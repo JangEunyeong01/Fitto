@@ -49,3 +49,7 @@ AGENTS.md
 # 로컬에서 브라우저로 열어 동작 확인하는 용도라 저장소에는 넣지 않는다.
 # 스펙 자체는 같은 폴더의 README.md에 모두 적혀 있다.
 design-source/design_handoff_fitto/Fitto 건강관리 앱.html
+# Playwright CLI output (may contain credentials)
+.playwright-cli/
+# 로컬에 받아둔 도구 저장소(자체 .git 보유, 앱 코드 아님)
+graph-engineering/
