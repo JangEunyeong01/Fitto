@@ -8,6 +8,7 @@ import RootNavigator from './src/navigation/RootNavigator';
 import Toast from './src/components/Toast';
 import QuickLogSheet from './src/components/QuickLogSheet';
 import FoodSearchSheet from './src/screens/diet/FoodSearchSheet';
+import ExerciseSheet from './src/screens/health/ExerciseSheet';
 import BirthdayModal from './src/screens/home/BirthdayModal';
 import TutorialOverlay from './src/components/TutorialOverlay';
 import { useTheme } from './src/theme/useTheme';
@@ -25,6 +26,7 @@ function AppShell() {
           <RootNavigator />
           <QuickLogSheet />
           <FoodSearchSheet />
+          <ExerciseSheet />
         </View>
       </NavigationContainer>
       <BirthdayModal />

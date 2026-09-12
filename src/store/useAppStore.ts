@@ -46,6 +46,7 @@ export interface ExerciseEntry {
   name: string;
   minutes: number;
   kcal: number;
+  memo?: string;
 }
 
 export interface MealItem {

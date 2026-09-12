@@ -7,8 +7,9 @@ import GlassCard from '../../components/GlassCard';
 import Badge from '../../components/Badge';
 import Icon from '../../components/Icon';
 import { useTheme } from '../../theme/useTheme';
-import { alpha, brand, typography, weight } from '../../theme/tokens';
+import { alpha, brand, selection, typography, weight } from '../../theme/tokens';
 import { useAppStore } from '../../store/useAppStore';
+import { useExerciseSheetStore } from '../../store/useExerciseSheetStore';
 import { useToastStore } from '../../store/useToastStore';
 import { dateKey } from '../../utils/timeOfDay';
 import { personaCopy } from '../../copy/persona';
@@ -25,6 +26,7 @@ export default function HealthScreen() {
   const weightLog = useAppStore((s) => s.weightLog);
   const addExercise = useAppStore((s) => s.addExercise);
   const removeExercise = useAppStore((s) => s.removeExercise);
+  const openExerciseSheet = useExerciseSheetStore((s) => s.show);
   const showToast = useToastStore((s) => s.show);
 
   const exercises = record?.exercises ?? [];
@@ -102,7 +104,14 @@ export default function HealthScreen() {
               {exercises.map((e) => (
                 <View key={e.id} style={styles.recordRow}>
                   <View style={[styles.dot, { backgroundColor: brand.mint }]} />
-                  <Text style={[styles.recordName, { color: colors.txt }]}>{e.name}</Text>
+                  <View style={styles.recordText}>
+                    <Text style={[styles.recordName, { color: colors.txt }]}>{e.name}</Text>
+                    {!!e.memo && (
+                      <Text style={[styles.recordMemo, { color: colors.sub }]} numberOfLines={1}>
+                        {e.memo}
+                      </Text>
+                    )}
+                  </View>
                   <Text style={[styles.recordDetail, { color: colors.sub }]}>
                     {e.minutes}분 · {e.kcal}kcal
                   </Text>
@@ -115,6 +124,13 @@ export default function HealthScreen() {
           )}
 
           <View style={[styles.chipRow, { borderTopColor: colors.line }]}>
+            {/* 퀵칩은 한 탭 기록용(15분 고정), 직접 추가는 운동·시간·메모를 받는 시트(명세 F-034). */}
+            <Pressable
+              onPress={openExerciseSheet}
+              style={[styles.chip, styles.chipPrimary, { borderColor: selection.border, backgroundColor: selection.bg }]}
+            >
+              <Text style={[styles.chipText, { color: colors.txt }]}>+ 직접 추가</Text>
+            </Pressable>
             {QUICK_WORKOUTS.map((c) => (
               <Pressable
                 key={c}
@@ -258,13 +274,16 @@ const styles = StyleSheet.create({
     height: 7,
     borderRadius: 3.5,
   },
-  recordName: {
-    ...typography.rowLabel,
+  recordText: {
     flex: 1,
+    gap: 1,
   },
+  recordName: typography.rowLabel,
+  recordMemo: typography.caption,
   recordDetail: typography.caption,
   chipRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 8,
     marginTop: 14,
     paddingTop: 12,
@@ -276,6 +295,9 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     borderWidth: 1,
     borderStyle: 'dashed',
+  },
+  chipPrimary: {
+    borderStyle: 'solid',
   },
   chipText: typography.label,
   periodRow: {
