@@ -136,8 +136,9 @@ export default function OnboardingScreen() {
         showToast('이름을 입력해 주세요');
         return false;
       }
-      if (!obInfo.height.trim() || !obInfo.weight.trim()) {
-        showToast('키와 몸무게를 입력해 주세요');
+      // 나이는 필수. 나이대별 건강 주의·생리 안내가 달라져서 기본값으로 채우면 안 된다.
+      if (!obInfo.age.trim() || !obInfo.height.trim() || !obInfo.weight.trim()) {
+        showToast('나이, 키, 몸무게를 입력해 주세요');
         return false;
       }
       // 자릿수를 잘못 넣으면 목표 칼로리·물 목표가 엉뚱하게 잡히므로 여기서 막는다.
@@ -168,7 +169,13 @@ export default function OnboardingScreen() {
    */
   const canProceed = (): boolean => {
     if (step === 1) {
-      return !!obInfo.name.trim() && !!obInfo.height.trim() && !!obInfo.weight.trim() && !checkRange(obInfo);
+      return (
+        !!obInfo.name.trim() &&
+        !!obInfo.age.trim() &&
+        !!obInfo.height.trim() &&
+        !!obInfo.weight.trim() &&
+        !checkRange(obInfo)
+      );
     }
     if (step === 2) return !!obPick.activity;
     if (step === 3) return !!obPick.goal;
@@ -204,6 +211,8 @@ export default function OnboardingScreen() {
             style={styles.scroll}
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
+            // 키보드가 올라온 채로 X·추가 버튼을 누르면 기본값(never)은 첫 탭을 키보드 닫기에 써버린다.
+            keyboardShouldPersistTaps="handled"
             onLayout={(e) => setScrollH(e.nativeEvent.layout.height)}
           >
             {/*

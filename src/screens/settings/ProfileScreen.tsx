@@ -44,6 +44,12 @@ export default function ProfileScreen() {
     setBirthDay(clamped ? String(clamped) : '');
     setProfile({ birthdayDay: clamped });
   };
+  // 비운 채로 나가면 원래 이름으로 되돌린다. 입력창도 같이 되돌려야 빈 칸으로 남지 않는다.
+  const commitNickname = () => {
+    const next = nickname.trim() || profile.nickname;
+    setNickname(next);
+    setProfile({ nickname: next });
+  };
   // 온보딩과 같은 범위로 자른다(utils/goals의 INPUT_LIMITS). 목표 체중도 몸무게와 같은 범위를 쓴다.
   const commitNum = (text: string, setText: (t: string) => void, key: 'height' | 'weight' | 'targetWeight') => {
     const limit = key === 'height' ? INPUT_LIMITS.height : INPUT_LIMITS.weight;
@@ -59,6 +65,7 @@ export default function ProfileScreen() {
         style={styles.scroll}
         contentContainerStyle={[styles.content, { paddingTop: insets.top + 14, paddingBottom: insets.bottom + 40 }]}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
         <DetailHeader title="프로필" />
 
@@ -67,8 +74,9 @@ export default function ProfileScreen() {
           <TextField
             value={nickname}
             onChangeText={setNickname}
-            onEndEditing={() => setProfile({ nickname: nickname.trim() || profile.nickname })}
-            onBlur={() => setProfile({ nickname: nickname.trim() || profile.nickname })}
+            clearable
+            onEndEditing={commitNickname}
+            onBlur={commitNickname}
             placeholder="피또가 부를 이름"
           />
 

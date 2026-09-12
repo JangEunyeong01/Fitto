@@ -1,5 +1,6 @@
-import React from 'react';
-import { TextInput, StyleSheet, StyleProp, TextStyle, TextInputProps } from 'react-native';
+import React, { useRef } from 'react';
+import { TextInput, View, Pressable, StyleSheet, StyleProp, TextStyle, TextInputProps } from 'react-native';
+import Icon from './Icon';
 import { useTheme } from '../theme/useTheme';
 import { typography } from '../theme/tokens';
 
@@ -15,6 +16,8 @@ interface TextFieldProps extends Omit<TextInputProps, 'style' | 'placeholderText
    * 같은 흰색이라 입력창이 통째로 사라진다.
    */
   onBackground?: boolean;
+  /** 값이 있을 때 오른쪽에 X를 띄워 한 번에 지운다(명세 F-003·F-040 이름 입력). */
+  clearable?: boolean;
   style?: StyleProp<TextStyle>;
 }
 
@@ -23,11 +26,13 @@ interface TextFieldProps extends Omit<TextInputProps, 'style' | 'placeholderText
  * 카드 안에서도 유리 색을 그대로 써서 테두리가 안 보이는 화면이 있었다.
  * placeholder 색과 테마 색은 여기서 붙이므로 호출부에서 넘기지 않는다.
  */
-export default function TextField({ size = 'md', center, onBackground, style, ...rest }: TextFieldProps) {
+export default function TextField({ size = 'md', center, onBackground, clearable, style, ...rest }: TextFieldProps) {
   const { colors } = useTheme();
+  const inputRef = useRef<TextInput>(null);
 
-  return (
+  const input = (
     <TextInput
+      ref={inputRef}
       placeholderTextColor={colors.sub}
       style={[
         styles.base,
@@ -38,10 +43,34 @@ export default function TextField({ size = 'md', center, onBackground, style, ..
           borderColor: onBackground ? colors.stroke : colors.line,
           color: colors.txt,
         },
+        clearable && styles.clearablePad,
         style,
       ]}
       {...rest}
     />
+  );
+
+  if (!clearable) return input;
+
+  return (
+    <View>
+      {input}
+      {!!rest.value && (
+        <Pressable
+          // 지우는 건 대개 다시 쓰려는 거라 포커스를 입력창으로 되돌린다.
+          onPress={() => {
+            rest.onChangeText?.('');
+            inputRef.current?.focus();
+          }}
+          hitSlop={8}
+          style={styles.clearBtn}
+          accessibilityRole="button"
+          accessibilityLabel="입력 지우기"
+        >
+          <Icon name="close" size={14} color={colors.sub} />
+        </Pressable>
+      )}
+    </View>
   );
 }
 
@@ -55,6 +84,19 @@ const styles = StyleSheet.create({
   },
   center: {
     textAlign: 'center',
+  },
+  // X 버튼 자리만큼 비워 긴 이름이 버튼 밑으로 들어가지 않게 한다.
+  clearablePad: {
+    paddingRight: 40,
+  },
+  clearBtn: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    width: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
 
