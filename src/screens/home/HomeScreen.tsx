@@ -39,6 +39,7 @@ export default function HomeScreen() {
   const cardOrder = useAppStore((s) => s.cardOrder);
   const cardHidden = useAppStore((s) => s.cardHidden);
   const periodOn = useAppStore((s) => s.periodOn);
+  const periodSetupDone = useAppStore((s) => s.periodSetupDone);
   const seedMockToday = useAppStore((s) => s.seedMockToday);
   const profile = useAppStore((s) => s.profile);
   const setBirthdayShownYear = useAppStore((s) => s.setBirthdayShownYear);
@@ -102,7 +103,10 @@ export default function HomeScreen() {
     return () => clearTimeout(timer);
   }, [tutorialDone]);
 
-  const visibleCards = cardOrder.filter((id) => !cardHidden.includes(id) && (id !== 'period' || periodOn));
+  // 명세 F-017: 생리 카드는 기능이 켜져 있고 시작일을 입력한 뒤에만 보인다. 기본값 예측을 사실처럼 보여주지 않으려고.
+  const visibleCards = cardOrder.filter(
+    (id) => !cardHidden.includes(id) && (id !== 'period' || (periodOn && periodSetupDone))
+  );
 
   /** 한 카드가 어떤 튜토리얼 단계의 대상인지. 첫 카드는 "카드 순서" 단계가 가리킨다. */
   const targetIdFor = (cardId: CardId): TutorialTargetId | null => {

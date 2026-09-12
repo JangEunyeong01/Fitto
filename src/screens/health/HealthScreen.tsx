@@ -26,6 +26,7 @@ export default function HealthScreen() {
   const isToday = date === dateKey();
   const persona = useAppStore((s) => s.persona);
   const periodOn = useAppStore((s) => s.periodOn);
+  const periodSetupDone = useAppStore((s) => s.periodSetupDone);
   const todayRecord = useAppStore((s) => s.dailyRecords[dateKey()]);
   const record = useAppStore((s) => s.dailyRecords[date]);
   const weightLog = useAppStore((s) => s.weightLog);
@@ -35,6 +36,8 @@ export default function HealthScreen() {
   const showToast = useToastStore((s) => s.show);
 
   const exercises = record?.exercises ?? [];
+  const totalMinutes = exercises.reduce((a, e) => a + e.minutes, 0);
+  const totalKcal = exercises.reduce((a, e) => a + e.kcal, 0);
   const steps = todayRecord?.steps ?? 0;
 
   // 카드 부제에 보여줄 최근 체중. 기록이 없으면 프로필 값도 쓰지 않는다 —
@@ -108,7 +111,15 @@ export default function HealthScreen() {
         )}
 
         <GlassCard style={styles.card}>
-          <Text style={[styles.cardTitle, { color: colors.txt }]}>운동 기록</Text>
+          <View style={styles.headerRow}>
+            <Text style={[styles.cardTitle, { color: colors.txt }]}>운동 기록</Text>
+            {/* 명세 F-033: 그날 총 운동 시간·소모 칼로리 */}
+            {exercises.length > 0 && (
+              <Text style={[styles.totalText, { color: colors.sub }]}>
+                총 {totalMinutes}분 · {totalKcal.toLocaleString()}kcal
+              </Text>
+            )}
+          </View>
           {exercises.length === 0 ? (
             <Text style={[styles.empty, { color: colors.sub }]}>
               {isToday ? '아직 기록된 운동이 없어요.' : '이날은 기록된 운동이 없어요.'}
@@ -176,7 +187,14 @@ export default function HealthScreen() {
         </Pressable>
 
         {periodOn && (
-          <Pressable onPress={() => navigation.navigate('PeriodDetail')}>
+          // 시작일 입력 전에는 상세 대신 설정으로 보낸다. 설정 화면은 설정 탭 스택에 있다.
+          <Pressable
+            onPress={() =>
+              periodSetupDone
+                ? navigation.navigate('PeriodDetail')
+                : navigation.navigate('Settings', { screen: 'PeriodSettings' })
+            }
+          >
             <GlassCard style={styles.card}>
               <View style={styles.periodRow}>
                 <View style={[styles.periodBadge, { backgroundColor: alpha(brand.lavender, 0.28) }]}>
@@ -184,7 +202,9 @@ export default function HealthScreen() {
                 </View>
                 <View style={styles.periodText}>
                   <Text style={[styles.cardTitle, { color: colors.txt }]}>생리 주기 상세</Text>
-                  <Text style={[styles.periodSub, { color: colors.sub }]}>캘린더와 컨디션 기록 보기</Text>
+                  <Text style={[styles.periodSub, { color: colors.sub }]}>
+                    {periodSetupDone ? '캘린더와 컨디션 기록 보기' : '마지막 시작일을 입력하면 주기를 계산해요'}
+                  </Text>
                 </View>
                 <Icon name="chevronRight" size={17} color={colors.sub} />
               </View>
@@ -296,6 +316,7 @@ const styles = StyleSheet.create({
   recordName: typography.rowLabel,
   recordMemo: typography.caption,
   recordDetail: typography.caption,
+  totalText: typography.label,
   chipRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
