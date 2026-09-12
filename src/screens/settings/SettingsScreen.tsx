@@ -101,6 +101,13 @@ export default function SettingsScreen() {
 
         <GlassCard style={styles.card}>
           <ToggleRow label="생리 주기 기능" value={periodOn} onChange={setPeriodOn} colors={colors} />
+          {/* 명세 F-044: 생리 기능이 켜져 있을 때만 주기 설정을 보여준다. */}
+          {periodOn && (
+            <>
+              <Divider colors={colors} />
+              <NavRow label="생리 주기 설정" onPress={() => navigation.navigate('PeriodSettings')} colors={colors} />
+            </>
+          )}
           <Divider colors={colors} />
           <NavRow label="알림" onPress={() => navigation.navigate('Notifications')} colors={colors} />
           <Divider colors={colors} />

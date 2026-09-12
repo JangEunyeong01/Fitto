@@ -11,7 +11,7 @@ import { useTheme } from '../../theme/useTheme';
 import { useAppStore } from '../../store/useAppStore';
 import { personaCopy } from '../../copy/persona';
 import { dateKey } from '../../utils/timeOfDay';
-import { getCycleDayNumber, parseDateKey } from '../../utils/periodCycle';
+import { getCycleDayNumber, parseDateKey, shiftYearMonth } from '../../utils/periodCycle';
 import { typography } from '../../theme/tokens';
 
 export default function PeriodDetailScreen() {
@@ -25,12 +25,7 @@ export default function PeriodDetailScreen() {
   const now = parseDateKey(today);
   const [view, setView] = useState({ year: now.getFullYear(), month: now.getMonth() + 1 });
 
-  const shiftMonth = (delta: number) => {
-    setView((v) => {
-      const total = v.year * 12 + (v.month - 1) + delta;
-      return { year: Math.floor(total / 12), month: (total % 12) + 1 };
-    });
-  };
+  const shiftMonth = (delta: number) => setView((v) => shiftYearMonth(v, delta));
 
   const cycleDay = getCycleDayNumber(today, settings);
   const comment = personaCopy.periodComment[persona]({ day: cycleDay });
