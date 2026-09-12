@@ -10,21 +10,26 @@ import OptionRow from '../onboarding/OptionRow';
 import TagPicker from '../onboarding/TagPicker';
 import { useTheme } from '../../theme/useTheme';
 import { useAppStore } from '../../store/useAppStore';
-import { ACTIVITY_OPTIONS, GENDERS, HEALTH_TAGS, AVOID_TAGS } from '../onboarding/onboardingData';
+import { ACTIVITY_OPTIONS, GENDERS, GOAL_OPTIONS, HEALTH_TAGS, AVOID_TAGS } from '../onboarding/onboardingData';
 import { INPUT_LIMITS } from '../../utils/goals';
 import { typography } from '../../theme/tokens';
 
+type NumKey = 'age' | 'height' | 'weight' | 'targetWeight';
+
 // README 9. 프로필: 언제든 수정 가능한 필드들 — 저장 버튼 없이 값이 바뀌는 대로 스토어에 반영한다.
 // 숫자 입력만 blur 시점에 클램프해서 커밋한다(타이핑 중간값이 범위를 벗어나도 막지 않기 위해).
+// 성별·나이·키·체중·활동량·목표가 바뀌면 스토어가 목표 칼로리를 다시 계산한다(명세 F-040·F-041).
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
   const profile = useAppStore((s) => s.profile);
+  const kcalGoal = useAppStore((s) => s.goals.kcal);
   const setProfile = useAppStore((s) => s.setProfile);
 
   const [nickname, setNickname] = useState(profile.nickname);
   const [birthMonth, setBirthMonth] = useState(profile.birthdayMonth ? String(profile.birthdayMonth) : '');
   const [birthDay, setBirthDay] = useState(profile.birthdayDay ? String(profile.birthdayDay) : '');
+  const [age, setAge] = useState(profile.age ? String(profile.age) : '');
   const [height, setHeight] = useState(profile.height ? String(profile.height) : '');
   const [weight, setWeight] = useState(profile.weight ? String(profile.weight) : '');
   const [targetWeight, setTargetWeight] = useState(profile.targetWeight ? String(profile.targetWeight) : '');
@@ -51,12 +56,18 @@ export default function ProfileScreen() {
     setProfile({ nickname: next });
   };
   // 온보딩과 같은 범위로 자른다(utils/goals의 INPUT_LIMITS). 목표 체중도 몸무게와 같은 범위를 쓴다.
-  const commitNum = (text: string, setText: (t: string) => void, key: 'height' | 'weight' | 'targetWeight') => {
-    const limit = key === 'height' ? INPUT_LIMITS.height : INPUT_LIMITS.weight;
+  const commitNum = (text: string, setText: (t: string) => void, key: NumKey) => {
+    const limit = key === 'age' ? INPUT_LIMITS.age : key === 'height' ? INPUT_LIMITS.height : INPUT_LIMITS.weight;
     const n = parseInt(text, 10);
     const clamped = Number.isFinite(n) && n > 0 ? Math.min(limit.max, Math.max(limit.min, n)) : null;
+    // 나이는 온보딩 필수값이라 비우면 원래 값으로 되돌린다.
+    if (key === 'age' && clamped == null) {
+      setText(profile.age ? String(profile.age) : '');
+      return;
+    }
     setText(clamped ? String(clamped) : '');
-    setProfile({ [key]: clamped });
+    // 값이 그대로면 스토어를 건드리지 않는다. 포커스만 옮겨도 재계산이 돌지 않게.
+    if (clamped !== profile[key]) setProfile({ [key]: clamped });
   };
 
   return (
@@ -116,8 +127,11 @@ export default function ProfileScreen() {
 
         <GlassCard style={styles.card}>
           <View style={styles.numRow}>
+            <NumField label="나이" value={age} onChangeText={setAge} onCommit={() => commitNum(age, setAge, 'age')} colors={colors} />
             <NumField label="키 (cm)" value={height} onChangeText={setHeight} onCommit={() => commitNum(height, setHeight, 'height')} colors={colors} />
             <NumField label="체중 (kg)" value={weight} onChangeText={setWeight} onCommit={() => commitNum(weight, setWeight, 'weight')} colors={colors} />
+          </View>
+          <View style={[styles.numRow, styles.numRowGap]}>
             <NumField
               label="목표 체중 (kg)"
               value={targetWeight}
@@ -125,6 +139,27 @@ export default function ProfileScreen() {
               onCommit={() => commitNum(targetWeight, setTargetWeight, 'targetWeight')}
               colors={colors}
             />
+            {/* 윗줄과 칸 너비를 맞추려고 빈 칸 두 개를 둔다. */}
+            <View style={styles.numCol} />
+            <View style={styles.numCol} />
+          </View>
+          <Text style={[styles.goalNote, { color: colors.sub }]}>
+            목표 칼로리 {kcalGoal.toLocaleString()}kcal · 성별·나이·키·체중·활동량·목표를 바꾸면 다시 계산돼요.
+          </Text>
+        </GlassCard>
+
+        <GlassCard style={styles.card}>
+          <Text style={[styles.cardTitle, { color: colors.txt }]}>목표</Text>
+          <View style={styles.gap10}>
+            {GOAL_OPTIONS.map((o) => (
+              <OptionRow
+                key={o.label}
+                title={o.label}
+                desc={o.desc}
+                selected={profile.goalType === o.label}
+                onPress={() => setProfile({ goalType: o.label })}
+              />
+            ))}
           </View>
         </GlassCard>
 
@@ -244,9 +279,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 8,
   },
+  numRowGap: {
+    marginTop: 12,
+  },
   numCol: {
     flex: 1,
     gap: 6,
   },
   numLabel: typography.label,
+  goalNote: {
+    ...typography.caption,
+    marginTop: 12,
+  },
 });

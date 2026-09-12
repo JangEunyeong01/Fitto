@@ -257,7 +257,24 @@ export const useAppStore = create<AppState>()(
 
       setTheme: (t) => set({ theme: t }),
       setPersona: (p) => set({ persona: p }),
-      setProfile: (patch) => set((s) => ({ profile: { ...s.profile, ...patch } })),
+      // 계산에 쓰는 값이 바뀌면 목표 칼로리를 다시 잡는다(명세 F-040·F-041).
+      // 모든 프로필 수정이 여기를 지나므로 화면마다 재계산을 부를 필요가 없다.
+      // 물 목표는 물 상세에서 직접 바꾼 값을 덮어쓰지 않도록 건드리지 않는다.
+      setProfile: (patch) =>
+        set((s) => {
+          const profile = { ...s.profile, ...patch };
+          const calcKeys: (keyof Profile)[] = ['gender', 'age', 'height', 'weight', 'activity', 'goalType'];
+          if (!calcKeys.some((k) => k in patch)) return { profile };
+          const { kcal } = calculateGoals({
+            gender: profile.gender ?? '',
+            age: profile.age ?? '',
+            height: profile.height ?? '',
+            weight: profile.weight ?? '',
+            activity: profile.activity ?? '',
+            goal: profile.goalType ?? '',
+          });
+          return { profile, goals: { ...s.goals, kcal } };
+        }),
 
       // 기록과 프로필 체중을 항상 같이 움직인다. 따로 두면 프로필엔 옛날 값이,
       // 추이 그래프엔 최신 값이 남아 같은 화면에서 숫자가 어긋난다.
