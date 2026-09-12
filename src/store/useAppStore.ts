@@ -175,6 +175,7 @@ interface AppState {
   addExercise: (dateKey: string, entry: ExerciseEntry) => void;
   removeExercise: (dateKey: string, id: string) => void;
   addMealItem: (dateKey: string, slot: keyof DailyRecord['meals'], item: MealItem) => void;
+  removeMealItem: (dateKey: string, slot: keyof DailyRecord['meals'], id: string) => void;
   addRecipe: (recipe: Recipe) => void;
   addCustomIngredient: (ingredient: CustomIngredient) => void;
   seedMockToday: (dateKey: string) => void;
@@ -392,6 +393,18 @@ export const useAppStore = create<AppState>()(
             dailyRecords: {
               ...s.dailyRecords,
               [dateKey]: { ...rec, meals: { ...rec.meals, [slot]: [...rec.meals[slot], item] } },
+            },
+          };
+        }),
+
+      removeMealItem: (dateKey, slot, id) =>
+        set((s) => {
+          const rec = s.dailyRecords[dateKey];
+          if (!rec) return s;
+          return {
+            dailyRecords: {
+              ...s.dailyRecords,
+              [dateKey]: { ...rec, meals: { ...rec.meals, [slot]: rec.meals[slot].filter((m) => m.id !== id) } },
             },
           };
         }),
