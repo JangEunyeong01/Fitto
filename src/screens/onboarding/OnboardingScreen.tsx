@@ -136,6 +136,11 @@ export default function OnboardingScreen() {
         showToast('이름을 입력해 주세요');
         return false;
       }
+      // 성별이 비면 BMR이 여성 공식으로 계산돼 버려서 필수로 받는다.
+      if (!obInfo.gender) {
+        showToast('성별을 선택해 주세요');
+        return false;
+      }
       // 나이는 필수. 나이대별 건강 주의·생리 안내가 달라져서 기본값으로 채우면 안 된다.
       if (!obInfo.age.trim() || !obInfo.height.trim() || !obInfo.weight.trim()) {
         showToast('나이, 키, 몸무게를 입력해 주세요');
@@ -171,6 +176,7 @@ export default function OnboardingScreen() {
     if (step === 1) {
       return (
         !!obInfo.name.trim() &&
+        !!obInfo.gender &&
         !!obInfo.age.trim() &&
         !!obInfo.height.trim() &&
         !!obInfo.weight.trim() &&

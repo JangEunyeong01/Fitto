@@ -108,7 +108,7 @@ export default function ProfileScreen() {
           <View style={styles.gap10}>
             <SegmentedControl
               options={GENDERS.map((g) => ({ value: g, label: g }))}
-              value={(profile.gender as (typeof GENDERS)[number]) ?? GENDERS[2]}
+              value={profile.gender as (typeof GENDERS)[number] | null}
               onChange={(g) => setProfile({ gender: g })}
             />
           </View>

@@ -1,7 +1,8 @@
 // README "1. 온보딩" 표의 확정 문구. 라벨은 계산식 키(utils/goals.ts)와 그대로 맞물린다.
 import type { Persona } from '../../store/useAppStore';
 
-export const GENDERS = ['여성', '남성', '선택 안 함'] as const;
+// BMR 공식이 생물학적 성별 두 가지만 구분해서 선택지도 둘만 둔다(명세 F-002).
+export const GENDERS = ['여성', '남성'] as const;
 
 export const ACTIVITY_OPTIONS = [
   { label: '거의 안 움직여요', desc: '종일 앉아서 생활' },

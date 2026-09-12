@@ -76,7 +76,7 @@ export function calculateGoals(input: GoalInput): GoalResult {
   const height = clamp(num(input.height, DEFAULT_HEIGHT), INPUT_LIMITS.height.min, INPUT_LIMITS.height.max);
   const weight = clamp(num(input.weight, DEFAULT_WEIGHT), INPUT_LIMITS.weight.min, INPUT_LIMITS.weight.max);
 
-  // Mifflin-St Jeor. 남성만 +5, 그 외(여성·선택 안 함)는 -161.
+  // Mifflin-St Jeor. 남성 +5, 여성 -161.
   const bmr = Math.round(
     10 * weight + 6.25 * height - 5 * age + (input.gender === '남성' ? 5 : -161)
   );
