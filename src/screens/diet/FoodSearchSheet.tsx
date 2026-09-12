@@ -17,12 +17,14 @@ import { dateKey } from '../../utils/timeOfDay';
  * 추가 시 저녁이 비어 있으면 저녁, 아니면 간식으로 들어간다.
  */
 export default function FoodSearchSheet() {
-  const { open, hide, recent, addRecent } = useFoodSearchStore();
+  const { open, hide, recent, addRecent, date: targetDate } = useFoodSearchStore();
   const { colors, radius: r, spacing } = useTheme();
   const insets = useSafeAreaInsets();
+  // 식단 탭에서 지난 날짜를 보다가 열었으면 그 날에, 빠른 기록처럼 날짜 없이 열었으면 오늘에 넣는다.
+  const date = targetDate ?? dateKey();
   const avoid = useAppStore((s) => s.profile.allergies);
   const addMealItem = useAppStore((s) => s.addMealItem);
-  const record = useAppStore((s) => s.dailyRecords[dateKey()]);
+  const record = useAppStore((s) => s.dailyRecords[date]);
   const showToast = useToastStore((s) => s.show);
 
   const [query, setQuery] = useState('');
@@ -40,7 +42,7 @@ export default function FoodSearchSheet() {
       return;
     }
     const slot = (record?.meals.저녁.length ?? 0) === 0 ? '저녁' : '간식';
-    addMealItem(dateKey(), slot, {
+    addMealItem(date, slot, {
       id: `${food.id}-${Date.now()}`,
       name: food.name,
       amount: food.amount,

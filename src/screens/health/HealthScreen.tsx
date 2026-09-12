@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -6,6 +6,7 @@ import ScreenBackground from '../../components/ScreenBackground';
 import GlassCard from '../../components/GlassCard';
 import Badge from '../../components/Badge';
 import Icon from '../../components/Icon';
+import DateNavigator from '../../components/DateNavigator';
 import { useTheme } from '../../theme/useTheme';
 import { alpha, brand, selection, typography, weight } from '../../theme/tokens';
 import { useAppStore } from '../../store/useAppStore';
@@ -20,9 +21,13 @@ export default function HealthScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<any>();
   const { colors, typography } = useTheme();
+  // 명세 F-030: 날짜별 운동 기록 조회. 움직임 현황·추천은 오늘 기준이라 날짜와 무관하다.
+  const [date, setDate] = useState(dateKey());
+  const isToday = date === dateKey();
   const persona = useAppStore((s) => s.persona);
   const periodOn = useAppStore((s) => s.periodOn);
-  const record = useAppStore((s) => s.dailyRecords[dateKey()]);
+  const todayRecord = useAppStore((s) => s.dailyRecords[dateKey()]);
+  const record = useAppStore((s) => s.dailyRecords[date]);
   const weightLog = useAppStore((s) => s.weightLog);
   const addExercise = useAppStore((s) => s.addExercise);
   const removeExercise = useAppStore((s) => s.removeExercise);
@@ -30,7 +35,7 @@ export default function HealthScreen() {
   const showToast = useToastStore((s) => s.show);
 
   const exercises = record?.exercises ?? [];
-  const steps = record?.steps ?? 0;
+  const steps = todayRecord?.steps ?? 0;
 
   // 카드 부제에 보여줄 최근 체중. 기록이 없으면 프로필 값도 쓰지 않는다 —
   // 온보딩에서 한 번 적은 값을 "최근 기록"처럼 보여주면 오해를 준다.
@@ -46,7 +51,7 @@ export default function HealthScreen() {
   const trainingComment = personaCopy.exerciseComment[persona]();
 
   const handleAdd = (name: string, minutes: number, kcal: number) => {
-    addExercise(dateKey(), { id: `${Date.now()}`, name, minutes, kcal });
+    addExercise(date, { id: `${Date.now()}`, name, minutes, kcal });
     showToast(`${name} 기록 완료`);
   };
 
@@ -59,46 +64,55 @@ export default function HealthScreen() {
       >
         <Text style={[typography.screenTitle, { color: colors.txt, marginBottom: 16 }]}>헬스</Text>
 
-        <GlassCard style={styles.card}>
-          <Text style={[styles.cardTitle, { color: colors.txt }]}>움직임 현황</Text>
-          <View style={styles.statRow}>
-            <Stat label="주간 활동" value={`${activeDays}일`} colors={colors} />
-            <Stat label="평균 걸음" value={`${(avgSteps / 1000).toFixed(1)}천`} colors={colors} />
-            <Stat label="앉은 시간" value={`${sittingHours}h`} colors={colors} />
-          </View>
-        </GlassCard>
+        <DateNavigator date={date} onChange={setDate} />
 
-        <GlassCard style={styles.card}>
-          <View style={styles.headerRow}>
-            <Text style={[styles.cardTitle, { color: colors.txt }]}>오늘의 퍼스널 트레이닝</Text>
-            <Badge label="룰 기반" />
-          </View>
-          <Text style={[styles.comment, { color: colors.txt }]}>{trainingComment}</Text>
-
-          <View style={styles.suggestList}>
-            {WORKOUT_SUGGESTIONS.map((w) => (
-              <View key={w.id} style={[styles.suggestRow, { backgroundColor: colors.card2 }]}>
-                <View style={styles.suggestText}>
-                  <Text style={[styles.suggestName, { color: colors.txt }]}>
-                    {w.name} <Text style={[styles.suggestDetail, { color: colors.sub }]}>{w.detail}</Text>
-                  </Text>
-                  <Text style={[styles.suggestReason, { color: colors.sub }]}>{w.reason}</Text>
-                </View>
-                <Pressable
-                  onPress={() => handleAdd(w.name, w.minutes, w.kcal)}
-                  style={[styles.addBtn, { borderColor: colors.stroke, backgroundColor: colors.card }]}
-                >
-                  <Text style={[styles.addLabel, { color: colors.txt }]}>기록에 추가</Text>
-                </Pressable>
+        {/* 움직임 현황과 오늘의 추천은 "오늘"을 위한 카드라, 지난 날짜를 볼 때는 기록만 보여준다. */}
+        {isToday && (
+          <>
+            <GlassCard style={styles.card}>
+              <Text style={[styles.cardTitle, { color: colors.txt }]}>움직임 현황</Text>
+              <View style={styles.statRow}>
+                <Stat label="주간 활동" value={`${activeDays}일`} colors={colors} />
+                <Stat label="평균 걸음" value={`${(avgSteps / 1000).toFixed(1)}천`} colors={colors} />
+                <Stat label="앉은 시간" value={`${sittingHours}h`} colors={colors} />
               </View>
-            ))}
-          </View>
-        </GlassCard>
+            </GlassCard>
+
+            <GlassCard style={styles.card}>
+              <View style={styles.headerRow}>
+                <Text style={[styles.cardTitle, { color: colors.txt }]}>오늘의 퍼스널 트레이닝</Text>
+                <Badge label="룰 기반" />
+              </View>
+              <Text style={[styles.comment, { color: colors.txt }]}>{trainingComment}</Text>
+
+              <View style={styles.suggestList}>
+                {WORKOUT_SUGGESTIONS.map((w) => (
+                  <View key={w.id} style={[styles.suggestRow, { backgroundColor: colors.card2 }]}>
+                    <View style={styles.suggestText}>
+                      <Text style={[styles.suggestName, { color: colors.txt }]}>
+                        {w.name} <Text style={[styles.suggestDetail, { color: colors.sub }]}>{w.detail}</Text>
+                      </Text>
+                      <Text style={[styles.suggestReason, { color: colors.sub }]}>{w.reason}</Text>
+                    </View>
+                    <Pressable
+                      onPress={() => handleAdd(w.name, w.minutes, w.kcal)}
+                      style={[styles.addBtn, { borderColor: colors.stroke, backgroundColor: colors.card }]}
+                    >
+                      <Text style={[styles.addLabel, { color: colors.txt }]}>기록에 추가</Text>
+                    </Pressable>
+                  </View>
+                ))}
+              </View>
+            </GlassCard>
+          </>
+        )}
 
         <GlassCard style={styles.card}>
           <Text style={[styles.cardTitle, { color: colors.txt }]}>운동 기록</Text>
           {exercises.length === 0 ? (
-            <Text style={[styles.empty, { color: colors.sub }]}>아직 기록된 운동이 없어요.</Text>
+            <Text style={[styles.empty, { color: colors.sub }]}>
+              {isToday ? '아직 기록된 운동이 없어요.' : '이날은 기록된 운동이 없어요.'}
+            </Text>
           ) : (
             <View style={styles.recordList}>
               {exercises.map((e) => (
@@ -115,7 +129,7 @@ export default function HealthScreen() {
                   <Text style={[styles.recordDetail, { color: colors.sub }]}>
                     {e.minutes}분 · {e.kcal}kcal
                   </Text>
-                  <Pressable onPress={() => removeExercise(dateKey(), e.id)} hitSlop={8}>
+                  <Pressable onPress={() => removeExercise(date, e.id)} hitSlop={8}>
                     <Icon name="close" size={15} color={colors.sub} />
                   </Pressable>
                 </View>
@@ -126,7 +140,8 @@ export default function HealthScreen() {
           <View style={[styles.chipRow, { borderTopColor: colors.line }]}>
             {/* 퀵칩은 한 탭 기록용(15분 고정), 직접 추가는 운동·시간·메모를 받는 시트(명세 F-034). */}
             <Pressable
-              onPress={openExerciseSheet}
+              // onPress에 show를 그대로 넘기면 이벤트 객체가 날짜 자리로 들어가서 감싼다.
+              onPress={() => openExerciseSheet(date)}
               style={[styles.chip, styles.chipPrimary, { borderColor: selection.border, backgroundColor: selection.bg }]}
             >
               <Text style={[styles.chipText, { color: colors.txt }]}>+ 직접 추가</Text>

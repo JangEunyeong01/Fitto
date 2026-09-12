@@ -17,13 +17,14 @@ const MAX_MINUTES = 600;
 
 // 명세 F-034: 운동 선택 → 시간 입력 → 소모 칼로리 자동 계산 → 메모 → 저장.
 export default function ExerciseSheet() {
-  const { open, hide } = useExerciseSheetStore();
+  const { open, hide, date } = useExerciseSheetStore();
   if (!open) return null;
   // 폼을 따로 두어 닫힐 때 언마운트시킨다. 명세의 "닫으면 입력값 초기화"가 이걸로 해결된다.
-  return <ExerciseForm onClose={hide} />;
+  // 헬스 탭에서 지난 날짜를 보다가 열었으면 그 날에, 빠른 기록에서 열었으면 오늘에 넣는다.
+  return <ExerciseForm date={date ?? dateKey()} onClose={hide} />;
 }
 
-function ExerciseForm({ onClose }: { onClose: () => void }) {
+function ExerciseForm({ date, onClose }: { date: string; onClose: () => void }) {
   const { colors, radius: r, spacing } = useTheme();
   const insets = useSafeAreaInsets();
   const weightKg = useAppStore((s) => s.profile.weight);
@@ -54,7 +55,7 @@ function ExerciseForm({ onClose }: { onClose: () => void }) {
       showToast(`시간은 1~${MAX_MINUTES}분 사이로 입력해 주세요`);
       return;
     }
-    addExercise(dateKey(), {
+    addExercise(date, {
       id: `${Date.now()}`,
       name: exercise.name,
       minutes: mins,
