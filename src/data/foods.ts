@@ -32,3 +32,13 @@ export const RECOMMENDED_MEALS: Food[] = [
 export function findAllergyHit(food: Food, avoid: string[]): string | null {
   return food.tags.find((t) => avoid.includes(t)) ?? null;
 }
+
+/**
+ * amount 문자열("1공기 210g", "150g")에서 1회 제공량 그램 수를 뽑는다.
+ * "1인분"·"1장"처럼 그램 정보가 없으면 null — 이런 음식은 g 단위 입력을 막는다.
+ * ponytail: 문자열 파싱. 식품영양성분 API로 바꾸면 servingGrams 필드를 그대로 쓴다.
+ */
+export function gramsPerServing(food: Food): number | null {
+  const m = food.amount.match(/(\d+(?:\.\d+)?)\s*g\b/);
+  return m ? Number(m[1]) : null;
+}
