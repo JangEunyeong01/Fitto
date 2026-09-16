@@ -79,3 +79,32 @@ export function getMonthGrid(year: number, month: number): (string | null)[] {
   }
   return cells;
 }
+
+export function addDays(key: string, n: number): string {
+  const d = parseDateKey(key);
+  d.setDate(d.getDate() + n);
+  return toDateKey(d);
+}
+
+/**
+ * 설정 화면 미리보기(명세 F-044). 오늘(포함) 이후 가장 가까운 배란일과 그 앞 5일 가임기,
+ * 다음 생리 시작일을 돌려준다. 달력 색(getDayType)과 같은 규칙이라 두 곳이 어긋나지 않는다.
+ * 오늘이 시작일이면 "다음 예정일"은 한 주기 뒤로 본다.
+ */
+export function getUpcomingDates(today: string, s: PeriodSettings) {
+  const todayOffset = cycleOffset(today, s.lastStartDate, s.cycleLength);
+  const daysUntil = (target: number) => (target - todayOffset + s.cycleLength) % s.cycleLength;
+  const ovulation = addDays(today, daysUntil(ovulationOffset(s.cycleLength)));
+  return {
+    nextStart: addDays(today, daysUntil(0) || s.cycleLength),
+    ovulation,
+    fertileStart: addDays(ovulation, -5),
+    fertileEnd: ovulation,
+  };
+}
+
+/** 달력 월 이동. 12월→1월 넘김을 한 곳에서 처리한다. */
+export function shiftYearMonth(v: { year: number; month: number }, delta: number) {
+  const total = v.year * 12 + (v.month - 1) + delta;
+  return { year: Math.floor(total / 12), month: (total % 12) + 1 };
+}

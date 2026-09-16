@@ -12,6 +12,7 @@ import { getWaterStageSpec } from '../utils/health';
 import { waterStageNames } from '../copy/persona';
 import { overlay, typography } from '../theme/tokens';
 import { useFoodSearchStore } from '../store/useFoodSearchStore';
+import { useExerciseSheetStore } from '../store/useExerciseSheetStore';
 import Icon, { type IconName } from './Icon';
 
 const ACTIONS = [
@@ -49,7 +50,7 @@ export default function QuickLogSheet() {
     }
     if (key === 'exercise') {
       hide();
-      navigation.navigate('Health');
+      useExerciseSheetStore.getState().show();
       return;
     }
     hide();
