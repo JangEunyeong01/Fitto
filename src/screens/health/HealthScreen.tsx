@@ -18,6 +18,7 @@ import { QUICK_WORKOUTS, QUICK_WORKOUT_MINUTES, calcExerciseKcal, findExercise }
 import { recommendWorkouts } from '../../utils/workoutRecommend';
 import { sumMealKcal } from '../../utils/health';
 import WorkoutSettingCard from './WorkoutSettingCard';
+import RoutineCard from './RoutineCard';
 import { MOCK_STEPS_PAST6 } from '../home/mockData';
 
 export default function HealthScreen() {
@@ -203,6 +204,8 @@ export default function HealthScreen() {
             ))}
           </View>
         </GlassCard>
+
+        <RoutineCard date={date} />
 
         <Pressable onPress={() => navigation.navigate('Weight')}>
           <GlassCard style={styles.card}>
