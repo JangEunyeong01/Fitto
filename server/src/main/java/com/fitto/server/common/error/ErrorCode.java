@@ -1,0 +1,36 @@
+package com.fitto.server.common.error;
+
+import org.springframework.http.HttpStatus;
+
+/**
+ * API 명세서 17장의 에러 코드. message는 화면에 그대로 띄울 수 있는 한국어 문장이다.
+ * 앱은 code로 분기하고 message를 보여준다. 그래서 code는 함부로 바꾸면 안 된다.
+ */
+public enum ErrorCode {
+	INVALID_INPUT(HttpStatus.BAD_REQUEST, "입력값을 다시 확인해 주세요."),
+	INVALID_DATE(HttpStatus.BAD_REQUEST, "날짜가 올바르지 않아요."),
+	UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "다시 로그인해 주세요."),
+	TOKEN_EXPIRED(HttpStatus.UNAUTHORIZED, "로그인이 만료됐어요. 다시 로그인해 주세요."),
+	FORBIDDEN(HttpStatus.FORBIDDEN, "권한이 없어요."),
+	NOT_FOUND(HttpStatus.NOT_FOUND, "찾을 수 없어요."),
+	PERIOD_NOT_SET(HttpStatus.NOT_FOUND, "생리 주기 정보가 아직 없어요."),
+	EMAIL_DUPLICATED(HttpStatus.CONFLICT, "이미 가입된 이메일이에요."),
+	ID_CONFLICT(HttpStatus.CONFLICT, "다른 곳에서 쓰고 있는 기록이에요."),
+	INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "잠시 후 다시 시도해 주세요.");
+
+	private final HttpStatus status;
+	private final String message;
+
+	ErrorCode(HttpStatus status, String message) {
+		this.status = status;
+		this.message = message;
+	}
+
+	public HttpStatus getStatus() {
+		return status;
+	}
+
+	public String getMessage() {
+		return message;
+	}
+}
