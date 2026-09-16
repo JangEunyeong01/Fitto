@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import GlassCard from '../../components/GlassCard';
 import SelectChip from '../../components/SelectChip';
+import TextField from '../../components/TextField';
 import { useTheme } from '../../theme/useTheme';
 import { typography } from '../../theme/tokens';
 import { useAppStore, type DailyRecord } from '../../store/useAppStore';
@@ -25,9 +26,22 @@ export default function ConditionCard({ dateKey, label }: ConditionCardProps) {
   const record = useAppStore((s) => s.dailyRecords[dateKey]);
   const setDayCondition = useAppStore((s) => s.setDayCondition);
   const toggleDaySymptom = useAppStore((s) => s.toggleDaySymptom);
+  const setDayPeriodNote = useAppStore((s) => s.setDayPeriodNote);
 
   const condition = record?.periodCondition;
   const symptoms = record?.periodSymptoms ?? [];
+
+  const [medication, setMedication] = useState(record?.periodMedication ?? '');
+  const [memo, setMemo] = useState(record?.periodMemo ?? '');
+  // 달력에서 다른 날짜를 고르면 같은 카드가 그 날 값을 보여줘야 한다.
+  useEffect(() => {
+    setMedication(record?.periodMedication ?? '');
+    setMemo(record?.periodMemo ?? '');
+  }, [dateKey, record?.periodMedication, record?.periodMemo]);
+
+  const commit = (key: 'medication' | 'memo', value: string, saved?: string) => {
+    if (value.trim() !== (saved ?? '')) setDayPeriodNote(dateKey, { [key]: value });
+  };
 
   return (
     <GlassCard style={styles.card}>
@@ -62,11 +76,30 @@ export default function ConditionCard({ dateKey, label }: ConditionCardProps) {
         ))}
       </View>
 
-      <View style={[styles.memoBlock, { backgroundColor: colors.card2 }]}>
-        <Text style={[styles.memoText, { color: colors.sub }]}>
-          메모 기능은 준비 중이에요. 지금은 컨디션과 증상만 기록돼요.
-        </Text>
-      </View>
+      {/* 명세 F-036: 복용약과 메모. 입력칸을 벗어날 때 저장한다. */}
+      <Text style={[styles.sectionLabel, { color: colors.sub }]}>복용약</Text>
+      <TextField
+        size="sm"
+        clearable
+        value={medication}
+        onChangeText={setMedication}
+        onEndEditing={() => commit('medication', medication, record?.periodMedication)}
+        onBlur={() => commit('medication', medication, record?.periodMedication)}
+        placeholder="선택 · 예: 이부프로펜"
+        maxLength={50}
+      />
+
+      <Text style={[styles.sectionLabel, { color: colors.sub }]}>메모</Text>
+      <TextField
+        size="sm"
+        clearable
+        value={memo}
+        onChangeText={setMemo}
+        onEndEditing={() => commit('memo', memo, record?.periodMemo)}
+        onBlur={() => commit('memo', memo, record?.periodMemo)}
+        placeholder="선택 · 그날 몸 상태를 적어두세요"
+        maxLength={200}
+      />
     </GlassCard>
   );
 }
@@ -94,14 +127,5 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
-  },
-  memoBlock: {
-    borderRadius: 15,
-    padding: 12,
-    marginTop: 14,
-  },
-  memoText: {
-    ...typography.caption,
-    lineHeight: 11 * 1.5,
   },
 });
