@@ -17,8 +17,8 @@ import com.fitto.server.auth.dto.SignupRequest;
 import com.fitto.server.auth.dto.TokenResponse;
 import com.fitto.server.common.error.ApiException;
 import com.fitto.server.common.error.ErrorCode;
-import com.fitto.server.user.GoalCalculator;
 import com.fitto.server.user.User;
+import com.fitto.server.user.UserGoalService;
 import com.fitto.server.user.UserRepository;
 import com.fitto.server.user.UserResponse;
 
@@ -29,17 +29,17 @@ public class AuthService {
 	private final RefreshTokenRepository refreshTokenRepository;
 	private final PasswordEncoder passwordEncoder;
 	private final JwtTokenProvider tokenProvider;
-	private final GoalCalculator goalCalculator;
+	private final UserGoalService userGoalService;
 	private final LoginAttemptGuard loginAttemptGuard;
 
 	public AuthService(UserRepository userRepository, RefreshTokenRepository refreshTokenRepository,
-			PasswordEncoder passwordEncoder, JwtTokenProvider tokenProvider, GoalCalculator goalCalculator,
+			PasswordEncoder passwordEncoder, JwtTokenProvider tokenProvider, UserGoalService userGoalService,
 			LoginAttemptGuard loginAttemptGuard) {
 		this.userRepository = userRepository;
 		this.refreshTokenRepository = refreshTokenRepository;
 		this.passwordEncoder = passwordEncoder;
 		this.tokenProvider = tokenProvider;
-		this.goalCalculator = goalCalculator;
+		this.userGoalService = userGoalService;
 		this.loginAttemptGuard = loginAttemptGuard;
 	}
 
@@ -63,7 +63,7 @@ public class AuthService {
 			user.changeStartedAt(request.startedAt());
 		}
 
-		recalculateGoals(user);
+		userGoalService.recalculate(user);
 		userRepository.save(user);
 
 		return new AuthResponse(UserResponse.from(user), tokenProvider.createAccessToken(user.getId()),
@@ -129,13 +129,6 @@ public class AuthService {
 
 	private void revokeAll(UUID userId) {
 		refreshTokenRepository.findAllByUserIdAndRevokedAtIsNull(userId).forEach(RefreshToken::revoke);
-	}
-
-	private void recalculateGoals(User user) {
-		user.getGoals().applyCalculated(
-				goalCalculator.targetCalorie(user.getGender(), user.getAge(), user.getHeight(), user.getWeight(),
-						user.getActivityLevel(), user.getGoal()),
-				goalCalculator.waterGoal(user.getWeight(), user.getActivityLevel()));
 	}
 
 	/**
