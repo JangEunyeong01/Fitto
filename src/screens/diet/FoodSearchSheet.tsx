@@ -10,23 +10,22 @@ import { useTheme } from '../../theme/useTheme';
 import { alpha, brand, overlay, radius, selection, typography } from '../../theme/tokens';
 import { FOODS, findAllergyHit, gramsPerServing, type Food } from '../../data/foods';
 import { useAppStore, type MealSlot } from '../../store/useAppStore';
+import { AVOID_TAGS, MEAL_SLOTS, labelOf, type MealUnit } from '../../constants/codes';
+import { slotLabel } from '../../utils/meal';
 import { useFoodSearchStore } from '../../store/useFoodSearchStore';
 import { useToastStore } from '../../store/useToastStore';
 import { dateKey } from '../../utils/timeOfDay';
 
-const SLOTS: MealSlot[] = ['아침', '점심', '저녁', '간식'];
 const MAX_SERVINGS = 10;
 const MAX_GRAMS = 2000;
-
-type Unit = 'serving' | 'gram';
 
 /** 끼니를 정하지 않고 열었을 때 기본값. 지금 시각에 가장 가까운 식사로 둔다. */
 function guessSlot(now = new Date()): MealSlot {
   const h = now.getHours();
-  if (h >= 5 && h < 10) return '아침';
-  if (h >= 10 && h < 15) return '점심';
-  if (h >= 17 && h < 21) return '저녁';
-  return '간식';
+  if (h >= 5 && h < 10) return 'breakfast';
+  if (h >= 10 && h < 15) return 'lunch';
+  if (h >= 17 && h < 21) return 'dinner';
+  return 'snack';
 }
 
 /**
@@ -53,7 +52,7 @@ function FoodSearchForm() {
   const [query, setQuery] = useState('');
   const [picked, setPicked] = useState<Food | null>(null);
   const [slot, setSlot] = useState<MealSlot>(targetSlot ?? guessSlot());
-  const [unit, setUnit] = useState<Unit>('serving');
+  const [unit, setUnit] = useState<MealUnit>('serving');
   const [amount, setAmount] = useState('1');
 
   const results = useMemo(() => {
@@ -89,23 +88,32 @@ function FoodSearchForm() {
       : 0;
 
   // 단위를 바꿔도 먹은 양은 그대로 두고 숫자만 환산한다(1공기 ↔ 210g).
-  const switchUnit = (next: Unit) => {
+  const switchUnit = (next: MealUnit) => {
     if (next === unit || !grams) return;
-    const q = validQty ? qty : next === 'gram' ? 1 : grams;
-    setAmount(next === 'gram' ? String(Math.round(q * grams)) : String(Math.round((q / grams) * 10) / 10));
+    const q = validQty ? qty : next === 'g' ? 1 : grams;
+    setAmount(next === 'g' ? String(Math.round(q * grams)) : String(Math.round((q / grams) * 10) / 10));
     setUnit(next);
   };
 
   const save = () => {
     if (!picked) return;
     if (!validQty) {
-      showToast(unit === 'serving' ? `양은 ${MAX_SERVINGS}인분 이하로 입력해 주세요` : `양은 ${MAX_GRAMS}g 이하로 입력해 주세요`);
+      showToast(
+        unit === 'serving' ? `양은 ${MAX_SERVINGS}인분 이하로 입력해 주세요` : `양은 ${MAX_GRAMS}g 이하로 입력해 주세요`
+      );
       return;
     }
-    const amountLabel = unit === 'gram' ? `${qty}g` : qty === 1 ? picked.amount : `${picked.amount} × ${qty}`;
-    addMealItem(date, slot, { id: `${picked.id}-${Date.now()}`, name: picked.name, amount: amountLabel, kcal });
+    addMealItem(date, slot, {
+      id: `${picked.id}-${Date.now()}`,
+      name: picked.name,
+      amount: qty,
+      unit,
+      // 인분으로 기록하면 그 1인분이 뭐였는지 같이 남긴다. 나중에 음식 데이터가 바뀌어도 기록은 그대로다.
+      servingLabel: unit === 'serving' ? picked.amount : undefined,
+      kcal,
+    });
     addRecent(picked.name);
-    showToast(`${slot}에 추가했어요`);
+    showToast(`${slotLabel(slot)}에 추가했어요`);
     // 한 번에 여러 음식을 넣는 경우가 많아 닫지 않고 목록으로 돌아간다.
     setPicked(null);
   };
@@ -141,8 +149,15 @@ function FoodSearchForm() {
 
             <Text style={[styles.label, { color: colors.sub }]}>끼니</Text>
             <View style={styles.chipRow}>
-              {SLOTS.map((s) => (
-                <SelectChip key={s} label={s} selected={slot === s} onPress={() => setSlot(s)} size="sm" fill />
+              {MEAL_SLOTS.map((s) => (
+                <SelectChip
+                  key={s.code}
+                  label={s.label}
+                  selected={slot === s.code}
+                  onPress={() => setSlot(s.code)}
+                  size="sm"
+                  fill
+                />
               ))}
             </View>
 
@@ -159,7 +174,7 @@ function FoodSearchForm() {
               {/* 그램 정보가 없는 음식(1인분·1장)은 g로 바꿀 수 없다. */}
               <SelectChip label="인분" selected={unit === 'serving'} onPress={() => switchUnit('serving')} size="sm" />
               {grams != null && (
-                <SelectChip label="g" selected={unit === 'gram'} onPress={() => switchUnit('gram')} size="sm" />
+                <SelectChip label="g" selected={unit === 'g'} onPress={() => switchUnit('g')} size="sm" />
               )}
               <Text style={[styles.kcalPreview, { color: colors.txt }]}>{kcal > 0 ? `${kcal}kcal` : ''}</Text>
             </View>
@@ -225,7 +240,7 @@ function FoodSearchForm() {
                       <View style={styles.nameRow}>
                         <Text style={[styles.name, { color: colors.txt }]}>{food.name}</Text>
                         <Badge
-                          label={hit ? hit : '가능'}
+                          label={hit ? labelOf(AVOID_TAGS, hit) : '가능'}
                           color={hit ? alpha(brand.peach, 0.28) : alpha(brand.mint, 0.28)}
                           textColor={colors.txt}
                         />

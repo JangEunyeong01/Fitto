@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -14,7 +14,10 @@ import { useExerciseSheetStore } from '../../store/useExerciseSheetStore';
 import { useToastStore } from '../../store/useToastStore';
 import { dateKey } from '../../utils/timeOfDay';
 import { personaCopy } from '../../copy/persona';
-import { WORKOUT_SUGGESTIONS, QUICK_WORKOUTS } from '../../data/workouts';
+import { QUICK_WORKOUTS, QUICK_WORKOUT_MINUTES, calcExerciseKcal, findExercise } from '../../data/workouts';
+import { recommendWorkouts } from '../../utils/workoutRecommend';
+import { sumMealKcal } from '../../utils/health';
+import WorkoutSettingCard from './WorkoutSettingCard';
 import { MOCK_STEPS_PAST6 } from '../home/mockData';
 
 export default function HealthScreen() {
@@ -30,6 +33,10 @@ export default function HealthScreen() {
   const todayRecord = useAppStore((s) => s.dailyRecords[dateKey()]);
   const record = useAppStore((s) => s.dailyRecords[date]);
   const weightLog = useAppStore((s) => s.weightLog);
+  const profile = useAppStore((s) => s.profile);
+  const weightKg = profile.weight;
+  const kcalGoal = useAppStore((s) => s.goals.kcal);
+  const preference = useAppStore((s) => s.workoutPreference);
   const addExercise = useAppStore((s) => s.addExercise);
   const removeExercise = useAppStore((s) => s.removeExercise);
   const openExerciseSheet = useExerciseSheetStore((s) => s.show);
@@ -53,9 +60,32 @@ export default function HealthScreen() {
 
   const trainingComment = personaCopy.exerciseComment[persona]();
 
-  const handleAdd = (name: string, minutes: number, kcal: number) => {
-    addExercise(date, { id: `${Date.now()}`, name, minutes, kcal });
+  // 명세 F-032: 설정·목표·질환·칼로리 상태·생리 컨디션을 반영한 추천. 오늘 기준으로만 계산한다.
+  const suggestions = useMemo(
+    () =>
+      recommendWorkouts({
+        preference,
+        goal: profile.goalType,
+        age: profile.age,
+        weightKg: profile.weight,
+        diseases: profile.conditions,
+        kcalDiff: (todayRecord ? sumMealKcal(todayRecord.meals) : 0) - kcalGoal,
+        periodCondition: todayRecord?.periodCondition,
+      }),
+    [preference, profile, todayRecord, kcalGoal]
+  );
+
+  const handleAdd = (name: string, minutes: number, kcal: number, code?: string) => {
+    addExercise(date, { id: `${Date.now()}`, code, name, minutes, kcal });
     showToast(`${name} 기록 완료`);
+  };
+
+  // 퀵칩은 내장 운동이라 소모 칼로리를 MET로 계산한다(고정값을 쓰면 체중과 어긋난다).
+  const handleQuickAdd = (code: string) => {
+    const exercise = findExercise(code);
+    if (!exercise) return;
+    const kcal = calcExerciseKcal(exercise.met, QUICK_WORKOUT_MINUTES, weightKg);
+    handleAdd(exercise.name, QUICK_WORKOUT_MINUTES, kcal, exercise.code);
   };
 
   return (
@@ -81,6 +111,8 @@ export default function HealthScreen() {
               </View>
             </GlassCard>
 
+            <WorkoutSettingCard />
+
             <GlassCard style={styles.card}>
               <View style={styles.headerRow}>
                 <Text style={[styles.cardTitle, { color: colors.txt }]}>오늘의 퍼스널 트레이닝</Text>
@@ -89,16 +121,19 @@ export default function HealthScreen() {
               <Text style={[styles.comment, { color: colors.txt }]}>{trainingComment}</Text>
 
               <View style={styles.suggestList}>
-                {WORKOUT_SUGGESTIONS.map((w) => (
-                  <View key={w.id} style={[styles.suggestRow, { backgroundColor: colors.card2 }]}>
+                {suggestions.map((w) => (
+                  <View key={w.code} style={[styles.suggestRow, { backgroundColor: colors.card2 }]}>
                     <View style={styles.suggestText}>
                       <Text style={[styles.suggestName, { color: colors.txt }]}>
-                        {w.name} <Text style={[styles.suggestDetail, { color: colors.sub }]}>{w.detail}</Text>
+                        {w.name}{' '}
+                        <Text style={[styles.suggestDetail, { color: colors.sub }]}>
+                          {w.minutes}분 · {w.kcal}kcal
+                        </Text>
                       </Text>
                       <Text style={[styles.suggestReason, { color: colors.sub }]}>{w.reason}</Text>
                     </View>
                     <Pressable
-                      onPress={() => handleAdd(w.name, w.minutes, w.kcal)}
+                      onPress={() => handleAdd(w.name, w.minutes, w.kcal, w.code)}
                       style={[styles.addBtn, { borderColor: colors.stroke, backgroundColor: colors.card }]}
                     >
                       <Text style={[styles.addLabel, { color: colors.txt }]}>기록에 추가</Text>
@@ -157,13 +192,13 @@ export default function HealthScreen() {
             >
               <Text style={[styles.chipText, { color: colors.txt }]}>+ 직접 추가</Text>
             </Pressable>
-            {QUICK_WORKOUTS.map((c) => (
+            {QUICK_WORKOUTS.map((code) => (
               <Pressable
-                key={c}
-                onPress={() => handleAdd(c, 15, 60)}
+                key={code}
+                onPress={() => handleQuickAdd(code)}
                 style={[styles.chip, { borderColor: colors.line }]}
               >
-                <Text style={[styles.chipText, { color: colors.txt }]}>+ {c}</Text>
+                <Text style={[styles.chipText, { color: colors.txt }]}>+ {findExercise(code)?.name}</Text>
               </Pressable>
             ))}
           </View>

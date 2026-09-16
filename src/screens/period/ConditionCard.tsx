@@ -5,6 +5,7 @@ import SelectChip from '../../components/SelectChip';
 import { useTheme } from '../../theme/useTheme';
 import { typography } from '../../theme/tokens';
 import { useAppStore, type DailyRecord } from '../../store/useAppStore';
+import { SYMPTOM_TAGS } from '../../constants/codes';
 
 const CONDITIONS: { value: NonNullable<DailyRecord['periodCondition']>; label: string }[] = [
   { value: 'good', label: '좋음' },
@@ -12,7 +13,6 @@ const CONDITIONS: { value: NonNullable<DailyRecord['periodCondition']>; label: s
   { value: 'bad', label: '나쁨' },
 ];
 
-export const SYMPTOMS = ['복통', '두통', '부기', '피로', '예민', '허리 통증'];
 
 interface ConditionCardProps {
   dateKey: string;
@@ -52,12 +52,12 @@ export default function ConditionCard({ dateKey, label }: ConditionCardProps) {
 
       <Text style={[styles.sectionLabel, { color: colors.sub }]}>증상</Text>
       <View style={styles.symptomWrap}>
-        {SYMPTOMS.map((s) => (
+        {SYMPTOM_TAGS.map((s) => (
           <SelectChip
-            key={s}
-            label={s}
-            selected={symptoms.includes(s)}
-            onPress={() => toggleDaySymptom(dateKey, s)}
+            key={s.code}
+            label={s.label}
+            selected={symptoms.includes(s.code)}
+            onPress={() => toggleDaySymptom(dateKey, s.code)}
           />
         ))}
       </View>

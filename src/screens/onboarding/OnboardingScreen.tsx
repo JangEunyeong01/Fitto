@@ -14,16 +14,8 @@ import { useAppStore } from '../../store/useAppStore';
 import { useToastStore } from '../../store/useToastStore';
 import { INPUT_LIMITS } from '../../utils/goals';
 import { typography } from '../../theme/tokens';
-import {
-  ACTIVITY_OPTIONS,
-  AVOID_TAGS,
-  GOAL_OPTIONS,
-  HEALTH_TAGS,
-  PERSONA_OPTIONS,
-  STEP_LABELS,
-  TASTE_TAGS,
-  TOTAL_STEPS,
-} from './onboardingData';
+import { PERSONA_OPTIONS, STEP_LABELS, TOTAL_STEPS } from './onboardingData';
+import { ACTIVITY_OPTIONS, AVOID_TAGS, DISEASE_TAGS, GOAL_OPTIONS, TASTE_TAGS } from '../../constants/codes';
 
 const TITLES = [
   '물방울 요정 피또와\n오늘도 또, 건강하게',
@@ -112,6 +104,7 @@ export default function OnboardingScreen() {
   const obPick = useAppStore((s) => s.obPick);
   const setObInfo = useAppStore((s) => s.setObInfo);
   const toggleObTag = useAppStore((s) => s.toggleObTag);
+  const toggleObCustomTag = useAppStore((s) => s.toggleObCustomTag);
   const clearObTags = useAppStore((s) => s.clearObTags);
   const setObPick = useAppStore((s) => s.setObPick);
   const completeOnboarding = useAppStore((s) => s.completeOnboarding);
@@ -245,30 +238,31 @@ export default function OnboardingScreen() {
                 {step === 2 &&
                   ACTIVITY_OPTIONS.map((o) => (
                     <OptionRow
-                      key={o.label}
+                      key={o.code}
                       title={o.label}
                       desc={o.desc}
-                      selected={obPick.activity === o.label}
-                      onPress={() => setObPick({ activity: o.label })}
+                      selected={obPick.activity === o.code}
+                      onPress={() => setObPick({ activity: o.code })}
                     />
                   ))}
 
                 {step === 3 &&
                   GOAL_OPTIONS.map((o) => (
                     <OptionRow
-                      key={o.label}
+                      key={o.code}
                       title={o.label}
                       desc={o.desc}
-                      selected={obPick.goal === o.label}
-                      onPress={() => setObPick({ goal: o.label })}
+                      selected={obPick.goal === o.code}
+                      onPress={() => setObPick({ goal: o.code })}
                     />
                   ))}
 
                 {step === 4 && (
                   <TagPicker
-                    tags={HEALTH_TAGS}
-                    selected={obTags.health}
+                    tags={DISEASE_TAGS}
+                    value={obTags.health}
                     onToggle={(v) => toggleObTag('health', v)}
+                    onToggleCustom={(v) => toggleObCustomTag('health', v)}
                     onClear={() => clearObTags('health')}
                     placeholder="기타 질환을 입력하세요"
                     noneLabel="해당사항 없음"
@@ -278,8 +272,9 @@ export default function OnboardingScreen() {
                 {step === 5 && (
                   <TagPicker
                     tags={TASTE_TAGS}
-                    selected={obTags.taste}
+                    value={obTags.taste}
                     onToggle={(v) => toggleObTag('taste', v)}
+                    onToggleCustom={(v) => toggleObCustomTag('taste', v)}
                     onClear={() => clearObTags('taste')}
                     placeholder="다른 종류를 입력하세요"
                     noneLabel="가리는 것 없음"
@@ -289,8 +284,9 @@ export default function OnboardingScreen() {
                 {step === 6 && (
                   <TagPicker
                     tags={AVOID_TAGS}
-                    selected={obTags.avoid}
+                    value={obTags.avoid}
                     onToggle={(v) => toggleObTag('avoid', v)}
+                    onToggleCustom={(v) => toggleObCustomTag('avoid', v)}
                     onClear={() => clearObTags('avoid')}
                     placeholder="기타 음식을 입력하세요"
                     noneLabel="해당사항 없음"

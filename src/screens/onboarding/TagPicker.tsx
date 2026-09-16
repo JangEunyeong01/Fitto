@@ -6,12 +6,16 @@ import Icon from '../../components/Icon';
 import { useTheme } from '../../theme/useTheme';
 import { alpha, brand, radius, selection, typography, weight } from '../../theme/tokens';
 import { useToastStore } from '../../store/useToastStore';
+import type { TagOption } from '../../constants/codes';
+import type { TagSelection } from '../../store/useAppStore';
 
 interface TagPickerProps {
-  tags: string[];
-  selected: string[];
+  tags: readonly TagOption[];
+  /** 목록에서 고른 코드와 직접 입력한 문자열. 저장 형식이 달라 따로 받는다. */
+  value: TagSelection;
   /** 최신 상태 기준으로 토글하도록 값 하나만 넘긴다(연속 선택 시 덮어쓰기 방지). */
-  onToggle: (value: string) => void;
+  onToggle: (code: string) => void;
+  onToggleCustom: (value: string) => void;
   onClear: () => void;
   placeholder: string;
   noneLabel: string;
@@ -20,28 +24,39 @@ interface TagPickerProps {
 /**
  * README "태그 + 직접 입력 단계 구조" (건강 상태·식단 취향·못 먹는 음식 공통).
  * 2열 태그 그리드 → 직접 입력 + 추가 → 선택 칩(× 제거) → 없음 링크.
- * 직접 입력한 값도 선택 칩으로 들어가고 그대로 저장된다.
  */
-export default function TagPicker({ tags, selected, onToggle, onClear, placeholder, noneLabel }: TagPickerProps) {
+export default function TagPicker({
+  tags,
+  value,
+  onToggle,
+  onToggleCustom,
+  onClear,
+  placeholder,
+  noneLabel,
+}: TagPickerProps) {
   const { colors, mode } = useTheme();
   const showToast = useToastStore((s) => s.show);
   const [draft, setDraft] = useState('');
 
-  // 그리드에 있는 태그는 위에서 이미 선택 표시가 되므로 아래에 또 나열하지 않는다.
-  // 여기 남는 건 목록에 없어서 직접 적은 값들뿐이다.
-  const customValues = selected.filter((v) => !tags.includes(v));
-
   const addCustom = () => {
-    const value = draft.trim();
-    if (!value) {
+    const input = draft.trim();
+    if (!input) {
       showToast('내용을 입력해 주세요');
       return;
     }
-    if (selected.includes(value)) {
+    // 목록에 있는 걸 직접 적었으면 그 태그를 켜준다. 같은 뜻이 코드와 문자열로 둘 다 남지 않게.
+    const known = tags.find((t) => t.label === input);
+    if (known) {
+      if (!value.codes.includes(known.code)) onToggle(known.code);
+      else showToast('이미 선택했어요');
+      setDraft('');
+      return;
+    }
+    if (value.custom.includes(input)) {
       showToast('이미 선택했어요');
       return;
     }
-    onToggle(value);
+    onToggleCustom(input);
     setDraft('');
   };
 
@@ -49,9 +64,9 @@ export default function TagPicker({ tags, selected, onToggle, onClear, placehold
     <View>
       <View style={styles.grid}>
         {tags.map((tag) => {
-          const on = selected.includes(tag);
+          const on = value.codes.includes(tag.code);
           return (
-            <Pressable key={tag} onPress={() => onToggle(tag)} style={styles.gridSlot}>
+            <Pressable key={tag.code} onPress={() => onToggle(tag.code)} style={styles.gridSlot}>
               <View style={[on && styles.tagShadow]}>
                 <BlurView
                   intensity={20}
@@ -61,7 +76,7 @@ export default function TagPicker({ tags, selected, onToggle, onClear, placehold
                 >
                   <View style={[styles.tagInner, { backgroundColor: on ? selection.bg : colors.card }]}>
                     <Text style={[styles.tagText, { color: colors.txt }, weight(on ? 700 : 500)]} numberOfLines={1}>
-                      {tag}
+                      {tag.label}
                     </Text>
                   </View>
                 </BlurView>
@@ -88,14 +103,15 @@ export default function TagPicker({ tags, selected, onToggle, onClear, placehold
         </Pressable>
       </View>
 
-      {customValues.length > 0 && (
+      {/* 그리드에 있는 태그는 위에서 이미 선택 표시가 되므로 여기에는 직접 적은 값만 나열한다. */}
+      {value.custom.length > 0 && (
         <>
           <Text style={[styles.sectionLabel, { color: colors.sub }]}>직접 입력한 항목</Text>
           <View style={styles.chipWrap}>
-            {customValues.map((item) => (
+            {value.custom.map((item) => (
               <Pressable
                 key={item}
-                onPress={() => onToggle(item)}
+                onPress={() => onToggleCustom(item)}
                 style={[styles.chip, { backgroundColor: selection.bg, borderColor: alpha(brand.blue, 0.7) }]}
               >
                 <Text style={[styles.chipText, { color: colors.txt }]}>{item}</Text>

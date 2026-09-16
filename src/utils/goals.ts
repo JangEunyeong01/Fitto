@@ -1,36 +1,26 @@
 // README "1. 온보딩 — 목표 계산식"을 그대로 옮긴 것. 수치를 임의로 바꾸지 않는다.
+// 계수는 constants/codes.ts의 선택지에 붙어 있다. 라벨·계수·코드가 흩어지면 한쪽만 고치는 실수가 난다.
 
-export const ACTIVITY_FACTORS: Record<string, number> = {
-  '거의 안 움직여요': 1.2,
-  '가볍게 움직여요': 1.375,
-  '보통이에요': 1.55,
-  '많이 움직여요': 1.725,
-  '매우 활동적이에요': 1.9,
-};
+import { ACTIVITY_OPTIONS, GOAL_OPTIONS } from '../constants/codes';
+
+function factorMap<K extends 'factor' | 'waterFactor'>(key: K): Record<string, number> {
+  return Object.fromEntries(ACTIVITY_OPTIONS.map((o) => [o.code, o[key]]));
+}
+
+export const ACTIVITY_FACTORS = factorMap('factor');
 
 /**
  * 물 목표 활동 보정(명세 F-008: 체중 × 30ml × 보정계수).
  * 위 칼로리용 계수(1.2~1.9)를 그대로 쓰면 거의 안 움직이는 사람도 체중당 36ml가 돼
  * 일반 권장량(30~35ml)을 넘는다. 물은 활동량에 따라 10%씩만 올린다.
  */
-export const WATER_FACTORS: Record<string, number> = {
-  '거의 안 움직여요': 1.0,
-  '가볍게 움직여요': 1.1,
-  '보통이에요': 1.2,
-  '많이 움직여요': 1.3,
-  '매우 활동적이에요': 1.4,
-};
+export const WATER_FACTORS = factorMap('waterFactor');
 // 활동량 미입력 시 기본값. 칼로리 기본 계수(가볍게 1.375)와 같은 단계로 맞춘다.
 const DEFAULT_WATER_FACTOR = 1.1;
 
-export const GOAL_ADJUSTMENTS: Record<string, number> = {
-  '체중 감량': -350,
-  '체중 증가': 350,
-  '체중 유지': 0,
-  '건강 관리': 0,
-  '근력 강화': 200,
-  '체력 증진': 100,
-};
+export const GOAL_ADJUSTMENTS: Record<string, number> = Object.fromEntries(
+  GOAL_OPTIONS.map((o) => [o.code, o.adjust])
+);
 
 // 값이 비었을 때 기본값 (README 명시)
 const DEFAULT_AGE = 28;
@@ -58,12 +48,13 @@ function clamp(value: number, min: number, max: number): number {
 }
 
 export interface GoalInput {
-  gender: string;
-  age: string | number;
-  height: string | number;
-  weight: string | number;
-  activity: string;
-  goal: string;
+  /** 성별·활동량·목표는 코드(constants/codes.ts). 온보딩 입력 중에는 비어 있을 수 있다. */
+  gender: string | null;
+  age: string | number | null;
+  height: string | number | null;
+  weight: string | number | null;
+  activity: string | null;
+  goal: string | null;
 }
 
 export interface GoalResult {
@@ -80,7 +71,8 @@ export interface GoalResult {
   height: number;
 }
 
-function num(value: string | number, fallback: number): number {
+function num(value: string | number | null, fallback: number): number {
+  if (value == null) return fallback;
   const n = typeof value === 'number' ? value : parseFloat(value);
   return Number.isFinite(n) && n > 0 ? n : fallback;
 }
@@ -93,16 +85,16 @@ export function calculateGoals(input: GoalInput): GoalResult {
 
   // Mifflin-St Jeor. 남성 +5, 여성 -161.
   const bmr = Math.round(
-    10 * weight + 6.25 * height - 5 * age + (input.gender === '남성' ? 5 : -161)
+    10 * weight + 6.25 * height - 5 * age + (input.gender === 'male' ? 5 : -161)
   );
 
-  const factor = ACTIVITY_FACTORS[input.activity] ?? DEFAULT_ACTIVITY_FACTOR;
+  const factor = ACTIVITY_FACTORS[input.activity ?? ''] ?? DEFAULT_ACTIVITY_FACTOR;
   const tdee = Math.round(bmr * factor);
 
-  const adjust = GOAL_ADJUSTMENTS[input.goal] ?? 0;
+  const adjust = GOAL_ADJUSTMENTS[input.goal ?? ''] ?? 0;
   const kcal = clamp(tdee + adjust, KCAL_GOAL_LIMITS.min, KCAL_GOAL_LIMITS.max);
 
-  const waterFactor = WATER_FACTORS[input.activity] ?? DEFAULT_WATER_FACTOR;
+  const waterFactor = WATER_FACTORS[input.activity ?? ''] ?? DEFAULT_WATER_FACTOR;
   const rawWater = Math.round((weight * 30 * waterFactor) / 50) * 50;
   const water = clamp(rawWater, WATER_GOAL_LIMITS.min, WATER_GOAL_LIMITS.max);
 

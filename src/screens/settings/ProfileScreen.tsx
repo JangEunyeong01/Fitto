@@ -10,11 +10,16 @@ import OptionRow from '../onboarding/OptionRow';
 import TagPicker from '../onboarding/TagPicker';
 import { useTheme } from '../../theme/useTheme';
 import { useAppStore } from '../../store/useAppStore';
-import { ACTIVITY_OPTIONS, GENDERS, GOAL_OPTIONS, HEALTH_TAGS, AVOID_TAGS } from '../onboarding/onboardingData';
+import { ACTIVITY_OPTIONS, AVOID_TAGS, DISEASE_TAGS, GENDERS, GOAL_OPTIONS } from '../../constants/codes';
 import { INPUT_LIMITS } from '../../utils/goals';
 import { typography } from '../../theme/tokens';
 
 type NumKey = 'age' | 'height' | 'weight' | 'targetWeight';
+
+/** 태그 하나를 켜고 끈다. 목록(코드)과 직접 입력(문자열) 둘 다 같은 방식이라 한 군데로 모았다. */
+function toggle(list: string[], value: string): string[] {
+  return list.includes(value) ? list.filter((v) => v !== value) : [...list, value];
+}
 
 // README 9. 프로필: 언제든 수정 가능한 필드들 — 저장 버튼 없이 값이 바뀌는 대로 스토어에 반영한다.
 // 숫자 입력만 blur 시점에 클램프해서 커밋한다(타이핑 중간값이 범위를 벗어나도 막지 않기 위해).
@@ -118,9 +123,9 @@ export default function ProfileScreen() {
           <Text style={[styles.label, { color: colors.sub, marginTop: 14 }]}>성별</Text>
           <View style={styles.gap10}>
             <SegmentedControl
-              options={GENDERS.map((g) => ({ value: g, label: g }))}
-              value={profile.gender as (typeof GENDERS)[number] | null}
-              onChange={(g) => setProfile({ gender: g })}
+              options={GENDERS.map((g) => ({ value: g.code, label: g.label }))}
+              value={profile.gender}
+              onChange={(gender) => setProfile({ gender })}
             />
           </View>
         </GlassCard>
@@ -153,11 +158,11 @@ export default function ProfileScreen() {
           <View style={styles.gap10}>
             {GOAL_OPTIONS.map((o) => (
               <OptionRow
-                key={o.label}
+                key={o.code}
                 title={o.label}
                 desc={o.desc}
-                selected={profile.goalType === o.label}
-                onPress={() => setProfile({ goalType: o.label })}
+                selected={profile.goalType === o.code}
+                onPress={() => setProfile({ goalType: o.code })}
               />
             ))}
           </View>
@@ -168,11 +173,11 @@ export default function ProfileScreen() {
           <View style={styles.gap10}>
             {ACTIVITY_OPTIONS.map((o) => (
               <OptionRow
-                key={o.label}
+                key={o.code}
                 title={o.label}
                 desc={o.desc}
-                selected={profile.activity === o.label}
-                onPress={() => setProfile({ activity: o.label })}
+                selected={profile.activity === o.code}
+                onPress={() => setProfile({ activity: o.code })}
               />
             ))}
           </View>
@@ -182,16 +187,11 @@ export default function ProfileScreen() {
           <Text style={[styles.cardTitle, { color: colors.txt }]}>건강 상태</Text>
           <View style={styles.gap10}>
             <TagPicker
-              tags={HEALTH_TAGS}
-              selected={profile.conditions}
-              onToggle={(v) =>
-                setProfile({
-                  conditions: profile.conditions.includes(v)
-                    ? profile.conditions.filter((c) => c !== v)
-                    : [...profile.conditions, v],
-                })
-              }
-              onClear={() => setProfile({ conditions: [] })}
+              tags={DISEASE_TAGS}
+              value={{ codes: profile.conditions, custom: profile.customConditions }}
+              onToggle={(v) => setProfile({ conditions: toggle(profile.conditions, v) })}
+              onToggleCustom={(v) => setProfile({ customConditions: toggle(profile.customConditions, v) })}
+              onClear={() => setProfile({ conditions: [], customConditions: [] })}
               placeholder="기타 질환을 입력하세요"
               noneLabel="해당사항 없음"
             />
@@ -203,15 +203,10 @@ export default function ProfileScreen() {
           <View style={styles.gap10}>
             <TagPicker
               tags={AVOID_TAGS}
-              selected={profile.allergies}
-              onToggle={(v) =>
-                setProfile({
-                  allergies: profile.allergies.includes(v)
-                    ? profile.allergies.filter((a) => a !== v)
-                    : [...profile.allergies, v],
-                })
-              }
-              onClear={() => setProfile({ allergies: [] })}
+              value={{ codes: profile.allergies, custom: profile.customAllergies }}
+              onToggle={(v) => setProfile({ allergies: toggle(profile.allergies, v) })}
+              onToggleCustom={(v) => setProfile({ customAllergies: toggle(profile.customAllergies, v) })}
+              onClear={() => setProfile({ allergies: [], customAllergies: [] })}
               placeholder="기타 알레르기를 입력하세요"
               noneLabel="해당사항 없음"
             />

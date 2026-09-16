@@ -1,6 +1,6 @@
 /**
  * 내장 재료표 (README 5장, 100g 기준). 구현 시 공공데이터포털 식품영양성분 API로 대체한다.
- * allergyTag는 음식 검색(foods.ts)과 같은 태그 체계를 써서 사용자의 "못 먹는 음식"과 대조한다.
+ * allergyTag는 음식 검색(foods.ts)과 같은 코드 체계(constants/codes.ts의 AVOID_TAGS)를 쓴다.
  */
 export interface Ingredient {
   name: string;
@@ -14,16 +14,16 @@ export interface Ingredient {
 export const INGREDIENTS: Ingredient[] = [
   { name: '닭가슴살', kcal100: 165, carbs100: 0, protein100: 31, fat100: 3.6 },
   { name: '현미밥', kcal100: 111, carbs100: 23, protein100: 2.6, fat100: 0.9 },
-  { name: '계란', kcal100: 155, carbs100: 1.1, protein100: 13, fat100: 11, allergyTag: '달걀' },
-  { name: '두부', kcal100: 76, carbs100: 1.9, protein100: 8, fat100: 4.8, allergyTag: '대두' },
-  { name: '연어', kcal100: 208, carbs100: 0, protein100: 20, fat100: 13, allergyTag: '해산물' },
+  { name: '계란', kcal100: 155, carbs100: 1.1, protein100: 13, fat100: 11, allergyTag: 'egg' },
+  { name: '두부', kcal100: 76, carbs100: 1.9, protein100: 8, fat100: 4.8, allergyTag: 'soy' },
+  { name: '연어', kcal100: 208, carbs100: 0, protein100: 20, fat100: 13, allergyTag: 'seafood' },
   { name: '브로콜리', kcal100: 34, carbs100: 7, protein100: 2.8, fat100: 0.4 },
   { name: '고구마', kcal100: 86, carbs100: 20, protein100: 1.6, fat100: 0.1 },
   { name: '아보카도', kcal100: 160, carbs100: 9, protein100: 2, fat100: 15 },
   { name: '올리브유', kcal100: 884, carbs100: 0, protein100: 0, fat100: 100 },
-  { name: '우유', kcal100: 60, carbs100: 4.8, protein100: 3.2, fat100: 3.3, allergyTag: '유제품' },
-  { name: '아몬드', kcal100: 579, carbs100: 22, protein100: 21, fat100: 50, allergyTag: '견과류' },
-  { name: '땅콩버터', kcal100: 588, carbs100: 20, protein100: 25, fat100: 50, allergyTag: '견과류' },
+  { name: '우유', kcal100: 60, carbs100: 4.8, protein100: 3.2, fat100: 3.3, allergyTag: 'dairy' },
+  { name: '아몬드', kcal100: 579, carbs100: 22, protein100: 21, fat100: 50, allergyTag: 'nuts' },
+  { name: '땅콩버터', kcal100: 588, carbs100: 20, protein100: 25, fat100: 50, allergyTag: 'nuts' },
 ];
 
 export interface RecipeLine {

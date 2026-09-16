@@ -6,6 +6,7 @@ import Icon from '../../components/Icon';
 import { useTheme } from '../../theme/useTheme';
 import { alpha, brand, typography } from '../../theme/tokens';
 import { RECOMMENDED_MEALS, findAllergyHit } from '../../data/foods';
+import { AVOID_TAGS, labelsOf } from '../../constants/codes';
 import { useAppStore } from '../../store/useAppStore';
 
 /**
@@ -24,7 +25,7 @@ export default function RecommendCard() {
   const excluded = [
     ...new Set(RECOMMENDED_MEALS.map((m) => findAllergyHit(m, avoid)).filter((t): t is string => !!t)),
   ];
-  const badge = excluded.length > 0 ? `${excluded.join('·')} 제외` : '전체 추천';
+  const badge = excluded.length > 0 ? `${labelsOf(AVOID_TAGS, excluded).join('·')} 제외` : '전체 추천';
 
   return (
     <GlassCard style={styles.card}>
