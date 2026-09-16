@@ -115,6 +115,16 @@ export interface Alarms {
   quietTo: string;
 }
 
+/**
+ * 나만의 루틴(명세 F-035). 자주 하는 운동 묶음.
+ * 칼로리는 저장하지 않고 쓸 때마다 그날 체중으로 계산한다 — 체중이 바뀌면 소모량도 달라진다.
+ */
+export interface WorkoutRoutine {
+  id: string;
+  name: string;
+  exercises: { code: string; name: string; minutes: number }[];
+}
+
 export interface Recipe {
   id: string;
   name: string;
@@ -177,6 +187,7 @@ interface AppState {
   cardHidden: CardId[];
   alarms: Alarms;
   recipes: Recipe[];
+  routines: WorkoutRoutine[];
   customIngredients: CustomIngredient[];
   dailyRecords: Record<string, DailyRecord>;
   /**
@@ -228,6 +239,8 @@ interface AppState {
   removeMealItem: (dateKey: string, slot: MealSlot, id: string) => void;
   setMealMemo: (dateKey: string, slot: MealSlot, text: string) => void;
   addRecipe: (recipe: Recipe) => void;
+  addRoutine: (routine: WorkoutRoutine) => void;
+  removeRoutine: (id: string) => void;
   addCustomIngredient: (ingredient: CustomIngredient) => void;
   seedMockToday: (dateKey: string) => void;
   /** 설정 → 데이터 초기화. 저장된 모든 상태를 처음 설치한 상태로 되돌린다(온보딩부터 다시). */
@@ -316,6 +329,7 @@ export const useAppStore = create<AppState>()(
       obPick: { activity: '', goal: '', persona: null },
       alarms: defaultAlarms,
       recipes: [],
+      routines: [],
       customIngredients: [],
       dailyRecords: {},
       weightLog: {},
@@ -531,6 +545,8 @@ export const useAppStore = create<AppState>()(
         }),
 
       addRecipe: (recipe) => set((s) => ({ recipes: [recipe, ...s.recipes] })),
+      addRoutine: (routine) => set((s) => ({ routines: [routine, ...s.routines] })),
+      removeRoutine: (id) => set((s) => ({ routines: s.routines.filter((r) => r.id !== id) })),
       // 직접 입력한 재료는 칩 목록에 남아 재사용된다(README 5장). 같은 이름이면 최신 값으로 덮어쓴다.
       addCustomIngredient: (ingredient) =>
         set((s) => ({
