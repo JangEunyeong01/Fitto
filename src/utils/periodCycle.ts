@@ -19,7 +19,8 @@ export function toDateKey(date: Date): string {
   return `${y}-${m}-${d}`;
 }
 
-function daysBetween(fromKey: string, toKey: string): number {
+/** 두 dateKey 사이의 일수. toKey가 뒤면 양수. */
+export function daysBetween(fromKey: string, toKey: string): number {
   const a = parseDateKey(fromKey).getTime();
   const b = parseDateKey(toKey).getTime();
   return Math.round((b - a) / DAY_MS);
