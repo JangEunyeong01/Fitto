@@ -1,0 +1,18 @@
+# 로컬 개발용 PostgreSQL. server/ 폴더에서 `docker compose up -d`로 띄운다.
+# 여기 적힌 계정은 로컬 전용이라 저장소에 있어도 된다. 배포 DB 정보는 환경변수로만 준다.
+services:
+  db:
+    image: postgres:17
+    container_name: fitto-db
+    environment:
+      POSTGRES_DB: fitto
+      POSTGRES_USER: fitto
+      POSTGRES_PASSWORD: fitto
+    ports:
+      - '5432:5432'
+    volumes:
+      # 컨테이너를 지워도 데이터는 남는다. 완전히 비우려면 `docker compose down -v`.
+      - fitto-db-data:/var/lib/postgresql/data
+
+volumes:
+  fitto-db-data:

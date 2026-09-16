@@ -1,0 +1,30 @@
+spring:
+  application:
+    name: fitto-server
+
+  datasource:
+    # 로컬 개발용. 배포에서는 환경변수로 덮어쓴다(비밀번호를 저장소에 두지 않는다).
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/fitto}
+    username: ${DB_USER:fitto}
+    password: ${DB_PASSWORD:fitto}
+
+  jpa:
+    hibernate:
+      # 스키마는 나중에 마이그레이션 도구로 관리한다. 지금은 엔티티 기준으로 자동 반영.
+      ddl-auto: update
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+
+  jackson:
+    # null 필드도 그대로 내려보낸다. 명세 0-5에서 "0"과 "정보 없음"을 구분하기로 했다.
+    default-property-inclusion: always
+
+server:
+  port: 8080
+
+logging:
+  level:
+    # 개발 중에는 실행되는 쿼리를 본다. N+1을 눈으로 잡으려는 목적.
+    org.hibernate.SQL: debug
