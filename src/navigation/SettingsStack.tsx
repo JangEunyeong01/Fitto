@@ -4,12 +4,16 @@ import SettingsScreen from '../screens/settings/SettingsScreen';
 import ProfileScreen from '../screens/settings/ProfileScreen';
 import NotificationsScreen from '../screens/settings/NotificationsScreen';
 import PeriodSettingsScreen from '../screens/period/PeriodSettingsScreen';
+import SignupScreen from '../screens/settings/SignupScreen';
+import LoginScreen from '../screens/settings/LoginScreen';
 
 export type SettingsStackParamList = {
   SettingsMain: undefined;
   Profile: undefined;
   Notifications: undefined;
   PeriodSettings: undefined;
+  Signup: undefined;
+  Login: undefined;
 };
 
 const Stack = createNativeStackNavigator<SettingsStackParamList>();
@@ -22,6 +26,8 @@ export default function SettingsStack() {
       <Stack.Screen name="Profile" component={ProfileScreen} />
       <Stack.Screen name="Notifications" component={NotificationsScreen} />
       <Stack.Screen name="PeriodSettings" component={PeriodSettingsScreen} />
+      <Stack.Screen name="Signup" component={SignupScreen} />
+      <Stack.Screen name="Login" component={LoginScreen} />
     </Stack.Navigator>
   );
 }

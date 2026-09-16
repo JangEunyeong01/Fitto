@@ -17,6 +17,8 @@ import { useBirthdayModalStore } from '../../store/useBirthdayModalStore';
 import { useTutorialStore } from '../../store/useTutorialStore';
 import { useToastStore } from '../../store/useToastStore';
 import { useFoodSearchStore } from '../../store/useFoodSearchStore';
+import { useAuthStore } from '../../store/useAuthStore';
+import { logout as requestLogout } from '../../api/auth';
 import { PERSONA_OPTIONS } from '../onboarding/onboardingData';
 import { GOAL_OPTIONS, labelOf } from '../../constants/codes';
 import { daysBetween, toDateKey } from '../../utils/periodCycle';
@@ -46,6 +48,27 @@ export default function SettingsScreen() {
   const setPeriodOn = useAppStore((s) => s.setPeriodOn);
   const resetOnboarding = useAppStore((s) => s.resetOnboarding);
   const resetAll = useAppStore((s) => s.resetAll);
+
+  const authStatus = useAuthStore((s) => s.status);
+  const authEmail = useAuthStore((s) => s.email);
+  const signOut = useAuthStore((s) => s.signOut);
+
+  /**
+   * 로그아웃. 서버에 refreshToken 폐기를 요청하되, 실패해도 기기에서는 지운다 —
+   * 네트워크가 안 될 때 로그아웃이 막히면 기기를 빌려준 상황에서 빠져나올 수 없다.
+   */
+  const handleLogout = async () => {
+    const token = useAuthStore.getState().refreshToken;
+    if (token) {
+      try {
+        await requestLogout(token);
+      } catch {
+        // 서버에 못 알려도 기기에서는 지운다. 토큰은 만료되면 무효가 된다.
+      }
+    }
+    signOut();
+    showToast('로그아웃했어요');
+  };
 
   // 명세 F-043 데이터 초기화 2단계 확인. 0: 닫힘, 1: 첫 확인, 2: 마지막 확인.
   // 네이티브 Alert는 웹에서 버튼을 못 달아서 카드 안에서 단계를 넘긴다.
@@ -101,6 +124,28 @@ export default function SettingsScreen() {
             </View>
           </GlassCard>
         </Pressable>
+
+        {/* 명세 3-2: 가입 유도는 여기 한 곳에서만 한다. 기능을 막고 가입을 요구하지 않는다. */}
+        <GlassCard style={styles.card}>
+          <Text style={[styles.cardTitle, { color: colors.txt }]}>계정</Text>
+          {authStatus === 'member' ? (
+            <>
+              <Text style={[styles.previewText, { color: colors.sub }]}>{authEmail}</Text>
+              <Divider colors={colors} />
+              <NavRow label="로그아웃" actionLabel="실행" onPress={handleLogout} colors={colors} />
+            </>
+          ) : (
+            <>
+              <Text style={[styles.previewText, { color: colors.sub }]}>
+                계정을 만들면 기록을 백업하고 다른 기기에서도 이어서 볼 수 있어요.
+              </Text>
+              <Divider colors={colors} />
+              <NavRow label="계정 만들기" onPress={() => navigation.navigate('Signup')} colors={colors} />
+              <Divider colors={colors} />
+              <NavRow label="로그인" onPress={() => navigation.navigate('Login')} colors={colors} />
+            </>
+          )}
+        </GlassCard>
 
         <GlassCard style={styles.card}>
           <Text style={[styles.cardTitle, { color: colors.txt }]}>피또 성격</Text>
