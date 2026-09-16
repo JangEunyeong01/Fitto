@@ -10,7 +10,10 @@ import {
   GENDERS,
   GOAL_OPTIONS,
   TASTE_TAGS,
+  SYMPTOM_TAGS,
   codeOfLabel,
+  type MealSlotCode,
+  type MealUnit,
   type TagOption,
   type ActivityCode,
   type GenderCode,
@@ -64,6 +67,8 @@ export interface Goals {
 
 export interface ExerciseEntry {
   id: string;
+  /** 내장 운동 목록(data/workouts.ts)의 코드. 목록에 없는 운동을 적었으면 없다. */
+  code?: string;
   name: string;
   minutes: number;
   kcal: number;
@@ -73,14 +78,18 @@ export interface ExerciseEntry {
 export interface MealItem {
   id: string;
   name: string;
-  amount: string;
+  /** 먹은 양과 단위. 화면 문구는 utils/meal.ts의 formatAmount가 만든다. */
+  amount: number;
+  unit: MealUnit;
+  /** unit이 serving일 때 1인분이 무엇인지("1공기 210g"). g으로 기록했으면 없다. */
+  servingLabel?: string;
   kcal: number;
   allergy?: boolean;
 }
 
 export interface DailyRecord {
   water: number;
-  meals: { 아침: MealItem[]; 점심: MealItem[]; 저녁: MealItem[]; 간식: MealItem[] };
+  meals: Record<MealSlot, MealItem[]>;
   exercises: ExerciseEntry[];
   steps: number;
   periodCondition?: 'good' | 'normal' | 'bad';
@@ -89,7 +98,7 @@ export interface DailyRecord {
   mealMemos?: Partial<Record<MealSlot, string>>;
 }
 
-export type MealSlot = keyof DailyRecord['meals'];
+export type MealSlot = MealSlotCode;
 
 export interface Alarms {
   water: boolean;
@@ -211,8 +220,8 @@ interface AppState {
   addWater: (dateKey: string, deltaMl: number) => void;
   addExercise: (dateKey: string, entry: ExerciseEntry) => void;
   removeExercise: (dateKey: string, id: string) => void;
-  addMealItem: (dateKey: string, slot: keyof DailyRecord['meals'], item: MealItem) => void;
-  removeMealItem: (dateKey: string, slot: keyof DailyRecord['meals'], id: string) => void;
+  addMealItem: (dateKey: string, slot: MealSlot, item: MealItem) => void;
+  removeMealItem: (dateKey: string, slot: MealSlot, id: string) => void;
   setMealMemo: (dateKey: string, slot: MealSlot, text: string) => void;
   addRecipe: (recipe: Recipe) => void;
   addCustomIngredient: (ingredient: CustomIngredient) => void;
@@ -221,10 +230,14 @@ interface AppState {
   resetAll: () => void;
 }
 
+export function emptyMeals(): Record<MealSlot, MealItem[]> {
+  return { breakfast: [], lunch: [], dinner: [], snack: [] };
+}
+
 function emptyRecord(): DailyRecord {
   return {
     water: 0,
-    meals: { 아침: [], 점심: [], 저녁: [], 간식: [] },
+    meals: emptyMeals(),
     exercises: [],
     steps: 0,
   };
@@ -528,12 +541,14 @@ export const useAppStore = create<AppState>()(
             const rec: DailyRecord = {
               water: 950,
               meals: {
-                아침: [{ id: 'm1', name: '그릭요거트', amount: '150g', kcal: 130 }],
-                점심: [{ id: 'm2', name: '현미밥 · 닭가슴살 구이', amount: '1인분', kcal: 475 }],
-                저녁: [],
-                간식: [{ id: 'm3', name: '아몬드 한 줌', amount: '25g', kcal: 145, allergy: true }],
+                breakfast: [{ id: 'm1', name: '그릭요거트', amount: 150, unit: 'g', kcal: 130 }],
+                lunch: [
+                  { id: 'm2', name: '현미밥 · 닭가슴살 구이', amount: 1, unit: 'serving', kcal: 475 },
+                ],
+                dinner: [],
+                snack: [{ id: 'm3', name: '아몬드 한 줌', amount: 25, unit: 'g', kcal: 145, allergy: true }],
               },
-              exercises: [{ id: 'e1', name: '아침 걷기', minutes: 20, kcal: 130 }],
+              exercises: [{ id: 'e1', code: 'walking', name: '아침 걷기', minutes: 20, kcal: 130 }],
               steps: 6420,
               periodCondition: undefined,
               periodSymptoms: [],
@@ -551,7 +566,7 @@ export const useAppStore = create<AppState>()(
     {
       name: 'fitto-app-storage',
       storage: createJSONStorage(() => AsyncStorage),
-      version: 3,
+      version: 4,
       // 기본 병합은 얕은 병합이라 profile 같은 객체는 저장본이 통째로 덮어쓴다.
       // 그러면 나중에 필드를 추가했을 때 기존 사용자에게만 undefined가 남으므로,
       // 객체 필드는 기본값 위에 저장본을 얹는다.
@@ -573,7 +588,15 @@ export const useAppStore = create<AppState>()(
       // 옛 구조를 다루는 자리라 필드 타입을 느슨하게 둔다(지금 타입으로 읽으면 옛 값이 들어오지 않는다).
       migrate: (persisted: unknown, version: number) => {
         const state = persisted as
-          | { profile?: any; obInfo?: any; obPick?: any; obTags?: any; cardOrder?: CardId[]; cardHidden?: CardId[] }
+          | {
+              profile?: any;
+              obInfo?: any;
+              obPick?: any;
+              obTags?: any;
+              dailyRecords?: any;
+              cardOrder?: CardId[];
+              cardHidden?: CardId[];
+            }
           | undefined;
         if (!state) return state as unknown as AppState;
 
@@ -639,6 +662,51 @@ export const useAppStore = create<AppState>()(
               avoid: toSelection(state.obTags.avoid, AVOID_TAGS),
             };
           }
+        }
+
+        // v4: 끼니 키·증상도 코드로, 음식 양은 "1공기 210g × 2" 같은 문장에서 숫자+단위로 옮긴다.
+        if (version < 4) {
+          const SLOT_BY_LABEL: Record<string, MealSlot> = {
+            아침: 'breakfast',
+            점심: 'lunch',
+            저녁: 'dinner',
+            간식: 'snack',
+          };
+
+          const parseAmount = (raw: unknown) => {
+            if (typeof raw !== 'string') return { amount: 1, unit: 'serving' as MealUnit };
+            // "1공기 210g × 2"처럼 배수가 붙어 있으면 앞쪽이 1회 제공량 설명이다.
+            const times = /^(.+?)\s*[×x]\s*([\d.]+)\s*$/.exec(raw.trim());
+            const label = (times ? times[1] : raw).trim();
+            const count = times ? Number(times[2]) : 1;
+            const grams = /^([\d.]+)\s*g$/.exec(label);
+            if (grams && count === 1) return { amount: Number(grams[1]), unit: 'g' as MealUnit };
+            return { amount: count, unit: 'serving' as MealUnit, servingLabel: label };
+          };
+
+          const records = state.dailyRecords ?? {};
+          Object.values(records).forEach((rec: any) => {
+            if (rec?.meals) {
+              const meals: Record<string, any[]> = emptyMeals();
+              Object.entries(rec.meals).forEach(([key, items]) => {
+                const slot = SLOT_BY_LABEL[key] ?? (key as MealSlot);
+                meals[slot] = (items as any[]).map((item) => ({ ...item, ...parseAmount(item.amount) }));
+              });
+              rec.meals = meals;
+            }
+            if (rec?.mealMemos) {
+              const memos: Record<string, string> = {};
+              Object.entries(rec.mealMemos).forEach(([key, memo]) => {
+                memos[SLOT_BY_LABEL[key] ?? key] = memo as string;
+              });
+              rec.mealMemos = memos;
+            }
+            if (rec?.periodSymptoms) {
+              rec.periodSymptoms = rec.periodSymptoms.map(
+                (s: string) => codeOfLabel(SYMPTOM_TAGS, s) ?? s
+              );
+            }
+          });
         }
 
         return state as AppState;

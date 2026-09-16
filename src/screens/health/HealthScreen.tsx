@@ -14,7 +14,13 @@ import { useExerciseSheetStore } from '../../store/useExerciseSheetStore';
 import { useToastStore } from '../../store/useToastStore';
 import { dateKey } from '../../utils/timeOfDay';
 import { personaCopy } from '../../copy/persona';
-import { WORKOUT_SUGGESTIONS, QUICK_WORKOUTS } from '../../data/workouts';
+import {
+  WORKOUT_SUGGESTIONS,
+  QUICK_WORKOUTS,
+  QUICK_WORKOUT_MINUTES,
+  calcExerciseKcal,
+  findExercise,
+} from '../../data/workouts';
 import { MOCK_STEPS_PAST6 } from '../home/mockData';
 
 export default function HealthScreen() {
@@ -30,6 +36,7 @@ export default function HealthScreen() {
   const todayRecord = useAppStore((s) => s.dailyRecords[dateKey()]);
   const record = useAppStore((s) => s.dailyRecords[date]);
   const weightLog = useAppStore((s) => s.weightLog);
+  const weightKg = useAppStore((s) => s.profile.weight);
   const addExercise = useAppStore((s) => s.addExercise);
   const removeExercise = useAppStore((s) => s.removeExercise);
   const openExerciseSheet = useExerciseSheetStore((s) => s.show);
@@ -53,9 +60,17 @@ export default function HealthScreen() {
 
   const trainingComment = personaCopy.exerciseComment[persona]();
 
-  const handleAdd = (name: string, minutes: number, kcal: number) => {
-    addExercise(date, { id: `${Date.now()}`, name, minutes, kcal });
+  const handleAdd = (name: string, minutes: number, kcal: number, code?: string) => {
+    addExercise(date, { id: `${Date.now()}`, code, name, minutes, kcal });
     showToast(`${name} 기록 완료`);
+  };
+
+  // 퀵칩은 내장 운동이라 소모 칼로리를 MET로 계산한다(고정값을 쓰면 체중과 어긋난다).
+  const handleQuickAdd = (code: string) => {
+    const exercise = findExercise(code);
+    if (!exercise) return;
+    const kcal = calcExerciseKcal(exercise.met, QUICK_WORKOUT_MINUTES, weightKg);
+    handleAdd(exercise.name, QUICK_WORKOUT_MINUTES, kcal, exercise.code);
   };
 
   return (
@@ -157,13 +172,13 @@ export default function HealthScreen() {
             >
               <Text style={[styles.chipText, { color: colors.txt }]}>+ 직접 추가</Text>
             </Pressable>
-            {QUICK_WORKOUTS.map((c) => (
+            {QUICK_WORKOUTS.map((code) => (
               <Pressable
-                key={c}
-                onPress={() => handleAdd(c, 15, 60)}
+                key={code}
+                onPress={() => handleQuickAdd(code)}
                 style={[styles.chip, { borderColor: colors.line }]}
               >
-                <Text style={[styles.chipText, { color: colors.txt }]}>+ {c}</Text>
+                <Text style={[styles.chipText, { color: colors.txt }]}>+ {findExercise(code)?.name}</Text>
               </Pressable>
             ))}
           </View>

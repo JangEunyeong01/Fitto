@@ -74,6 +74,26 @@ export const AVOID_TAGS: TagOption[] = [
   { code: 'pork', label: '돼지고기' },
 ];
 
+export const MEAL_SLOTS = [
+  { code: 'breakfast', label: '아침' },
+  { code: 'lunch', label: '점심' },
+  { code: 'dinner', label: '저녁' },
+  { code: 'snack', label: '간식' },
+] as const;
+export type MealSlotCode = (typeof MEAL_SLOTS)[number]['code'];
+
+/** 음식 양의 단위. serving은 "1공기 210g" 같은 1회 제공량 기준이다. */
+export type MealUnit = 'g' | 'serving';
+
+export const SYMPTOM_TAGS: TagOption[] = [
+  { code: 'cramp', label: '복통' },
+  { code: 'headache', label: '두통' },
+  { code: 'bloating', label: '부기' },
+  { code: 'fatigue', label: '피로' },
+  { code: 'irritability', label: '예민' },
+  { code: 'back_pain', label: '허리 통증' },
+];
+
 /** 코드를 화면용 라벨로. 목록에 없는 코드(직접 입력한 값)는 그대로 보여준다. */
 export function labelOf(options: readonly TagOption[], code: string | null | undefined): string {
   if (!code) return '';

@@ -12,13 +12,14 @@ import DateNavigator from '../../components/DateNavigator';
 import MealSlotCard from './MealSlotCard';
 import RecommendCard from './RecommendCard';
 import { useTheme } from '../../theme/useTheme';
-import { useAppStore, type MealSlot } from '../../store/useAppStore';
+import { emptyMeals, useAppStore, type MealSlot } from '../../store/useAppStore';
+import { MEAL_SLOTS } from '../../constants/codes';
 import { useFoodSearchStore } from '../../store/useFoodSearchStore';
 import { dateKey } from '../../utils/timeOfDay';
 import { sumMealKcal } from '../../utils/health';
 import { alpha, brand, typography } from '../../theme/tokens';
 
-const SLOTS: MealSlot[] = ['아침', '점심', '저녁', '간식'];
+const SLOTS: MealSlot[] = MEAL_SLOTS.map((s) => s.code);
 
 export default function DietScreen() {
   const insets = useSafeAreaInsets();
@@ -34,7 +35,7 @@ export default function DietScreen() {
   const openSearchForDate = () => openSearch({ date });
   const openSearchForSlot = (slot: MealSlot) => openSearch({ date, slot });
 
-  const meals = record?.meals ?? { 아침: [], 점심: [], 저녁: [], 간식: [] };
+  const meals = record?.meals ?? emptyMeals();
   const totalKcal = sumMealKcal(meals);
   const isEmpty = totalKcal === 0;
   const over = totalKcal > goal;

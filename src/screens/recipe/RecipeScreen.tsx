@@ -258,10 +258,11 @@ export default function RecipeScreen() {
                   </View>
                   <Pressable
                     onPress={() => {
-                      addMealItem(dateKey(), '저녁', {
+                      addMealItem(dateKey(), 'dinner', {
                         id: `${r.id}-${Date.now()}`,
                         name: r.name,
-                        amount: '1인분',
+                        amount: 1,
+                        unit: 'serving',
                         kcal: r.totalKcal,
                       });
                       showToast('오늘 저녁에 추가했어요');

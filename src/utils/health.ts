@@ -58,13 +58,8 @@ export function getKcalStatus(consumed: number, goal: number): KcalStatus {
   return 'over';
 }
 
-export function sumMealKcal(meals: { 아침: { kcal: number }[]; 점심: { kcal: number }[]; 저녁: { kcal: number }[]; 간식: { kcal: number }[] }): number {
-  return (
-    meals.아침.reduce((a, m) => a + m.kcal, 0) +
-    meals.점심.reduce((a, m) => a + m.kcal, 0) +
-    meals.저녁.reduce((a, m) => a + m.kcal, 0) +
-    meals.간식.reduce((a, m) => a + m.kcal, 0)
-  );
+export function sumMealKcal(meals: Record<string, { kcal: number }[]>): number {
+  return Object.values(meals).reduce((sum, items) => sum + items.reduce((a, m) => a + m.kcal, 0), 0);
 }
 
 /**

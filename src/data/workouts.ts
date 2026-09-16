@@ -38,28 +38,41 @@ export const WORKOUT_SUGGESTIONS: WorkoutSuggestion[] = [
   },
 ];
 
-/** 운동 기록 퀵칩 (홈 운동 카드와 동일한 3종). */
-export const QUICK_WORKOUTS = ['걷기', '스트레칭', '홈트'] as const;
+/** 운동 기록 퀵칩 (홈 운동 카드와 동일한 3종). 기록은 코드로 남긴다. */
+export const QUICK_WORKOUTS = ['walking', 'stretching', 'home_training'] as const;
+
+/** 퀵칩 한 번에 기록되는 시간(분). 짧게 한 번 눌러 남기는 용도라 고정값이다. */
+export const QUICK_WORKOUT_MINUTES = 15;
 
 /**
  * 운동 추가 모달(명세 F-034) 목록. met는 Compendium of Physical Activities(2011) 대표값.
- * 소모 칼로리 = MET × 체중(kg) × 시간(h).
+ * 소모 칼로리 = MET × 체중(kg) × 시간(h). code는 API 명세 v1.1의 exerciseCode.
  */
-export const EXERCISES: { name: string; met: number }[] = [
-  { name: '걷기', met: 3.5 },
-  { name: '빠르게 걷기', met: 4.3 },
-  { name: '달리기', met: 8.0 },
-  { name: '자전거', met: 6.8 },
-  { name: '수영', met: 6.0 },
-  { name: '등산', met: 6.0 },
-  { name: '계단 오르기', met: 4.0 },
-  { name: '줄넘기', met: 11.0 },
-  { name: '웨이트 트레이닝', met: 5.0 },
-  { name: '홈트', met: 3.8 },
-  { name: '필라테스', met: 3.0 },
-  { name: '요가', met: 2.5 },
-  { name: '스트레칭', met: 2.3 },
+export interface Exercise {
+  code: string;
+  name: string;
+  met: number;
+}
+
+export const EXERCISES: Exercise[] = [
+  { code: 'walking', name: '걷기', met: 3.5 },
+  { code: 'brisk_walking', name: '빠르게 걷기', met: 4.3 },
+  { code: 'running', name: '달리기', met: 8.0 },
+  { code: 'cycling', name: '자전거', met: 6.8 },
+  { code: 'swimming', name: '수영', met: 6.0 },
+  { code: 'hiking', name: '등산', met: 6.0 },
+  { code: 'stair_climbing', name: '계단 오르기', met: 4.0 },
+  { code: 'jump_rope', name: '줄넘기', met: 11.0 },
+  { code: 'weight_training', name: '웨이트 트레이닝', met: 5.0 },
+  { code: 'home_training', name: '홈트', met: 3.8 },
+  { code: 'pilates', name: '필라테스', met: 3.0 },
+  { code: 'yoga', name: '요가', met: 2.5 },
+  { code: 'stretching', name: '스트레칭', met: 2.3 },
 ];
+
+export function findExercise(code: string): Exercise | undefined {
+  return EXERCISES.find((e) => e.code === code);
+}
 
 // 프로필 체중이 없을 때 쓴다. goals.ts의 기본 체중과 같은 값.
 const DEFAULT_WEIGHT_KG = 58;

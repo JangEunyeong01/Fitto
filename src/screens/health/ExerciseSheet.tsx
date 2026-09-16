@@ -11,7 +11,7 @@ import { useAppStore } from '../../store/useAppStore';
 import { useExerciseSheetStore } from '../../store/useExerciseSheetStore';
 import { useToastStore } from '../../store/useToastStore';
 import { dateKey } from '../../utils/timeOfDay';
-import { EXERCISES, calcExerciseKcal } from '../../data/workouts';
+import { EXERCISES, calcExerciseKcal, findExercise } from '../../data/workouts';
 
 const MAX_MINUTES = 600;
 
@@ -41,7 +41,7 @@ function ExerciseForm({ date, onClose }: { date: string; onClose: () => void }) 
     return q ? EXERCISES.filter((e) => e.name.includes(q)) : EXERCISES;
   }, [query]);
 
-  const exercise = EXERCISES.find((e) => e.name === picked);
+  const exercise = picked ? findExercise(picked) : undefined;
   const mins = parseInt(minutes, 10);
   const validMins = mins > 0 && mins <= MAX_MINUTES;
   const kcal = exercise && validMins ? calcExerciseKcal(exercise.met, mins, weightKg) : 0;
@@ -57,6 +57,7 @@ function ExerciseForm({ date, onClose }: { date: string; onClose: () => void }) 
     }
     addExercise(date, {
       id: `${Date.now()}`,
+      code: exercise.code,
       name: exercise.name,
       minutes: mins,
       kcal,
@@ -99,10 +100,10 @@ function ExerciseForm({ date, onClose }: { date: string; onClose: () => void }) 
             <View style={styles.chipWrap}>
               {results.map((e) => (
                 <SelectChip
-                  key={e.name}
+                  key={e.code}
                   label={e.name}
-                  selected={picked === e.name}
-                  onPress={() => setPicked(e.name)}
+                  selected={picked === e.code}
+                  onPress={() => setPicked(e.code)}
                   size="sm"
                 />
               ))}

@@ -5,6 +5,7 @@ import Icon from '../../components/Icon';
 import TextField from '../../components/TextField';
 import { useTheme } from '../../theme/useTheme';
 import { useAppStore, type MealItem, type MealSlot } from '../../store/useAppStore';
+import { formatAmount, slotLabel } from '../../utils/meal';
 import { typography } from '../../theme/tokens';
 
 interface MealSlotCardProps {
@@ -24,6 +25,8 @@ export default function MealSlotCard({ date, slot, items, memo, onAdd }: MealSlo
   const setMealMemo = useAppStore((s) => s.setMealMemo);
   const total = items.reduce((a, i) => a + i.kcal, 0);
 
+  const label = slotLabel(slot);
+
   const [draft, setDraft] = useState(memo ?? '');
   // 날짜를 넘기면 같은 카드가 다른 날 메모를 보여줘야 해서, 저장된 값이 바뀌면 입력칸도 맞춘다.
   useEffect(() => {
@@ -36,7 +39,7 @@ export default function MealSlotCard({ date, slot, items, memo, onAdd }: MealSlo
   return (
     <GlassCard style={styles.card}>
       <View style={styles.headerRow}>
-        <Text style={[styles.title, { color: colors.txt }]}>{slot}</Text>
+        <Text style={[styles.title, { color: colors.txt }]}>{label}</Text>
         <View style={styles.headerRight}>
           <Text style={[styles.total, { color: colors.sub }]}>{total.toLocaleString()} kcal</Text>
           <Pressable
@@ -44,7 +47,7 @@ export default function MealSlotCard({ date, slot, items, memo, onAdd }: MealSlo
             hitSlop={8}
             style={[styles.plusBtn, { borderColor: colors.line }]}
             accessibilityRole="button"
-            accessibilityLabel={`${slot}에 음식 추가`}
+            accessibilityLabel={`${label}에 음식 추가`}
           >
             <Icon name="plus" size={14} color={colors.txt} />
           </Pressable>
@@ -53,7 +56,7 @@ export default function MealSlotCard({ date, slot, items, memo, onAdd }: MealSlo
 
       {items.length === 0 ? (
         <Pressable onPress={() => onAdd(slot)} style={[styles.emptyBtn, { borderColor: colors.line }]}>
-          <Text style={[styles.emptyLabel, { color: colors.sub }]}>+ {slot} 추가</Text>
+          <Text style={[styles.emptyLabel, { color: colors.sub }]}>+ {label} 추가</Text>
         </Pressable>
       ) : (
         <View style={styles.list}>
@@ -62,7 +65,7 @@ export default function MealSlotCard({ date, slot, items, memo, onAdd }: MealSlo
               <Text style={[styles.itemName, { color: colors.txt }]} numberOfLines={1}>
                 {item.name}
               </Text>
-              <Text style={[styles.itemAmount, { color: colors.sub }]}>{item.amount}</Text>
+              <Text style={[styles.itemAmount, { color: colors.sub }]}>{formatAmount(item)}</Text>
               <Text style={[styles.itemKcal, { color: colors.txt }]}>{item.kcal}</Text>
               <Pressable
                 onPress={() => removeMealItem(date, slot, item.id)}
