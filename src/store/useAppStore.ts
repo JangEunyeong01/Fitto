@@ -64,7 +64,11 @@ export interface DailyRecord {
   steps: number;
   periodCondition?: 'good' | 'normal' | 'bad';
   periodSymptoms?: string[];
+  /** 끼니별 메모(명세 F-022). 비우면 키를 지운다. */
+  mealMemos?: Partial<Record<MealSlot, string>>;
 }
+
+export type MealSlot = keyof DailyRecord['meals'];
 
 export interface Alarms {
   water: boolean;
@@ -177,6 +181,7 @@ interface AppState {
   removeExercise: (dateKey: string, id: string) => void;
   addMealItem: (dateKey: string, slot: keyof DailyRecord['meals'], item: MealItem) => void;
   removeMealItem: (dateKey: string, slot: keyof DailyRecord['meals'], id: string) => void;
+  setMealMemo: (dateKey: string, slot: MealSlot, text: string) => void;
   addRecipe: (recipe: Recipe) => void;
   addCustomIngredient: (ingredient: CustomIngredient) => void;
   seedMockToday: (dateKey: string) => void;
@@ -425,6 +430,17 @@ export const useAppStore = create<AppState>()(
               [dateKey]: { ...rec, meals: { ...rec.meals, [slot]: rec.meals[slot].filter((m) => m.id !== id) } },
             },
           };
+        }),
+
+      // 빈 문자열로 저장하면 메모를 지운 것으로 보고 키째 뺀다. 빈 메모가 기록에 쌓이지 않게.
+      setMealMemo: (dateKey, slot, text) =>
+        set((s) => {
+          const rec = s.dailyRecords[dateKey] ?? emptyRecord();
+          const mealMemos = { ...rec.mealMemos };
+          const t = text.trim();
+          if (t) mealMemos[slot] = t;
+          else delete mealMemos[slot];
+          return { dailyRecords: { ...s.dailyRecords, [dateKey]: { ...rec, mealMemos } } };
         }),
 
       addRecipe: (recipe) => set((s) => ({ recipes: [recipe, ...s.recipes] })),
