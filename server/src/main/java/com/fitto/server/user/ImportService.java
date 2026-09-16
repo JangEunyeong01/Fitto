@@ -14,15 +14,23 @@ import com.fitto.server.daily.DailyWater;
 import com.fitto.server.daily.DailyWaterRepository;
 import com.fitto.server.daily.WeightLog;
 import com.fitto.server.daily.WeightLogRepository;
+import com.fitto.server.diet.CustomIngredient;
+import com.fitto.server.diet.CustomIngredientRepository;
 import com.fitto.server.diet.MealItem;
 import com.fitto.server.diet.MealItemRepository;
 import com.fitto.server.diet.MealMemoRepository;
+import com.fitto.server.diet.Recipe;
+import com.fitto.server.diet.RecipeIngredient;
+import com.fitto.server.diet.RecipeRepository;
 import com.fitto.server.period.PeriodDaily;
 import com.fitto.server.period.PeriodDailyRepository;
 import com.fitto.server.period.PeriodSetting;
 import com.fitto.server.period.PeriodSettingRepository;
 import com.fitto.server.user.dto.ImportRequest;
 import com.fitto.server.user.dto.ImportResult;
+import com.fitto.server.workout.Routine;
+import com.fitto.server.workout.RoutineExercise;
+import com.fitto.server.workout.RoutineRepository;
 import com.fitto.server.workout.Workout;
 import com.fitto.server.workout.WorkoutRepository;
 
@@ -42,7 +50,8 @@ import com.fitto.server.workout.WorkoutRepository;
 public class ImportService {
 
 	private static final String[] KEYS = {
-			"meals", "mealMemos", "workouts", "water", "steps", "weights", "periodDaily" };
+			"meals", "mealMemos", "workouts", "water", "steps", "weights", "periodDaily",
+			"recipes", "routines", "customIngredients" };
 
 	private final UserRepository userRepository;
 	private final MealItemRepository mealItemRepository;
@@ -53,12 +62,16 @@ public class ImportService {
 	private final WeightLogRepository weightRepository;
 	private final PeriodSettingRepository periodSettingRepository;
 	private final PeriodDailyRepository periodDailyRepository;
+	private final RecipeRepository recipeRepository;
+	private final RoutineRepository routineRepository;
+	private final CustomIngredientRepository customIngredientRepository;
 
 	public ImportService(UserRepository userRepository, MealItemRepository mealItemRepository,
 			MealMemoRepository mealMemoRepository, WorkoutRepository workoutRepository,
 			DailyWaterRepository waterRepository, DailyStepsRepository stepsRepository,
 			WeightLogRepository weightRepository, PeriodSettingRepository periodSettingRepository,
-			PeriodDailyRepository periodDailyRepository) {
+			PeriodDailyRepository periodDailyRepository, RecipeRepository recipeRepository,
+			RoutineRepository routineRepository, CustomIngredientRepository customIngredientRepository) {
 		this.userRepository = userRepository;
 		this.mealItemRepository = mealItemRepository;
 		this.mealMemoRepository = mealMemoRepository;
@@ -68,6 +81,9 @@ public class ImportService {
 		this.weightRepository = weightRepository;
 		this.periodSettingRepository = periodSettingRepository;
 		this.periodDailyRepository = periodDailyRepository;
+		this.recipeRepository = recipeRepository;
+		this.routineRepository = routineRepository;
+		this.customIngredientRepository = customIngredientRepository;
 	}
 
 	/** 전체가 한 트랜잭션이다. 중간에 실패하면 아무것도 저장되지 않는다(명세 6장). */
@@ -85,6 +101,9 @@ public class ImportService {
 		importSteps(userId, request.steps(), counter);
 		importWeights(userId, request.weights(), counter);
 		importPeriod(userId, request.period(), counter);
+		importRecipes(userId, request.recipes(), counter);
+		importRoutines(userId, request.routines(), counter);
+		importCustomIngredients(userId, request.customIngredients(), counter);
 
 		return counter.toResult(UserResponse.from(user), KEYS);
 	}
@@ -183,6 +202,65 @@ public class ImportService {
 			}
 			weightRepository.save(WeightLog.create(userId, item.date(), item.weight()));
 			counter.imported("weights");
+		}
+	}
+
+	private void importRecipes(UUID userId, List<ImportRequest.Recipe> recipes, ImportResult.Counter counter) {
+		if (recipes == null) {
+			return;
+		}
+		for (ImportRequest.Recipe r : recipes) {
+			if (r.id() != null && recipeRepository.existsById(r.id())) {
+				counter.skipped("recipes");
+				continue;
+			}
+
+			Recipe recipe = Recipe.create(r.id(), userId, r.name());
+			recipeRepository.save(recipe);
+			recipe.replaceIngredients(r.ingredients().stream()
+					.map(i -> RecipeIngredient.create(i.name(), i.foodId(), i.customIngredientId(), i.amount(),
+							i.calories(), i.carbs(), i.protein(), i.fat(), i.sodium(), i.sugar()))
+					.toList());
+			counter.imported("recipes");
+		}
+	}
+
+	private void importRoutines(UUID userId, List<ImportRequest.Routine> routines, ImportResult.Counter counter) {
+		if (routines == null) {
+			return;
+		}
+		for (ImportRequest.Routine r : routines) {
+			if (r.id() != null && routineRepository.existsById(r.id())) {
+				counter.skipped("routines");
+				continue;
+			}
+
+			Routine routine = Routine.create(r.id(), userId, r.name());
+			routineRepository.save(routine);
+			routine.replaceExercises(r.exercises().stream()
+					.map(e -> RoutineExercise.create(e.exerciseCode(), e.name(), e.duration()))
+					.toList());
+			counter.imported("routines");
+		}
+	}
+
+	/** 직접 입력 재료는 이름이 겹치면 건너뛴다(명세 6장). 이름이 사용자 안에서 유일해야 해서다. */
+	private void importCustomIngredients(UUID userId, List<ImportRequest.CustomIngredient> ingredients,
+			ImportResult.Counter counter) {
+		if (ingredients == null) {
+			return;
+		}
+		for (ImportRequest.CustomIngredient i : ingredients) {
+			if (customIngredientRepository.findByUserIdAndName(userId, i.name()).isPresent()) {
+				counter.skipped("customIngredients");
+				continue;
+			}
+
+			CustomIngredient ingredient = CustomIngredient.create(i.id(), userId, i.name());
+			ingredient.change(i.calories(), i.carbs(), i.protein(), i.fat(), i.sodium(), i.sugar(),
+					Boolean.TRUE.equals(i.allergy()));
+			customIngredientRepository.save(ingredient);
+			counter.imported("customIngredients");
 		}
 	}
 
