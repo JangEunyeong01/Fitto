@@ -154,6 +154,10 @@ public class User {
 		this.weight = weight;
 	}
 
+	public void changePeriodEnabled(boolean enabled) {
+		this.periodEnabled = enabled;
+	}
+
 	/** 온보딩에서 받은 프로필을 한 번에 채운다. 목표 계산은 호출한 쪽에서 이어서 한다. */
 	public void applyProfile(String name, Gender gender, Integer age, Double height, Double weight,
 			Double targetWeight, ActivityLevel activityLevel, Goal goal, Personality personality,
