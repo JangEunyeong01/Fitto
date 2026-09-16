@@ -53,3 +53,5 @@ design-source/design_handoff_fitto/Fitto 건강관리 앱.html
 .playwright-cli/
 # 로컬에 받아둔 도구 저장소(자체 .git 보유, 앱 코드 아님)
 graph-engineering/
+# 개인 작업 메모 (저장소에는 올리지 않는다)
+docs/피또_진행현황_정리.md
