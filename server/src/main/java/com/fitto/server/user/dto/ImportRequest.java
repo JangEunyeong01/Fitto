@@ -22,7 +22,10 @@ public record ImportRequest(
 		List<@Valid Water> water,
 		List<@Valid Steps> steps,
 		List<@Valid Weight> weights,
-		@Valid Period period) {
+		@Valid Period period,
+		List<@Valid Recipe> recipes,
+		List<@Valid Routine> routines,
+		List<@Valid CustomIngredient> customIngredients) {
 
 	public record Meal(
 			UUID id, LocalDate date, MealType mealType, String name, String foodId, UUID recipeId,
@@ -55,5 +58,22 @@ public record ImportRequest(
 		public record Daily(LocalDate date, PeriodCondition condition, List<String> symptoms, String medication,
 				String memo) {
 		}
+	}
+
+	public record Recipe(UUID id, String name, List<@Valid Ingredient> ingredients) {
+
+		public record Ingredient(String name, String foodId, UUID customIngredientId, Double amount,
+				Integer calories, Double carbs, Double protein, Double fat, Integer sodium, Double sugar) {
+		}
+	}
+
+	public record Routine(UUID id, String name, List<@Valid RoutineExercise> exercises) {
+
+		public record RoutineExercise(String exerciseCode, String name, Integer duration) {
+		}
+	}
+
+	public record CustomIngredient(UUID id, String name, Integer calories, Double carbs, Double protein,
+			Double fat, Integer sodium, Double sugar, Boolean allergy) {
 	}
 }
