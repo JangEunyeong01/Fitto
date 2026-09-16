@@ -18,6 +18,7 @@ import { useTutorialStore } from '../../store/useTutorialStore';
 import { useToastStore } from '../../store/useToastStore';
 import { useFoodSearchStore } from '../../store/useFoodSearchStore';
 import { PERSONA_OPTIONS } from '../onboarding/onboardingData';
+import { GOAL_OPTIONS, labelOf } from '../../constants/codes';
 import { alpha, semantic, typography } from '../../theme/tokens';
 // 버전은 app.json 한 곳에서만 올린다. 화면에 따로 적어두면 배포 때 둘 중 하나를 꼭 까먹는다.
 import appConfig from '../../../app.json';
@@ -63,7 +64,9 @@ export default function SettingsScreen() {
   const showToast = useToastStore((s) => s.show);
 
   const personaDesc = PERSONA_OPTIONS.find((p) => p.key === persona)?.desc ?? '';
-  const goalSummary = [profile.goalType, `${goals.kcal.toLocaleString()}kcal`].filter(Boolean).join(' · ');
+  const goalSummary = [labelOf(GOAL_OPTIONS, profile.goalType), `${goals.kcal.toLocaleString()}kcal`]
+    .filter(Boolean)
+    .join(' · ');
 
   return (
     <ScreenBackground>

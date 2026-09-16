@@ -3,6 +3,19 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { calculateGoals } from '../utils/goals';
 import { toDateKey, type PeriodSettings } from '../utils/periodCycle';
+import {
+  ACTIVITY_OPTIONS,
+  AVOID_TAGS,
+  DISEASE_TAGS,
+  GENDERS,
+  GOAL_OPTIONS,
+  TASTE_TAGS,
+  codeOfLabel,
+  type TagOption,
+  type ActivityCode,
+  type GenderCode,
+  type GoalCode,
+} from '../constants/codes';
 
 export type ThemeMode = 'light' | 'dark' | 'system';
 export type Persona = 'friendly' | 'strict' | 'neutral';
@@ -22,16 +35,24 @@ export interface Profile {
   nickname: string;
   birthdayMonth: number | null;
   birthdayDay: number | null;
-  gender: string | null;
+  gender: GenderCode | null;
   /** 온보딩 필수값. 나이대별 건강 주의·생리 안내에 쓴다. */
   age: number | null;
   height: number | null;
   weight: number | null;
   targetWeight: number | null;
-  activity: string | null;
+  activity: ActivityCode | null;
+  /**
+   * 아래 세 쌍은 목록에서 고른 코드(constants/codes.ts)와 직접 입력한 문자열을 나눠 담는다.
+   * 섞어두면 서버에 보낼 때 어느 쪽이 코드인지 구분할 수 없다.
+   */
   allergies: string[];
+  customAllergies: string[];
   conditions: string[];
-  goalType: string | null;
+  customConditions: string[];
+  preferredFoods: string[];
+  customPreferredFoods: string[];
+  goalType: GoalCode | null;
 }
 
 export interface Goals {
@@ -110,11 +131,16 @@ export interface ObInfo {
   weight: string;
 }
 
-/** 태그 + 직접 입력 단계의 선택값. 태그 목록에 없던 직접 입력값도 그대로 저장된다. */
+/** 태그 + 직접 입력 단계의 선택값. 목록에서 고른 건 코드로, 직접 입력한 건 문자열 그대로 담는다. */
+export interface TagSelection {
+  codes: string[];
+  custom: string[];
+}
+
 export interface ObTags {
-  health: string[];
-  taste: string[];
-  avoid: string[];
+  health: TagSelection;
+  taste: TagSelection;
+  avoid: TagSelection;
 }
 
 export interface ObPick {
@@ -173,7 +199,8 @@ interface AppState {
   logWeight: (dateKey: string, kg: number) => void;
   removeWeight: (dateKey: string) => void;
   setObInfo: (patch: Partial<ObInfo>) => void;
-  toggleObTag: (key: keyof ObTags, value: string) => void;
+  toggleObTag: (key: keyof ObTags, code: string) => void;
+  toggleObCustomTag: (key: keyof ObTags, value: string) => void;
   clearObTags: (key: keyof ObTags) => void;
   setObPick: (patch: Partial<ObPick>) => void;
   completeOnboarding: () => void;
@@ -214,9 +241,21 @@ const defaultProfile: Profile = {
   targetWeight: null,
   activity: null,
   allergies: [],
+  customAllergies: [],
   conditions: [],
+  customConditions: [],
+  preferredFoods: [],
+  customPreferredFoods: [],
   goalType: null,
 };
+
+function emptyTags(): ObTags {
+  return {
+    health: { codes: [], custom: [] },
+    taste: { codes: [], custom: [] },
+    avoid: { codes: [], custom: [] },
+  };
+}
 
 const defaultGoals: Goals = { kcal: 1850, water: 1900, steps: 8000, cup: 250 };
 
@@ -255,7 +294,7 @@ export const useAppStore = create<AppState>()(
       cardOrder: [...DEFAULT_CARD_ORDER],
       cardHidden: [],
       obInfo: { name: '', gender: '', age: '', height: '', weight: '' },
-      obTags: { health: [], taste: [], avoid: [] },
+      obTags: emptyTags(),
       obPick: { activity: '', goal: '', persona: null },
       alarms: defaultAlarms,
       recipes: [],
@@ -279,12 +318,12 @@ export const useAppStore = create<AppState>()(
           const calcKeys: (keyof Profile)[] = ['gender', 'age', 'height', 'weight', 'activity', 'goalType'];
           if (!calcKeys.some((k) => k in patch)) return { profile };
           const { kcal } = calculateGoals({
-            gender: profile.gender ?? '',
-            age: profile.age ?? '',
-            height: profile.height ?? '',
-            weight: profile.weight ?? '',
-            activity: profile.activity ?? '',
-            goal: profile.goalType ?? '',
+            gender: profile.gender,
+            age: profile.age,
+            height: profile.height,
+            weight: profile.weight,
+            activity: profile.activity,
+            goal: profile.goalType,
           });
           return { profile, goals: { ...s.goals, kcal } };
         }),
@@ -336,13 +375,20 @@ export const useAppStore = create<AppState>()(
       setObInfo: (patch) => set((s) => ({ obInfo: { ...s.obInfo, ...patch } })),
       // 선택 배열을 통째로 받으면 리렌더 전에 두 번 누를 때 앞선 선택이 덮어써진다.
       // 항상 스토어의 최신 값을 기준으로 토글한다.
-      toggleObTag: (key, value) =>
+      toggleObTag: (key, code) =>
         set((s) => {
           const cur = s.obTags[key];
-          const next = cur.includes(value) ? cur.filter((v) => v !== value) : [...cur, value];
-          return { obTags: { ...s.obTags, [key]: next } };
+          const codes = cur.codes.includes(code) ? cur.codes.filter((v) => v !== code) : [...cur.codes, code];
+          return { obTags: { ...s.obTags, [key]: { ...cur, codes } } };
         }),
-      clearObTags: (key) => set((s) => ({ obTags: { ...s.obTags, [key]: [] } })),
+      toggleObCustomTag: (key, value) =>
+        set((s) => {
+          const cur = s.obTags[key];
+          const custom = cur.custom.includes(value) ? cur.custom.filter((v) => v !== value) : [...cur.custom, value];
+          return { obTags: { ...s.obTags, [key]: { ...cur, custom } } };
+        }),
+      // "해당사항 없음"은 고른 것과 직접 적은 것을 함께 비운다.
+      clearObTags: (key) => set((s) => ({ obTags: { ...s.obTags, [key]: { codes: [], custom: [] } } })),
       setObPick: (patch) => set((s) => ({ obPick: { ...s.obPick, ...patch } })),
 
       // 온보딩 완료: 계산된 목표를 홈 목표치로, 입력값을 프로필로 옮긴다.
@@ -362,14 +408,18 @@ export const useAppStore = create<AppState>()(
             profile: {
               ...s.profile,
               nickname: s.obInfo.name.trim() || s.profile.nickname,
-              gender: s.obInfo.gender || null,
+              gender: (s.obInfo.gender || null) as GenderCode | null,
               age: s.obInfo.age ? Number(s.obInfo.age) : null,
               height: s.obInfo.height ? Number(s.obInfo.height) : null,
               weight: s.obInfo.weight ? Number(s.obInfo.weight) : null,
-              activity: s.obPick.activity || null,
-              goalType: s.obPick.goal || null,
-              conditions: s.obTags.health,
-              allergies: s.obTags.avoid,
+              activity: (s.obPick.activity || null) as ActivityCode | null,
+              goalType: (s.obPick.goal || null) as GoalCode | null,
+              conditions: s.obTags.health.codes,
+              customConditions: s.obTags.health.custom,
+              preferredFoods: s.obTags.taste.codes,
+              customPreferredFoods: s.obTags.taste.custom,
+              allergies: s.obTags.avoid.codes,
+              customAllergies: s.obTags.avoid.custom,
             },
             persona: s.obPick.persona ?? s.persona,
           };
@@ -386,7 +436,11 @@ export const useAppStore = create<AppState>()(
             height: s.profile.height ? String(s.profile.height) : '',
             weight: s.profile.weight ? String(s.profile.weight) : '',
           },
-          obTags: { health: s.profile.conditions, taste: s.obTags.taste, avoid: s.profile.allergies },
+          obTags: {
+            health: { codes: s.profile.conditions, custom: s.profile.customConditions },
+            taste: { codes: s.profile.preferredFoods, custom: s.profile.customPreferredFoods },
+            avoid: { codes: s.profile.allergies, custom: s.profile.customAllergies },
+          },
           obPick: { activity: s.profile.activity ?? '', goal: s.profile.goalType ?? '', persona: s.persona },
         })),
       setTutorialDone: (v) => set({ tutorialDone: v }),
@@ -497,7 +551,7 @@ export const useAppStore = create<AppState>()(
     {
       name: 'fitto-app-storage',
       storage: createJSONStorage(() => AsyncStorage),
-      version: 2,
+      version: 3,
       // 기본 병합은 얕은 병합이라 profile 같은 객체는 저장본이 통째로 덮어쓴다.
       // 그러면 나중에 필드를 추가했을 때 기존 사용자에게만 undefined가 남으므로,
       // 객체 필드는 기본값 위에 저장본을 얹는다.
@@ -516,8 +570,11 @@ export const useAppStore = create<AppState>()(
         };
       },
       // 이미 저장된 상태에는 기본값 변경이 자동 반영되지 않아 버전별로 옮겨준다.
+      // 옛 구조를 다루는 자리라 필드 타입을 느슨하게 둔다(지금 타입으로 읽으면 옛 값이 들어오지 않는다).
       migrate: (persisted: unknown, version: number) => {
-        const state = persisted as { profile?: Profile; cardOrder?: CardId[]; cardHidden?: CardId[] } | undefined;
+        const state = persisted as
+          | { profile?: any; obInfo?: any; obPick?: any; obTags?: any; cardOrder?: CardId[]; cardHidden?: CardId[] }
+          | undefined;
         if (!state) return state as unknown as AppState;
 
         // 기본 카드를 숨김 목록에 넣어둔 채로 저장된 상태가 있을 수 있어 걸러낸다.
@@ -536,6 +593,51 @@ export const useAppStore = create<AppState>()(
           const oldDefault = ['kcal', 'water', 'act', 'steps', 'ex', 'week', 'period'];
           if (state.cardOrder && state.cardOrder.join() === oldDefault.join()) {
             state.cardOrder = [...DEFAULT_CARD_ORDER];
+          }
+        }
+
+        // v3: 화면 라벨을 그대로 저장하던 값을 API 코드로 옮긴다(API 명세 v1.1).
+        // 목록에 없던 값(직접 입력한 질환·음식)은 코드가 없으니 custom 쪽으로 보낸다.
+        if (version < 3) {
+          const toSelection = (labels: string[] | undefined, options: readonly TagOption[]): TagSelection => {
+            const codes: string[] = [];
+            const custom: string[] = [];
+            (labels ?? []).forEach((label) => {
+              const code = codeOfLabel(options, label);
+              if (code) codes.push(code);
+              else custom.push(label);
+            });
+            return { codes, custom };
+          };
+
+          const p = state.profile;
+          if (p) {
+            p.gender = codeOfLabel(GENDERS, p.gender ?? '');
+            p.activity = codeOfLabel(ACTIVITY_OPTIONS, p.activity ?? '');
+            p.goalType = codeOfLabel(GOAL_OPTIONS, p.goalType ?? '');
+            const conditions = toSelection(p.conditions, DISEASE_TAGS);
+            p.conditions = conditions.codes;
+            p.customConditions = conditions.custom;
+            const allergies = toSelection(p.allergies, AVOID_TAGS);
+            p.allergies = allergies.codes;
+            p.customAllergies = allergies.custom;
+            // 식단 취향은 프로필에 없던 값이라 온보딩에서 고른 걸 옮겨온다.
+            const taste = toSelection(state.obTags?.taste, TASTE_TAGS);
+            p.preferredFoods = taste.codes;
+            p.customPreferredFoods = taste.custom;
+          }
+
+          if (state.obInfo) state.obInfo.gender = codeOfLabel(GENDERS, state.obInfo.gender ?? '') ?? '';
+          if (state.obPick) {
+            state.obPick.activity = codeOfLabel(ACTIVITY_OPTIONS, state.obPick.activity ?? '') ?? '';
+            state.obPick.goal = codeOfLabel(GOAL_OPTIONS, state.obPick.goal ?? '') ?? '';
+          }
+          if (state.obTags) {
+            state.obTags = {
+              health: toSelection(state.obTags.health, DISEASE_TAGS),
+              taste: toSelection(state.obTags.taste, TASTE_TAGS),
+              avoid: toSelection(state.obTags.avoid, AVOID_TAGS),
+            };
           }
         }
 

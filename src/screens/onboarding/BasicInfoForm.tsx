@@ -4,7 +4,7 @@ import TextField from '../../components/TextField';
 import SelectChip from '../../components/SelectChip';
 import { useTheme } from '../../theme/useTheme';
 import { typography } from '../../theme/tokens';
-import { GENDERS } from './onboardingData';
+import { GENDERS } from '../../constants/codes';
 import type { ObInfo } from '../../store/useAppStore';
 
 interface BasicInfoFormProps {
@@ -33,10 +33,10 @@ export default function BasicInfoForm({ value, onChange }: BasicInfoFormProps) {
         <View style={styles.row}>
           {GENDERS.map((g) => (
             <SelectChip
-              key={g}
-              label={g}
-              selected={value.gender === g}
-              onPress={() => onChange({ gender: g })}
+              key={g.code}
+              label={g.label}
+              selected={value.gender === g.code}
+              onPress={() => onChange({ gender: g.code })}
               size="field"
               fill
               onBackground

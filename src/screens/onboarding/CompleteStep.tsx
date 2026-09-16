@@ -5,6 +5,18 @@ import { useTheme } from '../../theme/useTheme';
 import { useAppStore } from '../../store/useAppStore';
 import { calculateGoals } from '../../utils/goals';
 import { typography } from '../../theme/tokens';
+import {
+  ACTIVITY_OPTIONS,
+  AVOID_TAGS,
+  DISEASE_TAGS,
+  GENDERS,
+  GOAL_OPTIONS,
+  TASTE_TAGS,
+  labelOf,
+  labelsOf,
+  type TagOption,
+} from '../../constants/codes';
+import type { TagSelection } from '../../store/useAppStore';
 
 // README "완료 화면": 인사 → 목표 카드 2개 → 요약 블록 → 의료 면책 안내.
 export default function CompleteStep() {
@@ -28,17 +40,23 @@ export default function CompleteStep() {
   // 입력 원본이 아니라 calculateGoals가 실제로 쓴 값이라, 비워뒀거나 범위를 벗어나
   // 기본값·잘린 값으로 계산됐을 때도 화면 숫자와 어긋나지 않는다.
   const body = [
-    obInfo.gender,
+    labelOf(GENDERS, obInfo.gender),
     `${result.age}세`,
     `${result.height}cm`,
     `${result.weight}kg`,
   ].filter(Boolean).join(' · ');
 
+  // 고른 태그는 코드라 라벨로 바꾸고, 직접 입력한 값은 적은 그대로 보여준다.
+  const tagLabels = (selection: TagSelection, options: readonly TagOption[]) => [
+    ...labelsOf(options, selection.codes),
+    ...selection.custom,
+  ];
+
   const summaryRows = [
     { label: '신체 정보', values: [body], empty: '' },
-    { label: '건강 상태', values: obTags.health, empty: '해당사항 없음' },
-    { label: '식단 취향', values: obTags.taste, empty: '가리지 않음' },
-    { label: '제외 음식', values: obTags.avoid, empty: '없음' },
+    { label: '건강 상태', values: tagLabels(obTags.health, DISEASE_TAGS), empty: '해당사항 없음' },
+    { label: '식단 취향', values: tagLabels(obTags.taste, TASTE_TAGS), empty: '가리지 않음' },
+    { label: '제외 음식', values: tagLabels(obTags.avoid, AVOID_TAGS), empty: '없음' },
   ];
 
   return (
@@ -48,7 +66,9 @@ export default function CompleteStep() {
         <View style={styles.greetText}>
           <Text style={[styles.greetName, { color: colors.txt }]}>{name}님, 반가워요!</Text>
           <Text style={[styles.greetMeta, { color: colors.sub }]}>
-            {[obPick.activity, obPick.goal].filter(Boolean).join(' · ')}
+            {[labelOf(ACTIVITY_OPTIONS, obPick.activity), labelOf(GOAL_OPTIONS, obPick.goal)]
+              .filter(Boolean)
+              .join(' · ')}
           </Text>
         </View>
       </View>

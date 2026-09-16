@@ -10,6 +10,7 @@ import { useTheme } from '../../theme/useTheme';
 import { alpha, brand, overlay, radius, selection, typography } from '../../theme/tokens';
 import { FOODS, findAllergyHit, gramsPerServing, type Food } from '../../data/foods';
 import { useAppStore, type MealSlot } from '../../store/useAppStore';
+import { AVOID_TAGS, labelOf } from '../../constants/codes';
 import { useFoodSearchStore } from '../../store/useFoodSearchStore';
 import { useToastStore } from '../../store/useToastStore';
 import { dateKey } from '../../utils/timeOfDay';
@@ -225,7 +226,7 @@ function FoodSearchForm() {
                       <View style={styles.nameRow}>
                         <Text style={[styles.name, { color: colors.txt }]}>{food.name}</Text>
                         <Badge
-                          label={hit ? hit : '가능'}
+                          label={hit ? labelOf(AVOID_TAGS, hit) : '가능'}
                           color={hit ? alpha(brand.peach, 0.28) : alpha(brand.mint, 0.28)}
                           textColor={colors.txt}
                         />
