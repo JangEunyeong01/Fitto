@@ -12,11 +12,13 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fitto.server.auth.JwtAuthenticationFilter;
 import com.fitto.server.auth.JwtProperties;
 import com.fitto.server.common.error.ErrorCode;
 import com.fitto.server.common.error.ErrorResponse;
+
+// Spring Boot 4는 Jackson 3을 쓴다. 패키지가 com.fasterxml.jackson → tools.jackson으로 바뀌었다.
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * 앱 전용 API라 세션·폼 로그인을 쓰지 않는다. 토큰으로만 인증한다(명세 0-4).
