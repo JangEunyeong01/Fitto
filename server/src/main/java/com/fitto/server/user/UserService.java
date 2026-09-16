@@ -83,14 +83,14 @@ public class UserService {
 		}
 
 		boolean cleared = false;
-		// Optional이 null이면 "안 보냈다", 비어 있으면 "직접 설정을 해제하라"는 뜻이다(명세 5장).
+		// 해제가 먼저다. waterGoalCustom: false와 waterGoal 값이 같이 오면 값을 정한 쪽을 따른다.
+		if (Boolean.FALSE.equals(goals.waterGoalCustom())) {
+			user.getGoals().clearCustomWaterGoal();
+			cleared = true;
+		}
 		if (goals.waterGoal() != null) {
-			if (goals.waterGoal().isPresent()) {
-				user.getGoals().setCustomWaterGoal(goals.waterGoal().get());
-			} else {
-				user.getGoals().clearCustomWaterGoal();
-				cleared = true;
-			}
+			user.getGoals().setCustomWaterGoal(goals.waterGoal());
+			cleared = false;
 		}
 		if (goals.stepGoal() != null) {
 			user.getGoals().setStepGoal(goals.stepGoal());
