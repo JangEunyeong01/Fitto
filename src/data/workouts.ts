@@ -1,42 +1,4 @@
-/**
- * 오늘의 퍼스널 트레이닝 추천 (README 7장). 지금은 룰 기반 고정 목록이고,
- * 나중에 활동량·목표·기록을 반영한 추천 로직으로 바꾼다.
- */
-export interface WorkoutSuggestion {
-  id: string;
-  name: string;
-  detail: string;
-  minutes: number;
-  kcal: number;
-  reason: string;
-}
-
-export const WORKOUT_SUGGESTIONS: WorkoutSuggestion[] = [
-  {
-    id: 'w1',
-    name: '빠르게 걷기',
-    detail: '20분 · 130kcal',
-    minutes: 20,
-    kcal: 130,
-    reason: '어제보다 걸음이 적어요. 가장 부담 없는 운동이에요.',
-  },
-  {
-    id: 'w2',
-    name: '의자 스쿼트',
-    detail: '3세트 × 12회',
-    minutes: 10,
-    kcal: 60,
-    reason: '하체 근력은 기초대사량을 올려줘요.',
-  },
-  {
-    id: 'w3',
-    name: '상체 스트레칭',
-    detail: '8분',
-    minutes: 8,
-    kcal: 25,
-    reason: '앉은 시간이 길어 어깨가 굳어 있어요.',
-  },
-];
+import type { EquipmentCode, FocusCode, IntensityCode } from '../constants/codes';
 
 /** 운동 기록 퀵칩 (홈 운동 카드와 동일한 3종). 기록은 코드로 남긴다. */
 export const QUICK_WORKOUTS = ['walking', 'stretching', 'home_training'] as const;
@@ -52,22 +14,33 @@ export interface Exercise {
   code: string;
   name: string;
   met: number;
+  /** 운동 설정(F-031)과 맞춰보는 값들. 추천 규칙은 utils/workoutRecommend.ts에 있다. */
+  focus: FocusCode;
+  equipment: Exclude<EquipmentCode, 'both'>;
+  intensity: IntensityCode;
+  /** 무릎·관절에 충격이 큰 운동. 관절염이 있으면 추천에서 뺀다. */
+  impact?: 'high';
 }
 
 export const EXERCISES: Exercise[] = [
-  { code: 'walking', name: '걷기', met: 3.5 },
-  { code: 'brisk_walking', name: '빠르게 걷기', met: 4.3 },
-  { code: 'running', name: '달리기', met: 8.0 },
-  { code: 'cycling', name: '자전거', met: 6.8 },
-  { code: 'swimming', name: '수영', met: 6.0 },
-  { code: 'hiking', name: '등산', met: 6.0 },
-  { code: 'stair_climbing', name: '계단 오르기', met: 4.0 },
-  { code: 'jump_rope', name: '줄넘기', met: 11.0 },
-  { code: 'weight_training', name: '웨이트 트레이닝', met: 5.0 },
-  { code: 'home_training', name: '홈트', met: 3.8 },
-  { code: 'pilates', name: '필라테스', met: 3.0 },
-  { code: 'yoga', name: '요가', met: 2.5 },
-  { code: 'stretching', name: '스트레칭', met: 2.3 },
+  { code: 'walking', name: '걷기', met: 3.5, focus: 'cardio', equipment: 'bodyweight', intensity: 'light' },
+  { code: 'brisk_walking', name: '빠르게 걷기', met: 4.3, focus: 'cardio', equipment: 'bodyweight', intensity: 'normal' },
+  { code: 'running', name: '달리기', met: 8.0, focus: 'cardio', equipment: 'bodyweight', intensity: 'hard', impact: 'high' },
+  { code: 'cycling', name: '자전거', met: 6.8, focus: 'cardio', equipment: 'machine', intensity: 'normal' },
+  { code: 'swimming', name: '수영', met: 6.0, focus: 'cardio', equipment: 'machine', intensity: 'normal' },
+  { code: 'hiking', name: '등산', met: 6.0, focus: 'cardio', equipment: 'bodyweight', intensity: 'hard', impact: 'high' },
+  { code: 'stair_climbing', name: '계단 오르기', met: 4.0, focus: 'lower', equipment: 'bodyweight', intensity: 'normal', impact: 'high' },
+  { code: 'jump_rope', name: '줄넘기', met: 11.0, focus: 'cardio', equipment: 'bodyweight', intensity: 'hard', impact: 'high' },
+  { code: 'weight_training', name: '웨이트 트레이닝', met: 5.0, focus: 'full', equipment: 'machine', intensity: 'hard' },
+  { code: 'home_training', name: '홈트', met: 3.8, focus: 'full', equipment: 'bodyweight', intensity: 'normal' },
+  { code: 'pilates', name: '필라테스', met: 3.0, focus: 'full', equipment: 'bodyweight', intensity: 'normal' },
+  { code: 'yoga', name: '요가', met: 2.5, focus: 'full', equipment: 'bodyweight', intensity: 'light' },
+  { code: 'stretching', name: '스트레칭', met: 2.3, focus: 'full', equipment: 'bodyweight', intensity: 'light' },
+  { code: 'chair_squat', name: '의자 스쿼트', met: 3.5, focus: 'lower', equipment: 'bodyweight', intensity: 'normal' },
+  { code: 'lunge', name: '런지', met: 4.0, focus: 'lower', equipment: 'bodyweight', intensity: 'normal' },
+  { code: 'push_up', name: '푸시업', met: 3.8, focus: 'upper', equipment: 'bodyweight', intensity: 'normal' },
+  { code: 'dumbbell_row', name: '덤벨 로우', met: 3.5, focus: 'upper', equipment: 'machine', intensity: 'normal' },
+  { code: 'plank', name: '플랭크', met: 3.3, focus: 'full', equipment: 'bodyweight', intensity: 'normal' },
 ];
 
 export function findExercise(code: string): Exercise | undefined {

@@ -85,6 +85,29 @@ export type MealSlotCode = (typeof MEAL_SLOTS)[number]['code'];
 /** 음식 양의 단위. serving은 "1공기 210g" 같은 1회 제공량 기준이다. */
 export type MealUnit = 'g' | 'serving';
 
+/** 운동 설정(명세 F-031). 추천 규칙(utils/workoutRecommend.ts)이 이 값을 받는다. */
+export const INTENSITY_OPTIONS = [
+  { code: 'light', label: '가볍게' },
+  { code: 'normal', label: '보통' },
+  { code: 'hard', label: '강하게' },
+] as const;
+export type IntensityCode = (typeof INTENSITY_OPTIONS)[number]['code'];
+
+export const EQUIPMENT_OPTIONS = [
+  { code: 'bodyweight', label: '맨손' },
+  { code: 'machine', label: '기구' },
+  { code: 'both', label: '둘 다' },
+] as const;
+export type EquipmentCode = (typeof EQUIPMENT_OPTIONS)[number]['code'];
+
+export const FOCUS_OPTIONS = [
+  { code: 'upper', label: '상체' },
+  { code: 'lower', label: '하체' },
+  { code: 'full', label: '전신' },
+  { code: 'cardio', label: '유산소' },
+] as const;
+export type FocusCode = (typeof FOCUS_OPTIONS)[number]['code'];
+
 export const SYMPTOM_TAGS: TagOption[] = [
   { code: 'cramp', label: '복통' },
   { code: 'headache', label: '두통' },

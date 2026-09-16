@@ -6,21 +6,36 @@ import { useTheme } from '../../../theme/useTheme';
 import { useAppStore } from '../../../store/useAppStore';
 import { dateKey } from '../../../utils/timeOfDay';
 import { useToastStore } from '../../../store/useToastStore';
+import { QUICK_WORKOUTS, QUICK_WORKOUT_MINUTES, calcExerciseKcal, findExercise } from '../../../data/workouts';
 import { typography } from '../../../theme/tokens';
 
-const QUICK_CHIPS = ['걷기', '스트레칭', '홈트'];
+// README: 최대 2개만 보여주고 나머지는 "+N개 더"로 접는다(명세 F-015).
+const MAX_ROWS = 2;
 
 export default function ExerciseCard() {
   const { colors, brand } = useTheme();
   const navigation = useNavigation<any>();
   const record = useAppStore((s) => s.dailyRecords[dateKey()]);
+  const weightKg = useAppStore((s) => s.profile.weight);
   const addExercise = useAppStore((s) => s.addExercise);
   const showToast = useToastStore((s) => s.show);
   const exercises = record?.exercises ?? [];
+  const shown = exercises.slice(0, MAX_ROWS);
+  const restCount = exercises.length - shown.length;
 
-  const handleQuickAdd = (name: string) => {
-    addExercise(dateKey(), { id: `${Date.now()}`, name, minutes: 15, kcal: 60 });
-    showToast(`${name} 기록 완료`);
+  // 헬스 탭 퀵칩과 같은 규칙으로 기록한다(MET × 체중 × 시간).
+  const handleQuickAdd = (code: string) => {
+    const exercise = findExercise(code);
+    if (!exercise) return;
+    const kcal = calcExerciseKcal(exercise.met, QUICK_WORKOUT_MINUTES, weightKg);
+    addExercise(dateKey(), {
+      id: `${Date.now()}`,
+      code: exercise.code,
+      name: exercise.name,
+      minutes: QUICK_WORKOUT_MINUTES,
+      kcal,
+    });
+    showToast(`${exercise.name} 기록 완료`);
   };
 
   return (
@@ -36,7 +51,7 @@ export default function ExerciseCard() {
         <Text style={[styles.empty, { color: colors.sub }]}>아직 기록된 운동이 없어요.</Text>
       ) : (
         <View style={styles.list}>
-          {exercises.map((e) => (
+          {shown.map((e) => (
             <View key={e.id} style={styles.row}>
               <View style={[styles.dot, { backgroundColor: brand.mint }]} />
               <Text style={[styles.name, { color: colors.txt }]}>{e.name}</Text>
@@ -45,13 +60,22 @@ export default function ExerciseCard() {
               </Text>
             </View>
           ))}
+          {restCount > 0 && (
+            <Pressable onPress={() => navigation.navigate('Health')} hitSlop={6}>
+              <Text style={[styles.more, { color: colors.sub }]}>+{restCount}개 더</Text>
+            </Pressable>
+          )}
         </View>
       )}
 
       <View style={[styles.chipRow, { borderTopColor: colors.line }]}>
-        {QUICK_CHIPS.map((c) => (
-          <Pressable key={c} onPress={() => handleQuickAdd(c)} style={[styles.chip, { borderColor: colors.line }]}>
-            <Text style={[styles.chipText, { color: colors.txt }]}>+ {c}</Text>
+        {QUICK_WORKOUTS.map((code) => (
+          <Pressable
+            key={code}
+            onPress={() => handleQuickAdd(code)}
+            style={[styles.chip, { borderColor: colors.line }]}
+          >
+            <Text style={[styles.chipText, { color: colors.txt }]}>+ {findExercise(code)?.name}</Text>
           </Pressable>
         ))}
       </View>
@@ -106,4 +130,8 @@ const styles = StyleSheet.create({
     borderStyle: 'dashed',
   },
   chipText: typography.label,
+  more: {
+    ...typography.caption,
+    paddingTop: 2,
+  },
 });

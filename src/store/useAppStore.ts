@@ -3,6 +3,7 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { calculateGoals } from '../utils/goals';
 import { toDateKey, type PeriodSettings } from '../utils/periodCycle';
+import type { WorkoutPreference } from '../utils/workoutRecommend';
 import {
   ACTIVITY_OPTIONS,
   AVOID_TAGS,
@@ -163,6 +164,8 @@ interface AppState {
   persona: Persona;
   profile: Profile;
   goals: Goals;
+  /** 운동 설정(명세 F-031). 추천 규칙이 이 값을 받는다. */
+  workoutPreference: WorkoutPreference;
   periodOn: boolean;
   periodSettings: PeriodSettings;
   /**
@@ -197,6 +200,7 @@ interface AppState {
   setProfile: (patch: Partial<Profile>) => void;
   setGoals: (patch: Partial<Goals>) => void;
   setAlarms: (patch: Partial<Alarms>) => void;
+  setWorkoutPreference: (patch: Partial<WorkoutPreference>) => void;
   setPeriodOn: (v: boolean) => void;
   setPeriodSettings: (patch: Partial<PeriodSettings>) => void;
   setDayCondition: (dateKey: string, condition: DailyRecord['periodCondition']) => void;
@@ -300,6 +304,7 @@ export const useAppStore = create<AppState>()(
       persona: 'neutral',
       profile: defaultProfile,
       goals: defaultGoals,
+      workoutPreference: { intensity: 'normal', equipment: 'bodyweight', focus: 'full' },
       periodOn: true,
       periodSettings: defaultPeriodSettings(),
       periodSetupDone: false,
@@ -362,6 +367,8 @@ export const useAppStore = create<AppState>()(
         }),
       setGoals: (patch) => set((s) => ({ goals: { ...s.goals, ...patch } })),
       setAlarms: (patch) => set((s) => ({ alarms: { ...s.alarms, ...patch } })),
+      setWorkoutPreference: (patch) =>
+        set((s) => ({ workoutPreference: { ...s.workoutPreference, ...patch } })),
       setPeriodOn: (v) => set({ periodOn: v }),
       // 주기·기간 숫자만 바꾼 건 입력 완료로 보지 않는다. 시작일이 없으면 예측 자체가 기본값 기준이라서.
       setPeriodSettings: (patch) =>
@@ -579,6 +586,7 @@ export const useAppStore = create<AppState>()(
           goals: { ...current.goals, ...(p.goals ?? {}) },
           alarms: { ...current.alarms, ...(p.alarms ?? {}) },
           periodSettings: { ...current.periodSettings, ...(p.periodSettings ?? {}) },
+          workoutPreference: { ...current.workoutPreference, ...(p.workoutPreference ?? {}) },
           obInfo: { ...current.obInfo, ...(p.obInfo ?? {}) },
           obTags: { ...current.obTags, ...(p.obTags ?? {}) },
           obPick: { ...current.obPick, ...(p.obPick ?? {}) },
