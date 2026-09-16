@@ -1,7 +1,9 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, Pressable, StyleSheet } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
+import { useNavigation } from '@react-navigation/native';
 import GlassCard from '../../../components/GlassCard';
+import Icon from '../../../components/Icon';
 import { useTheme } from '../../../theme/useTheme';
 import { useAppStore } from '../../../store/useAppStore';
 import { dateKey } from '../../../utils/timeOfDay';
@@ -14,6 +16,7 @@ const RADIUS = (SIZE - STROKE) / 2;
 const CIRC = 2 * Math.PI * RADIUS;
 
 export default function ActivityCard() {
+  const navigation = useNavigation<any>();
   const { colors, brand } = useTheme();
   const stepsGoal = useAppStore((s) => s.goals.steps);
   const record = useAppStore((s) => s.dailyRecords[dateKey()]);
@@ -26,6 +29,14 @@ export default function ActivityCard() {
 
   return (
     <GlassCard>
+      <View style={styles.headerRow}>
+        <Text style={[styles.title, { color: colors.txt }]}>활동</Text>
+        <Pressable onPress={() => navigation.navigate('ActivityDetail')} hitSlop={6} style={styles.detailLink}>
+          <Text style={[styles.detailLabel, { color: colors.sub }]}>상세</Text>
+          <Icon name="chevronRight" size={13} color={colors.sub} />
+        </Pressable>
+      </View>
+
       <View style={styles.row}>
         <View style={styles.ringWrap}>
           <Svg width={SIZE} height={SIZE}>
@@ -70,6 +81,19 @@ function StatRow({ dot, label, value, colors }: { dot: string; label: string; va
 }
 
 const styles = StyleSheet.create({
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  title: typography.sectionTitle,
+  detailLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 1,
+  },
+  detailLabel: typography.label,
   row: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -80,8 +80,11 @@ export function hasNoExerciseForDays(
   return true;
 }
 
-const BASE_BURN = 320;
-
+/**
+ * 소모 칼로리 = 기록한 운동의 합 (API 명세 v1.1 기준).
+ * 예전엔 기초대사량 몫으로 320kcal를 더했는데, 기록이 없는 날도 320이 찍혀
+ * 활동 상세의 7일 그래프가 운동한 날과 안 한 날을 구분하지 못했다.
+ */
 export function getBurnedKcal(exercises: { kcal: number }[]): number {
-  return BASE_BURN + exercises.reduce((a, e) => a + e.kcal, 0);
+  return exercises.reduce((a, e) => a + e.kcal, 0);
 }
