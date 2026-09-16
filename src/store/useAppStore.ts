@@ -129,6 +129,12 @@ interface AppState {
   recipes: Recipe[];
   customIngredients: CustomIngredient[];
   dailyRecords: Record<string, DailyRecord>;
+  /**
+   * 날짜별 체중(kg). 하루에 여러 번 재면 마지막 값으로 덮어쓴다.
+   * 일자별 기록(dailyRecords)과 분리한 이유는 매일 재는 값이 아니어서다 —
+   * 안 잰 날까지 빈 레코드가 생기면 추이를 그릴 때 구멍을 걸러내야 한다.
+   */
+  weightLog: Record<string, number>;
   obInfo: ObInfo;
   obTags: ObTags;
   obPick: ObPick;
@@ -151,6 +157,9 @@ interface AppState {
   setCardOrder: (order: CardId[]) => void;
   setCardHidden: (hidden: CardId[]) => void;
   resetCardOrder: () => void;
+  /** 체중을 기록하고 프로필의 현재 체중도 함께 갱신한다. */
+  logWeight: (dateKey: string, kg: number) => void;
+  removeWeight: (dateKey: string) => void;
   setObInfo: (patch: Partial<ObInfo>) => void;
   toggleObTag: (key: keyof ObTags, value: string) => void;
   clearObTags: (key: keyof ObTags) => void;
@@ -234,6 +243,7 @@ export const useAppStore = create<AppState>()(
       recipes: [],
       customIngredients: [],
       dailyRecords: {},
+      weightLog: {},
       onboardingDone: false,
       tutorialDone: false,
       birthdayShownYear: null,
@@ -243,6 +253,26 @@ export const useAppStore = create<AppState>()(
       setTheme: (t) => set({ theme: t }),
       setPersona: (p) => set({ persona: p }),
       setProfile: (patch) => set((s) => ({ profile: { ...s.profile, ...patch } })),
+
+      // 기록과 프로필 체중을 항상 같이 움직인다. 따로 두면 프로필엔 옛날 값이,
+      // 추이 그래프엔 최신 값이 남아 같은 화면에서 숫자가 어긋난다.
+      logWeight: (dateKey, kg) =>
+        set((s) => ({
+          weightLog: { ...s.weightLog, [dateKey]: kg },
+          profile: { ...s.profile, weight: kg },
+        })),
+
+      removeWeight: (dateKey) =>
+        set((s) => {
+          const next = { ...s.weightLog };
+          delete next[dateKey];
+          // 가장 최근 기록을 프로필 체중으로 되돌린다. 남은 기록이 없으면 그대로 둔다.
+          const latest = Object.keys(next).sort().pop();
+          return {
+            weightLog: next,
+            profile: latest ? { ...s.profile, weight: next[latest] } : s.profile,
+          };
+        }),
       setGoals: (patch) => set((s) => ({ goals: { ...s.goals, ...patch } })),
       setAlarms: (patch) => set((s) => ({ alarms: { ...s.alarms, ...patch } })),
       setPeriodOn: (v) => set({ periodOn: v }),

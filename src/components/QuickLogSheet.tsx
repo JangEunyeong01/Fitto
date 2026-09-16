@@ -52,9 +52,8 @@ export default function QuickLogSheet() {
       navigation.navigate('Health');
       return;
     }
-    // 체중 기록은 프로필 화면을 만들 때 입력 폼으로 연결한다.
-    showToast('다음 단계에서 구현될 기능이에요');
     hide();
+    navigation.navigate('Health', { screen: 'Weight' });
   };
 
   if (!open) return null;

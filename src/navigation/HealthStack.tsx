@@ -2,10 +2,12 @@ import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import HealthScreen from '../screens/health/HealthScreen';
 import PeriodDetailScreen from '../screens/period/PeriodDetailScreen';
+import WeightScreen from '../screens/health/WeightScreen';
 
 export type HealthStackParamList = {
   HealthMain: undefined;
   PeriodDetail: undefined;
+  Weight: undefined;
 };
 
 const Stack = createNativeStackNavigator<HealthStackParamList>();
@@ -17,6 +19,7 @@ export default function HealthStack() {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="HealthMain" component={HealthScreen} />
       <Stack.Screen name="PeriodDetail" component={PeriodDetailScreen} />
+      <Stack.Screen name="Weight" component={WeightScreen} />
     </Stack.Navigator>
   );
 }

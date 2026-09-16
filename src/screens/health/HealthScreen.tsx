@@ -22,12 +22,18 @@ export default function HealthScreen() {
   const persona = useAppStore((s) => s.persona);
   const periodOn = useAppStore((s) => s.periodOn);
   const record = useAppStore((s) => s.dailyRecords[dateKey()]);
+  const weightLog = useAppStore((s) => s.weightLog);
   const addExercise = useAppStore((s) => s.addExercise);
   const removeExercise = useAppStore((s) => s.removeExercise);
   const showToast = useToastStore((s) => s.show);
 
   const exercises = record?.exercises ?? [];
   const steps = record?.steps ?? 0;
+
+  // 카드 부제에 보여줄 최근 체중. 기록이 없으면 프로필 값도 쓰지 않는다 —
+  // 온보딩에서 한 번 적은 값을 "최근 기록"처럼 보여주면 오해를 준다.
+  const weightDates = Object.keys(weightLog).sort();
+  const latestWeight = weightDates.length > 0 ? weightLog[weightDates[weightDates.length - 1]] : null;
 
   // 움직임 현황: 실제 헬스 API 연동 전까지 주간 목데이터 + 오늘 기록으로 계산한다.
   const week = [...MOCK_STEPS_PAST6, steps];
@@ -120,6 +126,23 @@ export default function HealthScreen() {
             ))}
           </View>
         </GlassCard>
+
+        <Pressable onPress={() => navigation.navigate('Weight')}>
+          <GlassCard style={styles.card}>
+            <View style={styles.periodRow}>
+              <View style={[styles.periodBadge, { backgroundColor: alpha(brand.mint, 0.28) }]}>
+                <Icon name="weight" size={20} color={colors.txt} />
+              </View>
+              <View style={styles.periodText}>
+                <Text style={[styles.cardTitle, { color: colors.txt }]}>체중 기록</Text>
+                <Text style={[styles.periodSub, { color: colors.sub }]}>
+                  {latestWeight != null ? `최근 ${latestWeight}kg · 추이 보기` : '기록하고 추이 보기'}
+                </Text>
+              </View>
+              <Icon name="chevronRight" size={17} color={colors.sub} />
+            </View>
+          </GlassCard>
+        </Pressable>
 
         {periodOn && (
           <Pressable onPress={() => navigation.navigate('PeriodDetail')}>

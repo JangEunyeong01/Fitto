@@ -27,15 +27,26 @@ export default function CardOrderSheet({ visible, onClose }: CardOrderSheetProps
   const insets = useSafeAreaInsets();
   const cardOrder = useAppStore((s) => s.cardOrder);
   const cardHidden = useAppStore((s) => s.cardHidden);
+  const periodOn = useAppStore((s) => s.periodOn);
   const setCardOrder = useAppStore((s) => s.setCardOrder);
   const setCardHidden = useAppStore((s) => s.setCardHidden);
   const resetCardOrder = useAppStore((s) => s.resetCardOrder);
 
-  const move = (index: number, dir: -1 | 1) => {
-    const target = index + dir;
-    if (target < 0 || target >= cardOrder.length) return;
+  // 홈과 같은 기준으로 거른다. 생리 기능을 꺼두면 홈에 안 나오는 카드라
+  // 순서 시트에만 남아 있으면 눌러도 아무 일이 없는 행이 된다.
+  const rows = cardOrder.filter((id) => id !== 'period' || periodOn);
+
+  /**
+   * cardOrder가 아니라 화면에 보이는 목록 기준으로 자리를 바꾼다.
+   * 숨겨진 카드가 중간에 끼어 있을 때 그것과 교환해버리면 눌러도 순서가 그대로인 것처럼 보인다.
+   */
+  const move = (id: CardId, dir: -1 | 1) => {
+    const targetId = rows[rows.indexOf(id) + dir];
+    if (!targetId) return;
     const next = [...cardOrder];
-    [next[index], next[target]] = [next[target], next[index]];
+    const from = next.indexOf(id);
+    const to = next.indexOf(targetId);
+    [next[from], next[to]] = [next[to], next[from]];
     setCardOrder(next);
   };
 
@@ -58,17 +69,19 @@ export default function CardOrderSheet({ visible, onClose }: CardOrderSheetProps
           <View style={[styles.grabber, { backgroundColor: colors.line }]} />
           <Text style={[styles.title, { color: colors.txt }]}>홈 카드 순서</Text>
 
-          {cardOrder.map((id, index) => {
+          {rows.map((id, index) => {
             const hidden = cardHidden.includes(id);
+            const atTop = index === 0;
+            const atBottom = index === rows.length - 1;
             return (
               <View key={id} style={[styles.row, { borderColor: colors.line }]}>
                 <Text style={[styles.rowLabel, { color: hidden ? colors.sub : colors.txt }]}>{CARD_LABELS[id]}</Text>
                 <View style={styles.rowActions}>
-                  <Pressable onPress={() => move(index, -1)} disabled={index === 0} style={styles.iconBtn}>
-                    <Icon name="arrowUp" size={16} color={index === 0 ? colors.line : colors.txt} />
+                  <Pressable onPress={() => move(id, -1)} disabled={atTop} style={styles.iconBtn}>
+                    <Icon name="arrowUp" size={16} color={atTop ? colors.line : colors.txt} />
                   </Pressable>
-                  <Pressable onPress={() => move(index, 1)} disabled={index === cardOrder.length - 1} style={styles.iconBtn}>
-                    <Icon name="arrowDown" size={16} color={index === cardOrder.length - 1 ? colors.line : colors.txt} />
+                  <Pressable onPress={() => move(id, 1)} disabled={atBottom} style={styles.iconBtn}>
+                    <Icon name="arrowDown" size={16} color={atBottom ? colors.line : colors.txt} />
                   </Pressable>
                   {ESSENTIAL_CARDS.includes(id) ? (
                     <View style={[styles.toggleBtn, styles.essentialBtn, { borderColor: colors.line }]}>
