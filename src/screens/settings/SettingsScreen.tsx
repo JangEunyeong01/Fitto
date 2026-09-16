@@ -19,6 +19,7 @@ import { useToastStore } from '../../store/useToastStore';
 import { useFoodSearchStore } from '../../store/useFoodSearchStore';
 import { PERSONA_OPTIONS } from '../onboarding/onboardingData';
 import { GOAL_OPTIONS, labelOf } from '../../constants/codes';
+import { daysBetween, toDateKey } from '../../utils/periodCycle';
 import { alpha, semantic, typography } from '../../theme/tokens';
 // 버전은 app.json 한 곳에서만 올린다. 화면에 따로 적어두면 배포 때 둘 중 하나를 꼭 까먹는다.
 import appConfig from '../../../app.json';
@@ -36,6 +37,7 @@ export default function SettingsScreen() {
 
   const profile = useAppStore((s) => s.profile);
   const goals = useAppStore((s) => s.goals);
+  const startDate = useAppStore((s) => s.startDate);
   const persona = useAppStore((s) => s.persona);
   const setPersona = useAppStore((s) => s.setPersona);
   const theme = useAppStore((s) => s.theme);
@@ -63,6 +65,9 @@ export default function SettingsScreen() {
   const startTutorial = useTutorialStore((s) => s.start);
   const showToast = useToastStore((s) => s.show);
 
+  // 명세 F-008: 시작일을 1일차로 센다. 시작일을 모르는 상태(초기화 직후)면 줄을 숨긴다.
+  const togetherDays = startDate ? daysBetween(startDate, toDateKey(new Date())) + 1 : null;
+
   const personaDesc = PERSONA_OPTIONS.find((p) => p.key === persona)?.desc ?? '';
   const goalSummary = [labelOf(GOAL_OPTIONS, profile.goalType), `${goals.kcal.toLocaleString()}kcal`]
     .filter(Boolean)
@@ -86,6 +91,11 @@ export default function SettingsScreen() {
                 <Text style={[styles.goalSummary, { color: colors.sub }]} numberOfLines={1}>
                   {goalSummary || '목표를 설정해 주세요'}
                 </Text>
+                {togetherDays != null && (
+                  <Text style={[styles.together, { color: colors.sub }]} numberOfLines={1}>
+                    피또와 함께한 지 {togetherDays.toLocaleString()}일째
+                  </Text>
+                )}
               </View>
               <Icon name="chevronRight" size={17} color={colors.sub} />
             </View>
@@ -291,6 +301,7 @@ const styles = StyleSheet.create({
   },
   nickname: typography.itemTitle,
   goalSummary: typography.bodySm,
+  together: typography.caption,
   cardTitle: typography.sectionTitle,
   gap10: {
     marginTop: 10,

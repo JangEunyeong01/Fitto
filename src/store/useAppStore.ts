@@ -203,6 +203,12 @@ interface AppState {
   obTags: ObTags;
   obPick: ObPick;
   onboardingDone: boolean;
+  /**
+   * 앱을 쓰기 시작한 날(dateKey, 명세 F-008). 온보딩을 마칠 때 한 번만 찍는다.
+   * 온보딩을 다시 봐도 유지된다 — 프로필을 고친 것이지 처음부터 다시 쓰는 건 아니라서.
+   * 데이터 초기화(resetAll)는 설치 직후 상태로 돌리는 것이라 null로 돌아간다.
+   */
+  startDate: string | null;
   tutorialDone: boolean;
   birthdayShownYear: number | null;
   /** 드러눕기 모달을 띄운 날짜(dateKey). 하루 한 번만 뜨게 한다. */
@@ -338,6 +344,7 @@ export const useAppStore = create<AppState>()(
       dailyRecords: {},
       weightLog: {},
       onboardingDone: false,
+      startDate: null,
       tutorialDone: false,
       birthdayShownYear: null,
       layDownShownDate: null,
@@ -459,6 +466,7 @@ export const useAppStore = create<AppState>()(
           });
           return {
             onboardingDone: true,
+            startDate: s.startDate ?? toDateKey(new Date()),
             goals: { ...s.goals, kcal: result.kcal, water: result.water },
             profile: {
               ...s.profile,
@@ -610,7 +618,7 @@ export const useAppStore = create<AppState>()(
     {
       name: 'fitto-app-storage',
       storage: createJSONStorage(() => AsyncStorage),
-      version: 4,
+      version: 5,
       // 기본 병합은 얕은 병합이라 profile 같은 객체는 저장본이 통째로 덮어쓴다.
       // 그러면 나중에 필드를 추가했을 때 기존 사용자에게만 undefined가 남으므로,
       // 객체 필드는 기본값 위에 저장본을 얹는다.
@@ -641,6 +649,8 @@ export const useAppStore = create<AppState>()(
               dailyRecords?: any;
               cardOrder?: CardId[];
               cardHidden?: CardId[];
+              onboardingDone?: boolean;
+              startDate?: string | null;
             }
           | undefined;
         if (!state) return state as unknown as AppState;
@@ -667,11 +677,22 @@ export const useAppStore = create<AppState>()(
         // v3: 화면 라벨을 그대로 저장하던 값을 API 코드로 옮긴다(API 명세 v1.1).
         // 목록에 없던 값(직접 입력한 질환·음식)은 코드가 없으니 custom 쪽으로 보낸다.
         if (version < 3) {
-          const toSelection = (labels: string[] | undefined, options: readonly TagOption[]): TagSelection => {
+          // 이미 코드로 저장된 값은 그대로 둔다. 라벨로 안 읽힌다고 null로 밀면
+          // 성별·활동량이 사라져 목표 칼로리가 기본값으로 돌아간다.
+          const toCode = (value: unknown, options: readonly TagOption[]) => {
+            const raw = typeof value === 'string' ? value : '';
+            if (options.some((o) => o.code === raw)) return raw;
+            return codeOfLabel(options, raw);
+          };
+
+          const toSelection = (labels: unknown, options: readonly TagOption[]): TagSelection => {
+            // 이미 {codes, custom}으로 옮겨진 값이 들어올 수 있다(버전이 어긋난 저장본).
+            // 여기서 예외가 나면 persist가 복구를 통째로 포기해 기록이 다 날아간 것처럼 보인다.
+            if (!Array.isArray(labels)) return (labels as TagSelection) ?? { codes: [], custom: [] };
             const codes: string[] = [];
             const custom: string[] = [];
-            (labels ?? []).forEach((label) => {
-              const code = codeOfLabel(options, label);
+            labels.forEach((label) => {
+              const code = toCode(label, options);
               if (code) codes.push(code);
               else custom.push(label);
             });
@@ -680,9 +701,9 @@ export const useAppStore = create<AppState>()(
 
           const p = state.profile;
           if (p) {
-            p.gender = codeOfLabel(GENDERS, p.gender ?? '');
-            p.activity = codeOfLabel(ACTIVITY_OPTIONS, p.activity ?? '');
-            p.goalType = codeOfLabel(GOAL_OPTIONS, p.goalType ?? '');
+            p.gender = toCode(p.gender, GENDERS);
+            p.activity = toCode(p.activity, ACTIVITY_OPTIONS);
+            p.goalType = toCode(p.goalType, GOAL_OPTIONS);
             const conditions = toSelection(p.conditions, DISEASE_TAGS);
             p.conditions = conditions.codes;
             p.customConditions = conditions.custom;
@@ -695,10 +716,10 @@ export const useAppStore = create<AppState>()(
             p.customPreferredFoods = taste.custom;
           }
 
-          if (state.obInfo) state.obInfo.gender = codeOfLabel(GENDERS, state.obInfo.gender ?? '') ?? '';
+          if (state.obInfo) state.obInfo.gender = toCode(state.obInfo.gender, GENDERS) ?? '';
           if (state.obPick) {
-            state.obPick.activity = codeOfLabel(ACTIVITY_OPTIONS, state.obPick.activity ?? '') ?? '';
-            state.obPick.goal = codeOfLabel(GOAL_OPTIONS, state.obPick.goal ?? '') ?? '';
+            state.obPick.activity = toCode(state.obPick.activity, ACTIVITY_OPTIONS) ?? '';
+            state.obPick.goal = toCode(state.obPick.goal, GOAL_OPTIONS) ?? '';
           }
           if (state.obTags) {
             state.obTags = {
@@ -752,6 +773,13 @@ export const useAppStore = create<AppState>()(
               );
             }
           });
+        }
+
+        // v5: 시작일(F-008)을 뒤늦게 넣었다. 언제 깔았는지는 알 수 없으니
+        // 기록이 남아 있는 가장 오래된 날을 시작일로 본다. 기록이 없으면 오늘부터 센다.
+        if (version < 5 && state.onboardingDone) {
+          const keys = Object.keys(state.dailyRecords ?? {}).sort();
+          state.startDate = keys[0] ?? toDateKey(new Date());
         }
 
         return state as AppState;
