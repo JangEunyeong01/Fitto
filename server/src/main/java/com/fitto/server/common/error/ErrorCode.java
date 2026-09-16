@@ -18,6 +18,8 @@ public enum ErrorCode {
 	TOO_MANY_REQUESTS(HttpStatus.TOO_MANY_REQUESTS, "시도가 너무 잦아요. 잠시 후 다시 시도해 주세요."),
 	FORBIDDEN(HttpStatus.FORBIDDEN, "권한이 없어요."),
 	NOT_FOUND(HttpStatus.NOT_FOUND, "찾을 수 없어요."),
+	// 직접 입력한 음식은 그램 환산 정보가 없어 g ↔ 인분을 바꿔 계산할 수 없다(명세 7장).
+	UNIT_CHANGE_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "단위를 바꾸려면 기록을 지우고 다시 추가해 주세요."),
 	PERIOD_NOT_SET(HttpStatus.NOT_FOUND, "생리 주기 정보가 아직 없어요."),
 	EMAIL_DUPLICATED(HttpStatus.CONFLICT, "이미 가입된 이메일이에요."),
 	ID_CONFLICT(HttpStatus.CONFLICT, "다른 곳에서 쓰고 있는 기록이에요."),

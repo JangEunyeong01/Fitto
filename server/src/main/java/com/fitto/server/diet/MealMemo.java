@@ -40,7 +40,7 @@ public class MealMemo {
 	@Column(name = "meal_type", nullable = false, length = 20)
 	private MealType mealType;
 
-	@Column(nullable = false, length = 200)
+	@Column(nullable = false, length = 80)
 	private String memo;
 
 	public static MealMemo create(UUID userId, LocalDate date, MealType mealType, String memo) {
