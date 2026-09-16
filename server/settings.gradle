@@ -1,0 +1,7 @@
+plugins {
+	// 이 프로젝트는 JDK 21로 빌드한다. 기기에 21이 없으면 Gradle이 알아서 받아 쓴다.
+	// 팀원(또는 다음에 이 저장소를 여는 나)이 JDK 버전을 맞추느라 시간 쓰지 않게 하려는 설정.
+	id 'org.gradle.toolchains.foojay-resolver-convention' version '1.0.0'
+}
+
+rootProject.name = 'server'
