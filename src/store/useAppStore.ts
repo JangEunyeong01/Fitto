@@ -265,7 +265,8 @@ function emptyRecord(): DailyRecord {
 }
 
 const defaultProfile: Profile = {
-  nickname: '은영',
+  // 온보딩에서 이름을 받기 전까지 쓰는 기본 호칭.
+  nickname: '피또 친구',
   birthdayMonth: null,
   birthdayDay: null,
   gender: null,
