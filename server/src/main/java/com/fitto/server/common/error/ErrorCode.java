@@ -11,6 +11,11 @@ public enum ErrorCode {
 	INVALID_DATE(HttpStatus.BAD_REQUEST, "날짜가 올바르지 않아요."),
 	UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "다시 로그인해 주세요."),
 	TOKEN_EXPIRED(HttpStatus.UNAUTHORIZED, "로그인이 만료됐어요. 다시 로그인해 주세요."),
+	// 이메일과 비밀번호 중 무엇이 틀렸는지 알려주지 않는다. 가입 여부를 확인하는 통로가 된다.
+	INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, "이메일 또는 비밀번호가 올바르지 않아요."),
+	REFRESH_TOKEN_INVALID(HttpStatus.UNAUTHORIZED, "다시 로그인해 주세요."),
+	REFRESH_TOKEN_REUSED(HttpStatus.UNAUTHORIZED, "보안을 위해 모든 기기에서 로그아웃했어요. 다시 로그인해 주세요."),
+	TOO_MANY_REQUESTS(HttpStatus.TOO_MANY_REQUESTS, "시도가 너무 잦아요. 잠시 후 다시 시도해 주세요."),
 	FORBIDDEN(HttpStatus.FORBIDDEN, "권한이 없어요."),
 	NOT_FOUND(HttpStatus.NOT_FOUND, "찾을 수 없어요."),
 	PERIOD_NOT_SET(HttpStatus.NOT_FOUND, "생리 주기 정보가 아직 없어요."),

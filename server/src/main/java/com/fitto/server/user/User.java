@@ -148,4 +148,44 @@ public class User {
 	public void changeStartedAt(Instant startedAt) {
 		this.startedAt = startedAt;
 	}
+
+	/** 온보딩에서 받은 프로필을 한 번에 채운다. 목표 계산은 호출한 쪽에서 이어서 한다. */
+	public void applyProfile(String name, Gender gender, Integer age, Double height, Double weight,
+			Double targetWeight, ActivityLevel activityLevel, Goal goal, Personality personality,
+			Integer birthdayMonth, Integer birthdayDay) {
+		this.name = name;
+		this.gender = gender;
+		this.age = age;
+		this.height = height;
+		this.weight = weight;
+		this.targetWeight = targetWeight;
+		this.activityLevel = activityLevel;
+		this.goal = goal;
+		this.personality = personality;
+		this.birthdayMonth = birthdayMonth;
+		this.birthdayDay = birthdayDay;
+	}
+
+	/**
+	 * 목록 필드를 통째로 갈아끼운다.
+	 * null이면 그 목록은 건드리지 않는다 — PATCH에서 안 보낸 필드를 비우지 않기 위해서다.
+	 */
+	public void replaceTagLists(List<String> diseases, List<String> customDiseases, List<String> preferredFoods,
+			List<String> customPreferredFoods, List<String> allergies, List<String> customAllergies) {
+		replace(this.diseases, diseases);
+		replace(this.customDiseases, customDiseases);
+		replace(this.preferredFoods, preferredFoods);
+		replace(this.customPreferredFoods, customPreferredFoods);
+		replace(this.allergies, allergies);
+		replace(this.customAllergies, customAllergies);
+	}
+
+	// 컬렉션 인스턴스를 바꾸지 않고 내용만 교체한다. JPA가 추적 중인 컬렉션을 통째로 갈면 예외가 난다.
+	private static void replace(List<String> target, List<String> next) {
+		if (next == null) {
+			return;
+		}
+		target.clear();
+		target.addAll(next);
+	}
 }
