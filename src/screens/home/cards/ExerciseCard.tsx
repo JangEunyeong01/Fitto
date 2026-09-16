@@ -48,7 +48,7 @@ export default function ExerciseCard() {
       </View>
 
       {exercises.length === 0 ? (
-        <Text style={[styles.empty, { color: colors.sub }]}>아직 기록된 운동이 없어요.</Text>
+        <Text style={[styles.empty, { color: colors.sub }]}>오늘 운동 기록이 없어요. 아래에서 바로 남겨보세요.</Text>
       ) : (
         <View style={styles.list}>
           {shown.map((e) => (

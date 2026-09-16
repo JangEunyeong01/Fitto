@@ -157,9 +157,17 @@ export default function HealthScreen() {
             )}
           </View>
           {exercises.length === 0 ? (
-            <Text style={[styles.empty, { color: colors.sub }]}>
-              {isToday ? '아직 기록된 운동이 없어요.' : '이날은 기록된 운동이 없어요.'}
-            </Text>
+            // 명세 F-051: 빈 상태에서 무엇을 하면 되는지까지 알려준다. 지난 날짜엔 권유가 어색해서 문구만 둔다.
+            <View style={styles.emptyBox}>
+              <Text style={[styles.empty, { color: colors.txt }]}>
+                {isToday ? '오늘 운동 기록이 없어요.' : '이날은 운동 기록이 없어요.'}
+              </Text>
+              {isToday && (
+                <Text style={[styles.emptyHint, { color: colors.sub }]}>
+                  아래 퀵 기록을 누르면 15분으로 바로 남길 수 있어요.
+                </Text>
+              )}
+            </View>
           ) : (
             <View style={styles.recordList}>
               {exercises.map((e) => (
@@ -329,10 +337,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   addLabel: typography.label,
-  empty: {
-    ...typography.body,
+  emptyBox: {
     marginTop: 10,
+    gap: 4,
   },
+  empty: typography.body,
+  emptyHint: typography.caption,
   recordList: {
     marginTop: 10,
     gap: 8,

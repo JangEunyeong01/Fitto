@@ -61,6 +61,8 @@ export default function HomeScreen() {
   // 튜토리얼 하이라이트 프레임이 가리킬 실제 화면 좌표. onLayout의 좌표는 부모 기준이라
   // 스크롤 오프셋이 빠지므로 measureInWindow로 절대 좌표를 받는다.
   const slotRefs = useRef<Partial<Record<CardId, View | null>>>({});
+  // 히어로는 카드 그리드 밖에 있어 따로 잡는다(튜토리얼 1단계 대상).
+  const heroRef = useRef<View | null>(null);
 
   const measureCard = (cardId: CardId, targetId: TutorialTargetId) => {
     slotRefs.current[cardId]?.measureInWindow((x, y, width, height) => {
@@ -112,12 +114,17 @@ export default function HomeScreen() {
   const targetIdFor = (cardId: CardId): TutorialTargetId | null => {
     if (cardId === 'kcal') return 'kcal';
     if (cardId === 'water') return 'water';
+    if (cardId === 'steps') return 'steps';
     return null;
   };
 
   const measureAllTargets = () => {
+    heroRef.current?.measureInWindow((x, y, width, height) => {
+      if (width > 0 && height > 0) setTutorialTarget('hero', { x, y, width, height });
+    });
     measureCard('kcal', 'kcal');
     measureCard('water', 'water');
+    measureCard('steps', 'steps');
     if (visibleCards[0]) measureCard(visibleCards[0], 'firstCard');
   };
 
@@ -136,7 +143,14 @@ export default function HomeScreen() {
       >
         <HomeHeader />
         {isBirthday && <BirthdayBanner name={profile.nickname} onPress={openBirthday} />}
-        <HeroRow />
+        <View
+          ref={(node) => {
+            heroRef.current = node;
+          }}
+          onLayout={measureAllTargets}
+        >
+          <HeroRow />
+        </View>
 
         <Pressable onLongPress={showSheet} delayLongPress={550} style={styles.grid}>
           {visibleCards.map((id, index) => {
