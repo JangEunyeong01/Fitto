@@ -8,6 +8,21 @@ export const ACTIVITY_FACTORS: Record<string, number> = {
   '매우 활동적이에요': 1.9,
 };
 
+/**
+ * 물 목표 활동 보정(명세 F-008: 체중 × 30ml × 보정계수).
+ * 위 칼로리용 계수(1.2~1.9)를 그대로 쓰면 거의 안 움직이는 사람도 체중당 36ml가 돼
+ * 일반 권장량(30~35ml)을 넘는다. 물은 활동량에 따라 10%씩만 올린다.
+ */
+export const WATER_FACTORS: Record<string, number> = {
+  '거의 안 움직여요': 1.0,
+  '가볍게 움직여요': 1.1,
+  '보통이에요': 1.2,
+  '많이 움직여요': 1.3,
+  '매우 활동적이에요': 1.4,
+};
+// 활동량 미입력 시 기본값. 칼로리 기본 계수(가볍게 1.375)와 같은 단계로 맞춘다.
+const DEFAULT_WATER_FACTOR = 1.1;
+
 export const GOAL_ADJUSTMENTS: Record<string, number> = {
   '체중 감량': -350,
   '체중 증가': 350,
@@ -76,7 +91,7 @@ export function calculateGoals(input: GoalInput): GoalResult {
   const height = clamp(num(input.height, DEFAULT_HEIGHT), INPUT_LIMITS.height.min, INPUT_LIMITS.height.max);
   const weight = clamp(num(input.weight, DEFAULT_WEIGHT), INPUT_LIMITS.weight.min, INPUT_LIMITS.weight.max);
 
-  // Mifflin-St Jeor. 남성만 +5, 그 외(여성·선택 안 함)는 -161.
+  // Mifflin-St Jeor. 남성 +5, 여성 -161.
   const bmr = Math.round(
     10 * weight + 6.25 * height - 5 * age + (input.gender === '남성' ? 5 : -161)
   );
@@ -87,7 +102,8 @@ export function calculateGoals(input: GoalInput): GoalResult {
   const adjust = GOAL_ADJUSTMENTS[input.goal] ?? 0;
   const kcal = clamp(tdee + adjust, KCAL_GOAL_LIMITS.min, KCAL_GOAL_LIMITS.max);
 
-  const rawWater = Math.round((weight * 33) / 50) * 50;
+  const waterFactor = WATER_FACTORS[input.activity] ?? DEFAULT_WATER_FACTOR;
+  const rawWater = Math.round((weight * 30 * waterFactor) / 50) * 50;
   const water = clamp(rawWater, WATER_GOAL_LIMITS.min, WATER_GOAL_LIMITS.max);
 
   return { bmr, tdee, kcal, water, weight, age, height };

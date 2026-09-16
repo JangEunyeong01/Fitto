@@ -4,7 +4,8 @@ import SelectChip from './SelectChip';
 
 interface SegmentedControlProps<T extends string> {
   options: { value: T; label: string }[];
-  value: T;
+  /** null이면 아무것도 선택되지 않은 상태(예: 성별 미입력). */
+  value: T | null;
   onChange: (v: T) => void;
 }
 

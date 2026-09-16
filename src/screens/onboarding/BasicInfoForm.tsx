@@ -22,6 +22,7 @@ export default function BasicInfoForm({ value, onChange }: BasicInfoFormProps) {
       <Field label="이름">
         <TextField
           onBackground
+          clearable
           value={value.name}
           onChangeText={(t) => onChange({ name: t })}
           placeholder="피또가 부를 이름"
@@ -49,7 +50,7 @@ export default function BasicInfoForm({ value, onChange }: BasicInfoFormProps) {
           <TextField
             onBackground
             value={value.age}
-            onChangeText={(t) => onChange({ age: t.replace(/[^0-9.]/g, '') })}
+            onChangeText={(t) => onChange({ age: t.replace(/[^0-9]/g, '') })}
             keyboardType="numeric"
             center
           />

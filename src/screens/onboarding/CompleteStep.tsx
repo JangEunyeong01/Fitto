@@ -62,7 +62,7 @@ export default function CompleteStep() {
         <View style={[styles.card, { backgroundColor: colors.card2, borderColor: colors.stroke }]}>
           <Text style={[styles.cardLabel, { color: colors.sub }]}>물 목표</Text>
           <Text style={[styles.cardValue, { color: colors.txt }]}>{result.water.toLocaleString()}</Text>
-          <Text style={[styles.cardCaption, { color: colors.sub }]}>ml · 체중 기준</Text>
+          <Text style={[styles.cardCaption, { color: colors.sub }]}>ml · 체중·활동량 기준</Text>
         </View>
       </View>
 

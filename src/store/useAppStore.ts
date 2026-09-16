@@ -23,6 +23,8 @@ export interface Profile {
   birthdayMonth: number | null;
   birthdayDay: number | null;
   gender: string | null;
+  /** 온보딩 필수값. 나이대별 건강 주의·생리 안내에 쓴다. */
+  age: number | null;
   height: number | null;
   weight: number | null;
   targetWeight: number | null;
@@ -192,6 +194,7 @@ const defaultProfile: Profile = {
   birthdayMonth: null,
   birthdayDay: null,
   gender: null,
+  age: null,
   height: null,
   weight: null,
   targetWeight: null,
@@ -323,6 +326,7 @@ export const useAppStore = create<AppState>()(
               ...s.profile,
               nickname: s.obInfo.name.trim() || s.profile.nickname,
               gender: s.obInfo.gender || null,
+              age: s.obInfo.age ? Number(s.obInfo.age) : null,
               height: s.obInfo.height ? Number(s.obInfo.height) : null,
               weight: s.obInfo.weight ? Number(s.obInfo.weight) : null,
               activity: s.obPick.activity || null,
@@ -341,7 +345,7 @@ export const useAppStore = create<AppState>()(
           obInfo: {
             name: s.profile.nickname,
             gender: s.profile.gender ?? '',
-            age: s.obInfo.age,
+            age: s.profile.age != null ? String(s.profile.age) : s.obInfo.age,
             height: s.profile.height ? String(s.profile.height) : '',
             weight: s.profile.weight ? String(s.profile.weight) : '',
           },
