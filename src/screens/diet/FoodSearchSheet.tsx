@@ -10,7 +10,8 @@ import { useTheme } from '../../theme/useTheme';
 import { alpha, brand, overlay, radius, selection, typography } from '../../theme/tokens';
 import { FOODS, findAllergyHit, gramsPerServing, type Food } from '../../data/foods';
 import { useAppStore, type MealSlot } from '../../store/useAppStore';
-import { AVOID_TAGS, MEAL_SLOTS, labelOf, type MealUnit } from '../../constants/codes';
+import { AVOID_TAGS, DISEASE_TAGS, MEAL_SLOTS, labelOf, type MealUnit } from '../../constants/codes';
+import { cautionReason, findCautionHit } from '../../utils/foodCaution';
 import { slotLabel } from '../../utils/meal';
 import { useFoodSearchStore } from '../../store/useFoodSearchStore';
 import { useToastStore } from '../../store/useToastStore';
@@ -46,6 +47,7 @@ function FoodSearchForm() {
   // 식단 탭에서 지난 날짜를 보다가 열었으면 그 날에, 빠른 기록처럼 날짜 없이 열었으면 오늘에 넣는다.
   const date = targetDate ?? dateKey();
   const avoid = useAppStore((s) => s.profile.allergies);
+  const conditions = useAppStore((s) => s.profile.conditions);
   const addMealItem = useAppStore((s) => s.addMealItem);
   const showToast = useToastStore((s) => s.show);
 
@@ -66,6 +68,9 @@ function FoodSearchForm() {
       showToast('알레르기 성분이 포함된 음식이에요');
       return;
     }
+    // 질환 주의는 막지 않고 알려만 준다(명세 F-023). 먹을지 말지는 사용자가 정한다.
+    const caution = findCautionHit(food, conditions);
+    if (caution) showToast(`${labelOf(DISEASE_TAGS, caution)} 주의 · ${cautionReason(caution)}`);
     setPicked(food);
     setUnit('serving');
     setAmount('1');
@@ -227,6 +232,7 @@ function FoodSearchForm() {
               )}
               {results.map((food) => {
                 const hit = findAllergyHit(food, avoid);
+                const caution = hit ? null : findCautionHit(food, conditions);
                 return (
                   <View
                     key={food.id}
@@ -240,14 +246,26 @@ function FoodSearchForm() {
                       <View style={styles.nameRow}>
                         <Text style={[styles.name, { color: colors.txt }]}>{food.name}</Text>
                         <Badge
-                          label={hit ? labelOf(AVOID_TAGS, hit) : '가능'}
-                          color={hit ? alpha(brand.peach, 0.28) : alpha(brand.mint, 0.28)}
+                          label={
+                            hit
+                              ? labelOf(AVOID_TAGS, hit)
+                              : caution
+                                ? `${labelOf(DISEASE_TAGS, caution)} 주의`
+                                : '가능'
+                          }
+                          color={
+                            hit
+                              ? alpha(brand.peach, 0.28)
+                              : caution
+                                ? alpha(brand.yellow, 0.4)
+                                : alpha(brand.mint, 0.28)
+                          }
                           textColor={colors.txt}
                         />
                       </View>
                       <Text style={[styles.meta, { color: colors.sub }]}>
                         {food.amount}
-                        {food.note ? ` · ${food.note}` : ''}
+                        {caution ? ` · ${cautionReason(caution)}` : food.note ? ` · ${food.note}` : ''}
                       </Text>
                     </View>
                     <Text style={[styles.kcal, { color: colors.txt }]}>{food.kcal}</Text>
