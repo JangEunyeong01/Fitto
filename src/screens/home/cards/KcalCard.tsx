@@ -1,9 +1,12 @@
 import React from 'react';
-import { View, Text, Image, StyleSheet } from 'react-native';
+import { View, Text, Image, Pressable, StyleSheet } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import GlassCard from '../../../components/GlassCard';
 import ProgressBar from '../../../components/ProgressBar';
+import Icon from '../../../components/Icon';
 import { useTheme } from '../../../theme/useTheme';
 import { useAppStore } from '../../../store/useAppStore';
+import { useFoodSearchStore } from '../../../store/useFoodSearchStore';
 import { dateKey } from '../../../utils/timeOfDay';
 import { getKcalStatus, kcalStatusColor, kcalStatusLabel, sumMealKcal, getBurnedKcal } from '../../../utils/health';
 import { personaCopy } from '../../../copy/persona';
@@ -11,7 +14,9 @@ import { FITTO_FACE } from '../../../theme/assets';
 import { alpha, typography, weight } from '../../../theme/tokens';
 
 export default function KcalCard() {
+  const navigation = useNavigation<any>();
   const { colors } = useTheme();
+  const openFoodSearch = useFoodSearchStore((s) => s.show);
   const persona = useAppStore((s) => s.persona);
   const goal = useAppStore((s) => s.goals.kcal);
   const record = useAppStore((s) => s.dailyRecords[dateKey()]);
@@ -35,7 +40,14 @@ export default function KcalCard() {
           <Image source={FITTO_FACE} style={styles.face} resizeMode="contain" />
         </View>
         <View style={styles.numCol}>
-          <Text style={[styles.label, { color: colors.sub }]}>오늘 칼로리 · {kcalStatusLabel[status]}</Text>
+          <View style={styles.labelRow}>
+            <Text style={[styles.label, { color: colors.sub }]}>오늘 칼로리 · {kcalStatusLabel[status]}</Text>
+            {/* 명세 F-011: 카드에서 식단 탭으로 바로 간다. */}
+            <Pressable onPress={() => navigation.navigate('Diet')} hitSlop={6} style={styles.detailLink}>
+              <Text style={[styles.label, { color: colors.sub }]}>식단</Text>
+              <Icon name="chevronRight" size={13} color={colors.sub} />
+            </Pressable>
+          </View>
           <View style={styles.numRow}>
             <Text style={[styles.bigNum, { color: colors.txt }]}>{consumed.toLocaleString()}</Text>
             <Text style={[styles.goalNum, { color: colors.sub }]}> / {goal.toLocaleString()} kcal</Text>
@@ -56,6 +68,11 @@ export default function KcalCard() {
       <View style={[styles.commentBox, { backgroundColor: colors.card2 }]}>
         <Text style={[styles.commentText, { color: colors.txt }]}>{comment}</Text>
       </View>
+
+      {/* 홈에서 바로 한 끼 기록. 시트가 지금 시각에 맞는 끼니를 골라준다. */}
+      <Pressable onPress={() => openFoodSearch()} style={[styles.quickBtn, { borderColor: colors.line }]}>
+        <Text style={[styles.quickLabel, { color: colors.txt }]}>+ 음식 기록</Text>
+      </Pressable>
     </GlassCard>
   );
 }
@@ -116,7 +133,17 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: 4,
   },
+  labelRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
   label: typography.label,
+  detailLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 1,
+  },
   numRow: {
     flexDirection: 'row',
     alignItems: 'baseline',
@@ -151,4 +178,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 13,
   },
   commentText: typography.body,
+  quickBtn: {
+    marginTop: 10,
+    height: 36,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  quickLabel: typography.label,
 });

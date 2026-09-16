@@ -3,12 +3,14 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import HomeScreen from '../screens/home/HomeScreen';
 import WaterDetailScreen from '../screens/detail/WaterDetailScreen';
 import StepsDetailScreen from '../screens/detail/StepsDetailScreen';
+import ActivityDetailScreen from '../screens/detail/ActivityDetailScreen';
 import PeriodDetailScreen from '../screens/period/PeriodDetailScreen';
 
 export type HomeStackParamList = {
   HomeMain: undefined;
   WaterDetail: undefined;
   StepsDetail: undefined;
+  ActivityDetail: undefined;
   PeriodDetail: undefined;
 };
 
@@ -23,6 +25,7 @@ export default function HomeStack() {
       <Stack.Screen name="HomeMain" component={HomeScreen} />
       <Stack.Screen name="WaterDetail" component={WaterDetailScreen} />
       <Stack.Screen name="StepsDetail" component={StepsDetailScreen} />
+      <Stack.Screen name="ActivityDetail" component={ActivityDetailScreen} />
       <Stack.Screen name="PeriodDetail" component={PeriodDetailScreen} />
     </Stack.Navigator>
   );
