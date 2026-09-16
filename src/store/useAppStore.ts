@@ -130,6 +130,11 @@ interface AppState {
   goals: Goals;
   periodOn: boolean;
   periodSettings: PeriodSettings;
+  /**
+   * 사용자가 마지막 생리 시작일을 직접 고른 적이 있는지(명세 F-017).
+   * periodSettings는 계산이 깨지지 않게 늘 기본값을 들고 있어서, 값만 보고는 입력 여부를 알 수 없다.
+   */
+  periodSetupDone: boolean;
   cardOrder: CardId[];
   cardHidden: CardId[];
   alarms: Alarms;
@@ -185,6 +190,8 @@ interface AppState {
   addRecipe: (recipe: Recipe) => void;
   addCustomIngredient: (ingredient: CustomIngredient) => void;
   seedMockToday: (dateKey: string) => void;
+  /** 설정 → 데이터 초기화. 저장된 모든 상태를 처음 설치한 상태로 되돌린다(온보딩부터 다시). */
+  resetAll: () => void;
 }
 
 function emptyRecord(): DailyRecord {
@@ -236,13 +243,14 @@ const defaultAlarms: Alarms = {
 
 export const useAppStore = create<AppState>()(
   persist(
-    (set, get) => ({
+    (set, get, api) => ({
       theme: 'system',
       persona: 'neutral',
       profile: defaultProfile,
       goals: defaultGoals,
       periodOn: true,
       periodSettings: defaultPeriodSettings(),
+      periodSetupDone: false,
       // 전역 상수를 그대로 상태에 넣으면 어딘가에서 배열을 직접 수정했을 때 기본값이 오염된다.
       cardOrder: [...DEFAULT_CARD_ORDER],
       cardHidden: [],
@@ -303,7 +311,12 @@ export const useAppStore = create<AppState>()(
       setGoals: (patch) => set((s) => ({ goals: { ...s.goals, ...patch } })),
       setAlarms: (patch) => set((s) => ({ alarms: { ...s.alarms, ...patch } })),
       setPeriodOn: (v) => set({ periodOn: v }),
-      setPeriodSettings: (patch) => set((s) => ({ periodSettings: { ...s.periodSettings, ...patch } })),
+      // 주기·기간 숫자만 바꾼 건 입력 완료로 보지 않는다. 시작일이 없으면 예측 자체가 기본값 기준이라서.
+      setPeriodSettings: (patch) =>
+        set((s) => ({
+          periodSettings: { ...s.periodSettings, ...patch },
+          periodSetupDone: s.periodSetupDone || 'lastStartDate' in patch,
+        })),
       setDayCondition: (dateKey, condition) =>
         set((s) => {
           const rec = s.dailyRecords[dateKey] ?? emptyRecord();
@@ -476,6 +489,10 @@ export const useAppStore = create<AppState>()(
 
           return patch;
         }),
+
+      // getInitialState는 이 함수가 처음 만든 상태(액션 포함)라 replace로 통째로 바꿔도 액션이 사라지지 않는다.
+      // persist가 바뀐 상태를 그대로 저장소에 다시 쓰므로 AsyncStorage를 따로 지울 필요는 없다.
+      resetAll: () => set(api.getInitialState(), true),
     }),
     {
       name: 'fitto-app-storage',

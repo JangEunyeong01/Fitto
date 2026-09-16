@@ -14,7 +14,7 @@ interface PeriodCalendarProps {
   onShiftMonth: (delta: number) => void;
   selected: string;
   onSelect: (dateKey: string) => void;
-  settings: PeriodSettings;
+  settings: PeriodSettings | null;
 }
 
 // README: 캘린더 카드. 7열 그리드, 생리일/가임기/배란일 색 구분, 선택일은 파랑 그라데이션.
@@ -53,7 +53,8 @@ export default function PeriodCalendar({ year, month, onShiftMonth, selected, on
       <View style={styles.grid}>
         {cells.map((key, i) => {
           if (!key) return <View key={i} style={styles.cell} />;
-          const dayType = getDayType(key, settings);
+          // settings가 null이면(시작일 입력 전) 추정 색을 칠하지 않는다.
+          const dayType = settings ? getDayType(key, settings) : null;
           const isSelected = key === selected;
           const day = Number(key.slice(-2));
           return (

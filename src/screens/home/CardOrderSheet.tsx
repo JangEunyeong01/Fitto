@@ -27,7 +27,8 @@ export default function CardOrderSheet({ visible, onClose }: CardOrderSheetProps
   const insets = useSafeAreaInsets();
   const cardOrder = useAppStore((s) => s.cardOrder);
   const cardHidden = useAppStore((s) => s.cardHidden);
-  const periodOn = useAppStore((s) => s.periodOn);
+  // 홈에서 안 보이는 생리 카드는 순서 목록에서도 뺀다(HomeScreen의 visibleCards와 같은 조건).
+  const periodOn = useAppStore((s) => s.periodOn && s.periodSetupDone);
   const setCardOrder = useAppStore((s) => s.setCardOrder);
   const setCardHidden = useAppStore((s) => s.setCardHidden);
   const resetCardOrder = useAppStore((s) => s.resetCardOrder);

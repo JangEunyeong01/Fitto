@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -16,8 +16,11 @@ import { useCardOrderSheetStore } from '../../store/useCardOrderSheetStore';
 import { useBirthdayModalStore } from '../../store/useBirthdayModalStore';
 import { useTutorialStore } from '../../store/useTutorialStore';
 import { useToastStore } from '../../store/useToastStore';
+import { useFoodSearchStore } from '../../store/useFoodSearchStore';
 import { PERSONA_OPTIONS } from '../onboarding/onboardingData';
-import { typography } from '../../theme/tokens';
+import { alpha, semantic, typography } from '../../theme/tokens';
+// 버전은 app.json 한 곳에서만 올린다. 화면에 따로 적어두면 배포 때 둘 중 하나를 꼭 까먹는다.
+import appConfig from '../../../app.json';
 
 const THEME_OPTIONS: { value: ThemeMode; label: string }[] = [
   { value: 'light', label: '라이트' },
@@ -39,6 +42,20 @@ export default function SettingsScreen() {
   const periodOn = useAppStore((s) => s.periodOn);
   const setPeriodOn = useAppStore((s) => s.setPeriodOn);
   const resetOnboarding = useAppStore((s) => s.resetOnboarding);
+  const resetAll = useAppStore((s) => s.resetAll);
+
+  // 명세 F-043 데이터 초기화 2단계 확인. 0: 닫힘, 1: 첫 확인, 2: 마지막 확인.
+  // 네이티브 Alert는 웹에서 버튼을 못 달아서 카드 안에서 단계를 넘긴다.
+  const [resetStep, setResetStep] = useState<0 | 1 | 2>(0);
+  const confirmReset = () => {
+    if (resetStep === 1) {
+      setResetStep(2);
+      return;
+    }
+    resetAll();
+    // 최근 검색은 세션 스토어라 앱 스토어 초기화에 안 딸려온다.
+    useFoodSearchStore.setState({ recent: [] });
+  };
 
   const showCardOrderSheet = useCardOrderSheetStore((s) => s.show);
   const showBirthdayModal = useBirthdayModalStore((s) => s.show);
@@ -149,6 +166,46 @@ export default function SettingsScreen() {
               </BlurView>
             </Pressable>
           </View>
+        </GlassCard>
+
+        <GlassCard style={styles.card}>
+          <View style={styles.row}>
+            <Text style={[styles.rowLabel, { color: colors.txt }]}>앱 버전</Text>
+            <Text style={[styles.rowAction, { color: colors.sub }]}>{appConfig.expo.version}</Text>
+          </View>
+          <Divider colors={colors} />
+          {resetStep === 0 ? (
+            <Pressable onPress={() => setResetStep(1)} style={styles.row}>
+              <Text style={[styles.rowLabel, { color: semantic.danger }]}>데이터 초기화</Text>
+            </Pressable>
+          ) : (
+            <View style={styles.resetBox}>
+              <Text style={[styles.rowLabel, { color: colors.txt }]}>
+                {resetStep === 1 ? '모든 기록을 지울까요?' : '정말 초기화할까요?'}
+              </Text>
+              <Text style={[styles.rowDesc, { color: colors.sub }]}>
+                {resetStep === 1
+                  ? '식단·운동·체중 기록과 프로필, 설정이 모두 지워지고 온보딩부터 다시 시작해요.'
+                  : '지운 데이터는 되돌릴 수 없어요.'}
+              </Text>
+              <View style={styles.resetBtns}>
+                <Pressable onPress={() => setResetStep(0)} style={[styles.resetBtn, { borderColor: colors.line }]}>
+                  <Text style={[styles.previewBtnLabel, { color: colors.txt }]}>취소</Text>
+                </Pressable>
+                <Pressable
+                  onPress={confirmReset}
+                  style={[
+                    styles.resetBtn,
+                    { borderColor: semantic.danger, backgroundColor: alpha(semantic.danger, 0.12) },
+                  ]}
+                >
+                  <Text style={[styles.previewBtnLabel, { color: semantic.danger }]}>
+                    {resetStep === 1 ? '초기화' : '모두 지우기'}
+                  </Text>
+                </Pressable>
+              </View>
+            </View>
+          )}
         </GlassCard>
       </ScrollView>
     </ScreenBackground>
@@ -274,4 +331,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   previewBtnLabel: typography.label,
+  resetBox: {
+    gap: 6,
+  },
+  resetBtns: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 8,
+  },
+  resetBtn: {
+    flex: 1,
+    height: 40,
+    borderRadius: 12,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 });

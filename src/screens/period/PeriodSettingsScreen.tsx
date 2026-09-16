@@ -29,6 +29,7 @@ export default function PeriodSettingsScreen() {
   const { colors } = useTheme();
   const settings = useAppStore((s) => s.periodSettings);
   const setPeriodSettings = useAppStore((s) => s.setPeriodSettings);
+  const setupDone = useAppStore((s) => s.periodSetupDone);
   const showToast = useToastStore((s) => s.show);
 
   const today = dateKey();
@@ -78,9 +79,10 @@ export default function PeriodSettingsScreen() {
           year={view.year}
           month={view.month}
           onShiftMonth={(delta) => setView((v) => shiftYearMonth(v, delta))}
-          selected={settings.lastStartDate}
+          // 입력 전에는 기본값(이틀 전)을 고른 것처럼 보이면 안 되니 선택·추정 색 모두 비운다.
+          selected={setupDone ? settings.lastStartDate : ''}
           onSelect={selectStart}
-          settings={settings}
+          settings={setupDone ? settings : null}
         />
 
         <GlassCard style={styles.card}>
@@ -104,19 +106,21 @@ export default function PeriodSettingsScreen() {
           </View>
         </GlassCard>
 
-        <GlassCard style={styles.card}>
-          <Text style={[styles.cardTitle, { color: colors.txt }]}>예상 날짜</Text>
-          <PreviewRow label="다음 생리 예정일" value={formatDate(upcoming.nextStart)} colors={colors} />
-          <PreviewRow
-            label="가임기"
-            value={`${formatDate(upcoming.fertileStart)} ~ ${formatDate(upcoming.fertileEnd)}`}
-            colors={colors}
-          />
-          <PreviewRow label="배란일" value={formatDate(upcoming.ovulation)} colors={colors} />
-          <Text style={[styles.notice, { color: colors.sub }]}>
-            평균 주기로 계산한 추정치예요. 실제와 다를 수 있고 의료 진단을 대체하지 않아요.
-          </Text>
-        </GlassCard>
+        {setupDone && (
+          <GlassCard style={styles.card}>
+            <Text style={[styles.cardTitle, { color: colors.txt }]}>예상 날짜</Text>
+            <PreviewRow label="다음 생리 예정일" value={formatDate(upcoming.nextStart)} colors={colors} />
+            <PreviewRow
+              label="가임기"
+              value={`${formatDate(upcoming.fertileStart)} ~ ${formatDate(upcoming.fertileEnd)}`}
+              colors={colors}
+            />
+            <PreviewRow label="배란일" value={formatDate(upcoming.ovulation)} colors={colors} />
+            <Text style={[styles.notice, { color: colors.sub }]}>
+              평균 주기로 계산한 추정치예요. 실제와 다를 수 있고 의료 진단을 대체하지 않아요.
+            </Text>
+          </GlassCard>
+        )}
       </ScrollView>
     </ScreenBackground>
   );
