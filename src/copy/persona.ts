@@ -4,7 +4,7 @@ import type { Persona } from '../store/useAppStore';
 export const personaLabel: Record<Persona, string> = {
   friendly: '친근형',
   strict: '엄격형',
-  neutral: '중립형',
+  neutral: '차분형',
 };
 
 export const personaOnboardingCopy: Record<Persona, string> = {

@@ -5,7 +5,7 @@ import type { Persona } from '../../store/useAppStore';
 export const PERSONA_OPTIONS: { key: Persona; label: string; desc: string }[] = [
   { key: 'friendly', label: '친근형', desc: '오늘도 같이 운동해볼까요? 💪' },
   { key: 'strict', label: '엄격형', desc: '오늘 목표 달성하셨나요?' },
-  { key: 'neutral', label: '중립형', desc: '오늘 칼로리를 확인하세요.' },
+  { key: 'neutral', label: '차분형', desc: '오늘 칼로리를 확인하세요.' },
 ];
 
 export const STEP_LABELS = [
