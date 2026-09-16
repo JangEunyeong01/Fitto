@@ -95,6 +95,9 @@ export interface DailyRecord {
   steps: number;
   periodCondition?: 'good' | 'normal' | 'bad';
   periodSymptoms?: string[];
+  /** 그날 먹은 약과 메모(명세 F-036). 비우면 키를 지운다. */
+  periodMedication?: string;
+  periodMemo?: string;
   /** 끼니별 메모(명세 F-022). 비우면 키를 지운다. */
   mealMemos?: Partial<Record<MealSlot, string>>;
 }
@@ -216,6 +219,7 @@ interface AppState {
   setPeriodSettings: (patch: Partial<PeriodSettings>) => void;
   setDayCondition: (dateKey: string, condition: DailyRecord['periodCondition']) => void;
   toggleDaySymptom: (dateKey: string, symptom: string) => void;
+  setDayPeriodNote: (dateKey: string, patch: { medication?: string; memo?: string }) => void;
   setCardOrder: (order: CardId[]) => void;
   setCardHidden: (hidden: CardId[]) => void;
   resetCardOrder: () => void;
@@ -401,6 +405,23 @@ export const useAppStore = create<AppState>()(
           const cur = rec.periodSymptoms ?? [];
           const next = cur.includes(symptom) ? cur.filter((v) => v !== symptom) : [...cur, symptom];
           return { dailyRecords: { ...s.dailyRecords, [dateKey]: { ...rec, periodSymptoms: next } } };
+        }),
+      // 빈 문자열이면 지운다. 빈 메모가 기록에 남으면 "쓴 적 있음"처럼 보인다.
+      setDayPeriodNote: (dateKey, patch) =>
+        set((s) => {
+          const rec = s.dailyRecords[dateKey] ?? emptyRecord();
+          const next: DailyRecord = { ...rec };
+          if ('medication' in patch) {
+            const v = patch.medication?.trim();
+            if (v) next.periodMedication = v;
+            else delete next.periodMedication;
+          }
+          if ('memo' in patch) {
+            const v = patch.memo?.trim();
+            if (v) next.periodMemo = v;
+            else delete next.periodMemo;
+          }
+          return { dailyRecords: { ...s.dailyRecords, [dateKey]: next } };
         }),
       setCardOrder: (order) => set({ cardOrder: order }),
       // 기본 카드는 어떤 경로로 들어와도 숨김 목록에 들어가지 않게 걸러낸다.
