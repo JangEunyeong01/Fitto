@@ -149,6 +149,15 @@ public class User {
 		this.startedAt = startedAt;
 	}
 
+	/** 체중 기록이 갱신되면 프로필의 현재 체중도 따라간다(명세 2-6). */
+	public void changeWeight(double weight) {
+		this.weight = weight;
+	}
+
+	public void changePeriodEnabled(boolean enabled) {
+		this.periodEnabled = enabled;
+	}
+
 	/** 온보딩에서 받은 프로필을 한 번에 채운다. 목표 계산은 호출한 쪽에서 이어서 한다. */
 	public void applyProfile(String name, Gender gender, Integer age, Double height, Double weight,
 			Double targetWeight, ActivityLevel activityLevel, Goal goal, Personality personality,
