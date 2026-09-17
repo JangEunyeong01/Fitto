@@ -46,8 +46,9 @@ public class AuthController {
 	}
 
 	@PostMapping("/login")
-	public AuthResponse login(@Valid @RequestBody LoginRequest request) {
-		return authService.login(request);
+	public AuthResponse login(@Valid @RequestBody LoginRequest request, HttpServletRequest httpRequest) {
+		// IP도 함께 넘긴다. 이메일 기준만으로는 계정을 바꿔가며 훑는 공격을 못 막는다.
+		return authService.login(request, httpRequest.getRemoteAddr());
 	}
 
 	@PostMapping("/refresh")
