@@ -74,6 +74,24 @@ curl -s -o /dev/null -w "%{http_code}\n" -X POST https://<도메인>/auth/login 
 
 `413`이어야 합니다. 길이를 밝히지 않는 요청을 받지 않는다는 뜻입니다.
 
+### 7. 개발용 도구가 열려 있지 않은지
+
+```bash
+curl -s -o /dev/null -w "%{http_code}\n" https://<도메인>/actuator/env
+```
+
+`404`여야 합니다. `actuator`·`springdoc`(Swagger)·H2 콘솔은 의존성에 넣지 않았으므로 경로 자체가 없습니다. 나중에 누가 추가하면 이 확인이 걸러줍니다.
+
+### 8. 운영 DB에 테스트 계정이 없는지
+
+```sql
+select email, created_at from users order by created_at;
+```
+
+운영 DB는 개발과 별도이고 마이그레이션으로 새로 만들므로 처음에는 비어 있어야 합니다.
+점검·시연용으로 만든 계정이 있다면 공개 전에 지웁니다. 계정을 지울 때는 그 사용자의 기록도 함께 지워야 합니다 —
+`user_id`를 가진 테이블 중 `users`를 외래키로 참조하는 건 일부뿐이라 나머지는 자동으로 지워지지 않습니다.
+
 ## 앱 빌드
 
 `EXPO_PUBLIC_API_URL`은 **빌드할 때 번들에 박혀서 나중에 고칠 수 없습니다.**

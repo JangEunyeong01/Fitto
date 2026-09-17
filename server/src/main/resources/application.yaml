@@ -17,6 +17,15 @@ spring:
       hibernate:
         format_sql: true
 
+  flyway:
+    # 개발에서는 ddl-auto가 스키마를 만든다. 마이그레이션은 운영에서만 돌린다.
+    enabled: false
+
+  # 요청 본문 상한. 큰 요청으로 메모리를 밀어 넣는 걸 막는다.
+  servlet:
+    multipart:
+      max-request-size: 2MB
+
   jackson:
     # null 필드도 그대로 내려보낸다. 명세 0-5에서 "0"과 "정보 없음"을 구분하기로 했다.
     default-property-inclusion: always
@@ -34,15 +43,6 @@ fitto:
     secret: ${JWT_SECRET:local-dev-secret-change-me-32bytes-minimum}
     access-ttl: 30m
     refresh-ttl: 14d
-
-  flyway:
-    # 개발에서는 ddl-auto가 스키마를 만든다. 마이그레이션은 운영에서만 돌린다.
-    enabled: false
-
-  # 요청 본문 상한. 큰 요청으로 메모리를 밀어 넣는 걸 막는다.
-  servlet:
-    multipart:
-      max-request-size: 2MB
 
 server:
   port: 8080
