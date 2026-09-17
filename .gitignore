@@ -30,8 +30,12 @@ yarn-error.*
 .DS_Store
 *.pem
 
-# local env files
-.env*.local
+# 환경변수 파일. 예시(.env.example)만 올리고 실제 값이 든 파일은 전부 제외한다.
+# 한 줄로 .env*를 막고 예시만 되살리는 편이, 새 파일 이름이 생길 때마다 규칙을 추가하는 것보다 안전하다.
+.env
+.env.*
+!.env.example
+!*/.env.example
 
 # 로컬 개발 도구 설정 (저장소에는 올리지 않는다)
 CLAUDE.md
