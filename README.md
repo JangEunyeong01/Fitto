@@ -60,6 +60,8 @@ npm start
 
 Expo Go 앱으로 QR을 찍거나, `npm run android` · `npm run ios` · `npm run web`으로 실행합니다.
 
+서버는 `server/`에 있습니다. 필요한 환경변수는 `server/.env.example`, 배포 후 확인 절차는 [server/DEPLOY.md](server/DEPLOY.md)에 정리해 뒀습니다.
+
 ## 구조
 
 ```
