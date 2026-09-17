@@ -26,6 +26,7 @@ export default function BasicInfoForm({ value, onChange }: BasicInfoFormProps) {
           value={value.name}
           onChangeText={(t) => onChange({ name: t })}
           placeholder="피또가 부를 이름"
+          maxLength={20}
         />
       </Field>
 

@@ -95,6 +95,8 @@ export default function TagPicker({
           onSubmitEditing={addCustom}
           placeholder={placeholder}
           returnKeyType="done"
+          // 서버가 받는 직접 입력 태그 길이와 같은 값. 넘기면 동기화 때 거절당한다.
+          maxLength={20}
           style={styles.input}
         />
         {/* 화면의 주요 액션은 하단 "다음"이다. 여기까지 그라데이션을 쓰면 CTA가 둘로 보여서 아웃라인으로 낮췄다. */}

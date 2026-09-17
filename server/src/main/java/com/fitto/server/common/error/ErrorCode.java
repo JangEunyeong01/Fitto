@@ -23,6 +23,7 @@ public enum ErrorCode {
 	PERIOD_NOT_SET(HttpStatus.NOT_FOUND, "생리 주기 정보가 아직 없어요."),
 	EMAIL_DUPLICATED(HttpStatus.CONFLICT, "이미 가입된 이메일이에요."),
 	ID_CONFLICT(HttpStatus.CONFLICT, "다른 곳에서 쓰고 있는 기록이에요."),
+	PAYLOAD_TOO_LARGE(HttpStatus.PAYLOAD_TOO_LARGE, "보낸 데이터가 너무 커요."),
 	INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "잠시 후 다시 시도해 주세요.");
 
 	private final HttpStatus status;

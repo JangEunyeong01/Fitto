@@ -94,6 +94,7 @@ export default function ProfileScreen() {
             onEndEditing={commitNickname}
             onBlur={commitNickname}
             placeholder="피또가 부를 이름"
+            maxLength={20}
           />
 
           <Text style={[styles.label, { color: colors.sub, marginTop: 14 }]}>생일</Text>
