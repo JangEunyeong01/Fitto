@@ -21,13 +21,15 @@ import com.fitto.server.workout.dto.WorkoutResponse;
 public class WorkoutService {
 
 	private final WorkoutRepository workoutRepository;
+	private final RoutineRepository routineRepository;
 	private final UserRepository userRepository;
 	private final ExerciseCatalog exerciseCatalog;
 	private final DateGuard dateGuard;
 
-	public WorkoutService(WorkoutRepository workoutRepository, UserRepository userRepository,
-			ExerciseCatalog exerciseCatalog, DateGuard dateGuard) {
+	public WorkoutService(WorkoutRepository workoutRepository, RoutineRepository routineRepository,
+			UserRepository userRepository, ExerciseCatalog exerciseCatalog, DateGuard dateGuard) {
 		this.workoutRepository = workoutRepository;
+		this.routineRepository = routineRepository;
 		this.userRepository = userRepository;
 		this.exerciseCatalog = exerciseCatalog;
 		this.dateGuard = dateGuard;
@@ -63,7 +65,7 @@ public class WorkoutService {
 
 		Workout workout = Workout.create(request.id(), userId, request.date(), request.name());
 		workout.change(request.exerciseCode(), request.name(), request.duration(), calories, request.memo(),
-				request.routineId());
+				ownRoutineId(userId, request.routineId()));
 
 		workoutRepository.save(workout);
 		return new Created(WorkoutResponse.from(workout), true);
@@ -97,6 +99,20 @@ public class WorkoutService {
 		Workout workout = workoutRepository.findByIdAndUserId(workoutId, userId)
 				.orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, "기록을 찾을 수 없어요."));
 		workoutRepository.delete(workout);
+	}
+
+	/**
+	 * 이 기록이 어느 루틴에서 나왔는지 적어두는 값이다. 남의 루틴을 가리키면 지우고 저장한다.
+	 *
+	 * 거절하지 않는 이유는, 루틴을 지운 뒤에 밀린 기록이 올라오는 경우가 정상적으로 생기기 때문이다.
+	 * 그때 400을 주면 앱의 전송 대기열이 막히고 사용자가 실제로 한 운동이 사라진다.
+	 * 기록은 살리고 출처만 비운다.
+	 */
+	private UUID ownRoutineId(UUID userId, UUID routineId) {
+		if (routineId == null) {
+			return null;
+		}
+		return routineRepository.existsByIdAndUserId(routineId, userId) ? routineId : null;
 	}
 
 	/**

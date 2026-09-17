@@ -11,4 +11,6 @@ public interface RecipeRepository extends JpaRepository<Recipe, UUID> {
 	List<Recipe> findAllByUserIdOrderByCreatedAtDesc(UUID userId);
 
 	Optional<Recipe> findByIdAndUserId(UUID id, UUID userId);
+
+	boolean existsByIdAndUserId(UUID id, UUID userId);
 }
