@@ -1581,10 +1581,16 @@ F-035 "사용" 버튼. 루틴 안의 운동을 그날 기록으로 한꺼번에 
 | 404 | `FOOD_NOT_FOUND` | 식품 DB에 없는 `foodId` |
 | 404 | `PERIOD_NOT_SET` | 생리 주기 미입력 |
 | 409 | `EMAIL_DUPLICATED` | 이미 가입된 이메일 |
+| 405 | `METHOD_NOT_ALLOWED` | 그 경로가 받지 않는 메서드 |
 | 409 | `ID_CONFLICT` | 다른 사용자가 쓰는 ID |
 | 413 | `PAYLOAD_TOO_LARGE` | 요청 본문 5MB 초과 |
+| 415 | `UNSUPPORTED_MEDIA_TYPE` | `application/json`이 아닌 요청 |
 | 429 | `TOO_MANY_REQUESTS` | 요청 횟수 제한 |
 | 500 | `INTERNAL_ERROR` | 서버 오류 |
 | 503 | `FOOD_API_UNAVAILABLE` | 공공 API 장애 |
 
 **유효성 사유 (`errors[].reason`)**: `REQUIRED`, `INVALID_FORMAT`, `OUT_OF_RANGE`, `TOO_LONG`, `INVALID_CODE`, `DUPLICATED`
+
+`405`와 `415`는 앱이 정상 동작하면 나오지 않는다. 잘못 부른 요청을 `500`으로 돌려주지 않으려고 둔다. 서버가 보낸 쪽 잘못을 자기 잘못으로 보고하면 운영 로그가 ERROR로 뒤덮여 진짜 장애가 묻힌다.
+
+`415`는 CSRF 방어의 한 축이기도 하다. 브라우저 `<form>`은 사전 요청 없이 바로 보낼 수 있지만 `Content-Type`을 세 가지밖에 못 쓰고, 그 셋이 전부 여기서 거절된다.
