@@ -57,7 +57,9 @@ public class GlobalExceptionHandler {
 	 */
 	@ExceptionHandler(HttpMessageNotReadableException.class)
 	public ResponseEntity<ErrorResponse> handleUnreadable(HttpMessageNotReadableException e) {
-		log.warn("요청 본문을 읽지 못함: {}", e.getMessage());
+		// 예외 메시지는 남기지 않는다. 파싱 실패 메시지에 요청 본문 조각이 섞여 들어올 수 있고,
+		// 로그인 요청이 깨진 경우라면 그게 비밀번호다. 무엇이 터졌는지는 예외 종류로 충분하다.
+		log.warn("요청 본문을 읽지 못함: {}", e.getClass().getSimpleName());
 		ErrorCode code = ErrorCode.INVALID_INPUT;
 		return ResponseEntity.status(code.getStatus())
 				.body(ErrorResponse.of(code, "요청 형식이 올바르지 않아요."));
@@ -73,7 +75,7 @@ public class GlobalExceptionHandler {
 	@ExceptionHandler({ MissingServletRequestParameterException.class, MethodArgumentTypeMismatchException.class,
 			MultipartException.class })
 	public ResponseEntity<ErrorResponse> handleBadRequest(Exception e) {
-		log.warn("잘못된 요청: {}", e.getMessage());
+		log.warn("잘못된 요청: {}", e.getClass().getSimpleName());
 		ErrorCode code = ErrorCode.INVALID_INPUT;
 		return ResponseEntity.status(code.getStatus()).body(ErrorResponse.of(code, code.getMessage()));
 	}

@@ -7,9 +7,13 @@ import java.time.Instant;
 import java.util.HexFormat;
 import java.util.UUID;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import com.fitto.server.common.LogMask;
 
 import com.fitto.server.auth.dto.AuthResponse;
 import com.fitto.server.auth.dto.LoginRequest;
@@ -24,6 +28,8 @@ import com.fitto.server.user.UserResponse;
 
 @Service
 public class AuthService {
+
+	private static final Logger log = LoggerFactory.getLogger(AuthService.class);
 
 	/**
 	 * 계정이 없을 때 비교용으로 쓰는 더미 BCrypt 해시.
@@ -80,6 +86,7 @@ public class AuthService {
 	public AuthResponse login(LoginRequest request, String clientIp) {
 		String email = request.email().toLowerCase();
 		if (loginAttemptGuard.isBlocked(email, clientIp)) {
+			log.warn("로그인 차단: email={} ip={}", LogMask.email(email), clientIp);
 			throw new ApiException(ErrorCode.TOO_MANY_REQUESTS);
 		}
 
@@ -97,6 +104,8 @@ public class AuthService {
 
 		if (user == null || !matched) {
 			loginAttemptGuard.recordFailure(email, clientIp);
+			// 계정이 없었는지 비밀번호가 틀렸는지는 로그에도 적지 않는다. 로그가 유출되면 가입 여부가 드러난다.
+			log.warn("로그인 실패: email={} ip={}", LogMask.email(email), clientIp);
 			throw new ApiException(ErrorCode.INVALID_CREDENTIALS);
 		}
 
@@ -120,7 +129,9 @@ public class AuthService {
 				.orElseThrow(() -> new ApiException(ErrorCode.REFRESH_TOKEN_INVALID));
 
 		if (saved.getUsedAt() != null) {
-			refreshTokenRepository.revokeAllByUserId(saved.getUserId(), Instant.now());
+			int revoked = refreshTokenRepository.revokeAllByUserId(saved.getUserId(), Instant.now());
+			// 탈취가 의심되는 상황이다. 사용자는 갑자기 전부 로그아웃되므로 원인을 찾을 수 있어야 한다.
+			log.warn("refreshToken 재사용 감지, 전체 세션 폐기: userId={} 폐기={}건", saved.getUserId(), revoked);
 			throw new ApiException(ErrorCode.REFRESH_TOKEN_REUSED);
 		}
 		if (!saved.isUsable(Instant.now())) {

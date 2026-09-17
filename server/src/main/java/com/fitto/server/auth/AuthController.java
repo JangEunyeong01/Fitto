@@ -1,5 +1,7 @@
 package com.fitto.server.auth;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -23,6 +25,8 @@ import jakarta.validation.Valid;
 @RequestMapping("/auth")
 public class AuthController {
 
+	private static final Logger log = LoggerFactory.getLogger(AuthController.class);
+
 	private final AuthService authService;
 	private final SignupThrottle signupThrottle;
 
@@ -37,6 +41,7 @@ public class AuthController {
 		// 한 곳에서 계정을 무더기로 만드는 걸 막는다. 가입은 토큰 없이 부를 수 있는 API라 열려 있다.
 		String clientKey = httpRequest.getRemoteAddr();
 		if (signupThrottle.isBlocked(clientKey)) {
+			log.warn("가입 차단: ip={}", clientKey);
 			throw new ApiException(ErrorCode.TOO_MANY_REQUESTS, "가입 시도가 너무 잦아요. 잠시 후 다시 시도해 주세요.");
 		}
 

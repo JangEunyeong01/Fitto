@@ -4,6 +4,8 @@ import java.time.Duration;
 import java.util.Set;
 import java.util.UUID;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
@@ -24,6 +26,8 @@ import jakarta.servlet.http.HttpServletResponse;
  */
 @Component
 public class WriteRateLimitInterceptor implements HandlerInterceptor {
+
+	private static final Logger log = LoggerFactory.getLogger(WriteRateLimitInterceptor.class);
 
 	/**
 	 * 분당 한도. 정상 사용으로는 닿지 않는 값이다.
@@ -49,6 +53,7 @@ public class WriteRateLimitInterceptor implements HandlerInterceptor {
 
 		String key = userId.toString();
 		if (BY_USER.isBlocked(key)) {
+			log.warn("쓰기 제한: userId={} {} {}", userId, request.getMethod(), request.getRequestURI());
 			throw new ApiException(ErrorCode.TOO_MANY_REQUESTS, "기록이 너무 빠르게 올라오고 있어요. 잠시 후 다시 시도해 주세요.");
 		}
 		BY_USER.record(key);
