@@ -40,7 +40,7 @@ public class Routine {
 
 	@OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
 	@JoinColumn(name = "routine_id", nullable = false)
-	@OrderColumn(name = "position")
+	@OrderColumn(name = "sort_order")
 	private List<RoutineExercise> exercises = new ArrayList<>();
 
 	public static Routine create(UUID id, UUID userId, String name) {

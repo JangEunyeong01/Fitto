@@ -48,7 +48,7 @@ public class Recipe {
 	 */
 	@OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
 	@JoinColumn(name = "recipe_id", nullable = false)
-	@OrderColumn(name = "position")
+	@OrderColumn(name = "sort_order")
 	private List<RecipeIngredient> ingredients = new ArrayList<>();
 
 	@CreationTimestamp

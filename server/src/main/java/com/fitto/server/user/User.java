@@ -28,6 +28,9 @@ import lombok.NoArgsConstructor;
  *
  * 목록 필드를 코드(diseases)와 직접 입력(customDiseases)으로 나눠 담는다.
  * 한 칸에 섞으면 어느 쪽이 코드인지 구분할 수 없어 추천·주의 규칙을 못 돌린다.
+ *
+ * 직접 입력 목록의 컬럼 이름이 item인 이유: value는 H2 예약어라 테이블 생성이 조용히 실패한다.
+ * Postgres에서는 통과해서 실제 호출로는 못 잡았고, H2 통합 테스트에서 드러났다.
  */
 @Entity
 @Table(name = "users")
@@ -80,7 +83,7 @@ public class User {
 
 	@ElementCollection
 	@CollectionTable(name = "user_custom_diseases", joinColumns = @JoinColumn(name = "user_id"))
-	@Column(name = "value", length = 30)
+	@Column(name = "item", length = 30)
 	private List<String> customDiseases = new ArrayList<>();
 
 	@ElementCollection
@@ -90,7 +93,7 @@ public class User {
 
 	@ElementCollection
 	@CollectionTable(name = "user_custom_preferred_foods", joinColumns = @JoinColumn(name = "user_id"))
-	@Column(name = "value", length = 30)
+	@Column(name = "item", length = 30)
 	private List<String> customPreferredFoods = new ArrayList<>();
 
 	@ElementCollection
@@ -100,7 +103,7 @@ public class User {
 
 	@ElementCollection
 	@CollectionTable(name = "user_custom_allergies", joinColumns = @JoinColumn(name = "user_id"))
-	@Column(name = "value", length = 30)
+	@Column(name = "item", length = 30)
 	private List<String> customAllergies = new ArrayList<>();
 
 	@Enumerated(EnumType.STRING)

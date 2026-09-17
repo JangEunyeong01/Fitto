@@ -29,6 +29,7 @@ export default function SignupScreen() {
 
   const profile = useAppStore((s) => s.profile);
   const persona = useAppStore((s) => s.persona);
+  const startDate = useAppStore((s) => s.startDate);
   const signIn = useAuthStore((s) => s.signIn);
   const showToast = useToastStore((s) => s.show);
 
@@ -61,8 +62,9 @@ export default function SignupScreen() {
           customAllergies: profile.customAllergies,
           personality: persona,
         },
-        // TODO 앱 시작일(F-008)이 main에 들어오면 startedAt으로 함께 보낸다.
-        // 안 보내면 서버가 가입 시각을 시작일로 잡아 "함께한 지" 일수가 1일로 돌아간다.
+        // 게스트로 쓴 기간을 이어받는다(F-008). 안 보내면 서버가 가입 시각을 시작일로 잡아
+        // "피또와 함께한 지 N일"이 1일로 되돌아간다.
+        startedAt: startDate ? new Date(`${startDate}T00:00:00`).toISOString() : undefined,
       });
 
       signIn({ accessToken: result.accessToken, refreshToken: result.refreshToken, email: result.user.email });
