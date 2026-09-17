@@ -1,0 +1,20 @@
+# 스키마 SQL을 뽑아내기 위한 일회성 프로파일.
+#
+#   .\gradlew.bat bootRun --args='--spring.profiles.active=schema-export'
+#
+# 실행하면 build/schema.sql이 생긴다. 그 내용을 다듬어 Flyway 마이그레이션으로 옮긴다.
+# 엔티티가 서른 개 가까이라 손으로 쓰면 반드시 틀린다 — Hibernate가 아는 걸 그대로 받아쓴다.
+#
+# DB에는 아무것도 적용하지 않는다(action: none). 파일만 만든다.
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: none
+    properties:
+      jakarta:
+        persistence:
+          schema-generation:
+            scripts:
+              action: create
+              create-target: build/schema.sql
+              create-source: metadata
