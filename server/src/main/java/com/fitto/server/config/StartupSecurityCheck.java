@@ -62,6 +62,34 @@ public class StartupSecurityCheck implements ApplicationListener<ApplicationEnvi
 		if (isProd && "update".equals(env.getProperty("spring.jpa.hibernate.ddl-auto"))) {
 			fail("운영 환경에서는 ddl-auto를 update로 둘 수 없습니다. 스키마는 마이그레이션으로 관리합니다.");
 		}
+
+		if (isProd) {
+			checkProdOrigins(env.getProperty("fitto.cors.allowed-origins", ""));
+		}
+	}
+
+	/**
+	 * 개발용으로 열어둔 주소가 그대로 배포되는 걸 막는다.
+	 *
+	 * 환경변수만 바꾸면 되는 구조라 값이 틀려도 코드 리뷰에 걸리지 않는다. 그래서 부팅 때 본다.
+	 * 여기가 열리면 아무 사이트나 브라우저에서 이 API를 부를 수 있다.
+	 */
+	static void checkProdOrigins(String origins) {
+		for (String origin : origins.split(",")) {
+			String value = origin.trim();
+			if (value.isEmpty()) {
+				continue;
+			}
+			if (value.equals("*")) {
+				fail("운영 환경에서 CORS_ORIGINS를 *로 둘 수 없습니다. 실제 앱 주소만 적으세요.");
+			}
+			if (value.contains("localhost") || value.contains("127.0.0.1")) {
+				fail("운영 환경 CORS_ORIGINS에 개발용 주소가 남아 있습니다: " + value);
+			}
+			if (value.startsWith("http://")) {
+				fail("운영 환경 CORS_ORIGINS는 https여야 합니다: " + value);
+			}
+		}
 	}
 
 	/** 로그에 한 번 찍고 끝낸다. 예외만 던지면 스프링 스택에 묻혀 안 보인다. */
