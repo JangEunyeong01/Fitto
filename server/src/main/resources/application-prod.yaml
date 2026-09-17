@@ -38,6 +38,8 @@ fitto:
 
 server:
   port: ${PORT:8080}
+  # 배포로 컨테이너가 교체될 때 처리 중이던 요청을 끝내고 종료한다.
+  shutdown: graceful
   # 프록시(Render·Railway 등) 뒤에 있을 때 원래 프로토콜·IP를 그대로 읽는다.
   forward-headers-strategy: framework
   tomcat:

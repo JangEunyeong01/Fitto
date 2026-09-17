@@ -25,4 +25,6 @@ COPY --from=build --chown=fitto:fitto /app/build/libs/*.jar app.jar
 ENV PORT=8080
 EXPOSE 8080
 
-ENTRYPOINT ["sh", "-c", "java -jar app.jar"]
+# sh를 거치지 않는다. 중간에 끼면 SIGTERM이 java까지 오지 않아,
+# 배포로 컨테이너가 교체될 때 처리 중이던 요청이 그대로 끊긴다.
+ENTRYPOINT ["java", "-jar", "app.jar"]
