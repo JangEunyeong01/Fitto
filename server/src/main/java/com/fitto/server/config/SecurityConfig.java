@@ -47,7 +47,9 @@ public class SecurityConfig {
 				// 인증 실패도 명세 0-6의 모양으로 내려보낸다. 기본 응답은 본문이 비어 있어 앱이 처리할 게 없다.
 				.exceptionHandling(handler -> handler
 						.authenticationEntryPoint((request, response, e) -> write(response, objectMapper,
-								ErrorCode.UNAUTHORIZED))
+								request.getAttribute(JwtAuthenticationFilter.EXPIRED_ATTRIBUTE) != null
+										? ErrorCode.TOKEN_EXPIRED
+										: ErrorCode.UNAUTHORIZED))
 						.accessDeniedHandler((request, response, e) -> write(response, objectMapper,
 								ErrorCode.FORBIDDEN)))
 				.build();

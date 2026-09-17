@@ -120,7 +120,7 @@ public class AuthService {
 				.orElseThrow(() -> new ApiException(ErrorCode.REFRESH_TOKEN_INVALID));
 
 		if (saved.getUsedAt() != null) {
-			revokeAll(saved.getUserId());
+			refreshTokenRepository.revokeAllByUserId(saved.getUserId(), Instant.now());
 			throw new ApiException(ErrorCode.REFRESH_TOKEN_REUSED);
 		}
 		if (!saved.isUsable(Instant.now())) {
@@ -141,10 +141,6 @@ public class AuthService {
 		String token = tokenProvider.createRefreshToken(userId);
 		refreshTokenRepository.save(RefreshToken.issue(userId, hash(token), tokenProvider.refreshExpiresAt()));
 		return token;
-	}
-
-	private void revokeAll(UUID userId) {
-		refreshTokenRepository.findAllByUserIdAndRevokedAtIsNull(userId).forEach(RefreshToken::revoke);
 	}
 
 	/**

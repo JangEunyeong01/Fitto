@@ -9,7 +9,7 @@ import { isSameTarget, type OutboxItem, type SyncOp } from '../sync/types';
  * 기기에 저장하는 이유는 앱을 껐다 켜도 남아 있어야 하기 때문이다.
  * 지하철에서 기록하고 앱을 닫아도, 다음에 연결되면 그때 올라간다.
  *
- * ponytail: 순서대로 하나씩 보낸다. 병렬로 보내면 빨라지지만
+ * 순서대로 하나씩 보낸다. 병렬로 보내면 빨라지지만
  * "추가 → 삭제"가 뒤집혀 도착할 수 있다. 기록 앱에서 그 위험이 속도보다 크다.
  */
 interface OutboxState {

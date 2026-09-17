@@ -24,6 +24,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
 	private static final String PREFIX = "Bearer ";
 
+	/** 기한만 지난 토큰이었다는 표시. 앱은 이걸 보고 다시 로그인시키지 않고 갱신을 시도한다. */
+	public static final String EXPIRED_ATTRIBUTE = "fitto.tokenExpired";
+
 	private final JwtTokenProvider tokenProvider;
 
 	public JwtAuthenticationFilter(JwtTokenProvider tokenProvider) {
@@ -36,11 +39,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
 		String header = request.getHeader("Authorization");
 		if (header != null && header.startsWith(PREFIX)) {
-			UUID userId = tokenProvider.parseUserId(header.substring(PREFIX.length()), false);
+			String token = header.substring(PREFIX.length());
+			UUID userId = tokenProvider.parseUserId(token, false);
 			if (userId != null) {
 				var authentication = new UsernamePasswordAuthenticationToken(userId, null, List.of());
 				authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 				SecurityContextHolder.getContext().setAuthentication(authentication);
+			} else if (tokenProvider.isExpired(token)) {
+				// 거절 사유를 여기서만 알 수 있다. 응답을 쓰는 건 SecurityConfig의 진입점이라 표시만 남긴다.
+				request.setAttribute(EXPIRED_ATTRIBUTE, Boolean.TRUE);
 			}
 		}
 
