@@ -65,3 +65,58 @@ export function putPeriodDaily(
 export function patchMe(patch: Record<string, unknown>, token: string): Promise<User> {
   return request<User>('/users/me', { method: 'PATCH', body: patch, token });
 }
+
+/* ---------- 조회 (서버 → 기기) ---------- */
+
+export interface DietDay {
+  date: string;
+  totalCalories: number;
+  meals: Record<string, MealItemDto[]>;
+  memos: Record<string, string | null>;
+}
+
+export function getDiet(date: string, token: string): Promise<DietDay> {
+  return request<DietDay>('/diet', { query: { date }, token });
+}
+
+export interface WorkoutDay {
+  date: string;
+  totalDuration: number;
+  totalCalories: number;
+  workouts: WorkoutDto[];
+}
+
+export function getWorkout(date: string, token: string): Promise<WorkoutDay> {
+  return request<WorkoutDay>('/workout', { query: { date }, token });
+}
+
+export function getWater(date: string, token: string): Promise<{ date: string; amount: number }> {
+  return request('/water', { query: { date }, token });
+}
+
+export function getSteps(
+  from: string,
+  to: string,
+  token: string
+): Promise<{ goal: number; items: { date: string; steps: number }[] }> {
+  return request('/steps', { query: { from, to }, token });
+}
+
+export function getWeights(
+  token: string
+): Promise<{ targetWeight: number | null; items: { date: string; weight: number }[] }> {
+  return request('/weights', { token });
+}
+
+/** 주기 설정이 없으면 404 PERIOD_NOT_SET이 온다(명세 12장). 부르는 쪽에서 "미설정"으로 처리한다. */
+export function getPeriod(today: string, token: string): Promise<PeriodSettingsDto> {
+  return request<PeriodSettingsDto>('/period', { query: { today }, token });
+}
+
+export function getPeriodDaily(
+  from: string,
+  to: string,
+  token: string
+): Promise<{ items: PeriodDailyDto[] }> {
+  return request('/period/daily', { query: { from, to }, token });
+}

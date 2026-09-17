@@ -258,6 +258,19 @@ interface AppState {
   seedMockToday: (dateKey: string) => void;
   /** 설정 → 데이터 초기화. 저장된 모든 상태를 처음 설치한 상태로 되돌린다(온보딩부터 다시). */
   resetAll: () => void;
+  /**
+   * 서버에서 받은 값을 기기에 반영한다(동기화 내려받기).
+   * 다른 액션과 달리 동기화 대기열에 쌓지 않는다 — 서버에서 온 값을 서버로 되돌려 보낼 이유가 없다.
+   */
+  applyServerRecords: (patch: {
+    profile?: Profile;
+    goals?: Goals;
+    persona?: Persona;
+    dailyRecords?: Record<string, Partial<DailyRecord>>;
+    weightLog?: Record<string, number>;
+    periodSettings?: PeriodSettings;
+    periodSetupDone?: boolean;
+  }) => void;
 }
 
 export function emptyMeals(): Record<MealSlot, MealItem[]> {
@@ -651,6 +664,26 @@ export const useAppStore = create<AppState>()(
       // getInitialState는 이 함수가 처음 만든 상태(액션 포함)라 replace로 통째로 바꿔도 액션이 사라지지 않는다.
       // persist가 바뀐 상태를 그대로 저장소에 다시 쓰므로 AsyncStorage를 따로 지울 필요는 없다.
       resetAll: () => set(api.getInitialState(), true),
+
+      applyServerRecords: (patch) =>
+        set((s) => {
+          const dailyRecords = { ...s.dailyRecords };
+          // 서버가 준 날짜만 덮어쓴다. 서버에 없는 날짜의 기기 기록은 그대로 둔다 —
+          // 아직 못 올린 기록일 수 있어서, 여기서 지우면 영영 사라진다.
+          Object.entries(patch.dailyRecords ?? {}).forEach(([date, record]) => {
+            dailyRecords[date] = { ...(dailyRecords[date] ?? emptyRecord()), ...record };
+          });
+
+          return {
+            dailyRecords,
+            weightLog: patch.weightLog ? { ...s.weightLog, ...patch.weightLog } : s.weightLog,
+            periodSettings: patch.periodSettings ?? s.periodSettings,
+            periodSetupDone: patch.periodSetupDone ?? s.periodSetupDone,
+            profile: patch.profile ?? s.profile,
+            goals: patch.goals ?? s.goals,
+            persona: patch.persona ?? s.persona,
+          };
+        }),
     }),
     {
       name: 'fitto-app-storage',

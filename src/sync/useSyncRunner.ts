@@ -2,7 +2,17 @@ import { useEffect } from 'react';
 import { AppState } from 'react-native';
 import { useAuthStore } from '../store/useAuthStore';
 import { useOutboxStore } from '../store/useOutboxStore';
+import { pullAll } from './pull';
 import { runSync } from './syncEngine';
+
+/**
+ * 올린 뒤에 받는다. 순서를 바꾸면 아직 못 올린 기록이 서버 값으로 덮여 사라진다.
+ * (pullAll도 대기열이 비어 있을 때만 진행하도록 한 번 더 막아둔다.)
+ */
+async function syncBoth(): Promise<void> {
+  await runSync();
+  await pullAll();
+}
 
 /** 큐가 비어 있어도 주기적으로 한 번씩 확인한다. 실패로 멈춰 있던 작업을 다시 집어 든다. */
 const INTERVAL_MS = 30_000;
@@ -17,9 +27,10 @@ const INTERVAL_MS = 30_000;
  */
 export function useSyncRunner(): void {
   useEffect(() => {
-    // 앱을 켤 때 남아 있던 작업부터 비운다.
-    runSync();
+    // 앱을 켤 때 남아 있던 작업부터 비우고, 다른 기기에서 쌓인 기록을 받아온다.
+    syncBoth();
 
+    // 기록할 때마다 받아올 필요는 없다. 올리기만 한다.
     const unsubscribeOutbox = useOutboxStore.subscribe((state, prev) => {
       if (state.items.length > prev.items.length) {
         runSync();
@@ -30,13 +41,13 @@ export function useSyncRunner(): void {
     // 그 뒤에 생긴 기록은 여기서 따라붙는다.
     const unsubscribeAuth = useAuthStore.subscribe((state, prev) => {
       if (state.status === 'member' && prev.status !== 'member') {
-        runSync();
+        syncBoth();
       }
     });
 
     const subscription = AppState.addEventListener('change', (next) => {
       if (next === 'active') {
-        runSync();
+        syncBoth();
       }
     });
 
