@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { calculateGoals } from '../utils/goals';
 // 기록이 바뀌면 동기화 대기열에 알린다. 게스트면 아무 일도 일어나지 않는다(sync/enqueue.ts).
 import { enqueueSync } from '../sync/enqueue';
+import { isUuid, newId } from '../utils/id';
 import { toDateKey, type PeriodSettings } from '../utils/periodCycle';
 import type { WorkoutPreference } from '../utils/workoutRecommend';
 import {
@@ -654,7 +655,7 @@ export const useAppStore = create<AppState>()(
     {
       name: 'fitto-app-storage',
       storage: createJSONStorage(() => AsyncStorage),
-      version: 5,
+      version: 6,
       // 기본 병합은 얕은 병합이라 profile 같은 객체는 저장본이 통째로 덮어쓴다.
       // 그러면 나중에 필드를 추가했을 때 기존 사용자에게만 undefined가 남으므로,
       // 객체 필드는 기본값 위에 저장본을 얹는다.
@@ -687,6 +688,8 @@ export const useAppStore = create<AppState>()(
               cardHidden?: CardId[];
               onboardingDone?: boolean;
               startDate?: string | null;
+              recipes?: any[];
+              routines?: any[];
             }
           | undefined;
         if (!state) return state as unknown as AppState;
@@ -816,6 +819,27 @@ export const useAppStore = create<AppState>()(
         if (version < 5 && state.onboardingDone) {
           const keys = Object.keys(state.dailyRecords ?? {}).sort();
           state.startDate = keys[0] ?? toDateKey(new Date());
+        }
+
+        // v6: 기록 ID를 UUID로 맞춘다. 예전에는 `${Date.now()}` 형태로 만들었는데,
+        // 서버가 UUID만 받아서(명세 0-2) 그대로 두면 이미 쌓인 기록이 영영 안 올라간다.
+        if (version < 6) {
+          Object.values(state.dailyRecords ?? {}).forEach((rec: any) => {
+            rec?.exercises?.forEach((e: any) => {
+              if (!isUuid(e.id)) e.id = newId();
+            });
+            Object.values(rec?.meals ?? {}).forEach((items: any) => {
+              (items as any[]).forEach((item) => {
+                if (!isUuid(item.id)) item.id = newId();
+              });
+            });
+          });
+          (state.recipes ?? []).forEach((r: any) => {
+            if (!isUuid(r.id)) r.id = newId();
+          });
+          (state.routines ?? []).forEach((r: any) => {
+            if (!isUuid(r.id)) r.id = newId();
+          });
         }
 
         return state as AppState;

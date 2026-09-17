@@ -4,6 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 import GlassCard from '../../../components/GlassCard';
 import { useTheme } from '../../../theme/useTheme';
 import { useAppStore } from '../../../store/useAppStore';
+import { newId } from '../../../utils/id';
 import { dateKey } from '../../../utils/timeOfDay';
 import { useToastStore } from '../../../store/useToastStore';
 import { QUICK_WORKOUTS, QUICK_WORKOUT_MINUTES, calcExerciseKcal, findExercise } from '../../../data/workouts';
@@ -29,7 +30,7 @@ export default function ExerciseCard() {
     if (!exercise) return;
     const kcal = calcExerciseKcal(exercise.met, QUICK_WORKOUT_MINUTES, weightKg);
     addExercise(dateKey(), {
-      id: `${Date.now()}`,
+      id: newId(),
       code: exercise.code,
       name: exercise.name,
       minutes: QUICK_WORKOUT_MINUTES,

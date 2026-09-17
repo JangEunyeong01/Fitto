@@ -11,6 +11,7 @@ import { alpha, brand, overlay, radius, selection, typography } from '../../them
 import { FOODS, findAllergyHit, gramsPerServing, type Food } from '../../data/foods';
 import { useAppStore, type MealSlot } from '../../store/useAppStore';
 import { AVOID_TAGS, DISEASE_TAGS, MEAL_SLOTS, labelOf, type MealUnit } from '../../constants/codes';
+import { newId } from '../../utils/id';
 import { cautionReason, findCautionHit } from '../../utils/foodCaution';
 import { slotLabel } from '../../utils/meal';
 import { useFoodSearchStore } from '../../store/useFoodSearchStore';
@@ -109,7 +110,7 @@ function FoodSearchForm() {
       return;
     }
     addMealItem(date, slot, {
-      id: `${picked.id}-${Date.now()}`,
+      id: newId(),
       name: picked.name,
       amount: qty,
       unit,
