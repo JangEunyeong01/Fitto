@@ -18,6 +18,7 @@ import { useTutorialStore } from '../../store/useTutorialStore';
 import { useToastStore } from '../../store/useToastStore';
 import { useFoodSearchStore } from '../../store/useFoodSearchStore';
 import { useAuthStore } from '../../store/useAuthStore';
+import { useOutboxStore } from '../../store/useOutboxStore';
 import { logout as requestLogout } from '../../api/auth';
 import { PERSONA_OPTIONS } from '../onboarding/onboardingData';
 import { GOAL_OPTIONS, labelOf } from '../../constants/codes';
@@ -67,6 +68,8 @@ export default function SettingsScreen() {
       }
     }
     signOut();
+    // 아직 못 올린 작업은 버린다. 남겨두면 다음에 로그인한 계정으로 올라간다.
+    useOutboxStore.getState().clear();
     showToast('로그아웃했어요');
   };
 
@@ -81,6 +84,8 @@ export default function SettingsScreen() {
     resetAll();
     // 최근 검색은 세션 스토어라 앱 스토어 초기화에 안 딸려온다.
     useFoodSearchStore.setState({ recent: [] });
+    // 기록을 지웠으니 올릴 것도 없다. 큐를 두면 지운 기록을 서버로 보낸다.
+    useOutboxStore.getState().clear();
   };
 
   const showCardOrderSheet = useCardOrderSheetStore((s) => s.show);

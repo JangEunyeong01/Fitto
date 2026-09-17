@@ -32,6 +32,9 @@ public class SecurityConfig {
 	public SecurityFilterChain filterChain(HttpSecurity http, JwtAuthenticationFilter jwtFilter,
 			ObjectMapper objectMapper) throws Exception {
 		return http
+				// CORS 설정(CorsConfig)을 필터 체인에 물린다. 없으면 브라우저의 사전 요청(OPTIONS)이 401로 막힌다.
+				.cors(cors -> {
+				})
 				// 브라우저 폼이 아니라 토큰을 쓰므로 CSRF 토큰이 필요 없다.
 				.csrf(AbstractHttpConfigurer::disable)
 				.httpBasic(AbstractHttpConfigurer::disable)

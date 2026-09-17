@@ -14,9 +14,12 @@ import TutorialOverlay from './src/components/TutorialOverlay';
 import { useTheme } from './src/theme/useTheme';
 import { useFittoFonts } from './src/theme/fonts';
 import { lightColors } from './src/theme/tokens';
+import { useSyncRunner } from './src/sync/useSyncRunner';
 
 function AppShell() {
   const { mode } = useTheme();
+  // 로그인 상태라면 기기에 쌓인 기록을 서버로 올린다. 게스트면 아무 일도 하지 않는다.
+  useSyncRunner();
   return (
     <>
       {/* 시트들은 화면 전체를 덮는 오버레이지만 useNavigation을 쓰므로
