@@ -31,7 +31,7 @@ import type { SyncOp } from './types';
 let running = false;
 
 /** 401을 만나면 한 번만 갱신을 시도한다. 갱신도 실패하면 로그아웃시킨다(명세 0-4). */
-async function refreshToken(): Promise<string | null> {
+export async function refreshToken(): Promise<string | null> {
   const { refreshToken: current, updateTokens, signOut } = useAuthStore.getState();
   if (!current) {
     return null;
