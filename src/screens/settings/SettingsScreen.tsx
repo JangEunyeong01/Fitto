@@ -27,6 +27,16 @@ import { alpha, semantic, typography } from '../../theme/tokens';
 // 버전은 app.json 한 곳에서만 올린다. 화면에 따로 적어두면 배포 때 둘 중 하나를 꼭 까먹는다.
 import appConfig from '../../../app.json';
 
+/** "3분 전"처럼 사람이 읽는 표현으로. 초 단위는 보여줘도 알 것이 없어 "방금"으로 묶는다. */
+function formatSyncedAgo(timestamp: number): string {
+  const minutes = Math.floor((Date.now() - timestamp) / 60_000);
+  if (minutes < 1) return '방금';
+  if (minutes < 60) return `${minutes}분 전`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}시간 전`;
+  return `${Math.floor(hours / 24)}일 전`;
+}
+
 const THEME_OPTIONS: { value: ThemeMode; label: string }[] = [
   { value: 'light', label: '라이트' },
   { value: 'dark', label: '다크' },
@@ -53,6 +63,19 @@ export default function SettingsScreen() {
   const authStatus = useAuthStore((s) => s.status);
   const authEmail = useAuthStore((s) => s.email);
   const signOut = useAuthStore((s) => s.signOut);
+
+  const pendingCount = useOutboxStore((s) => s.items.length);
+  const lastSyncedAt = useOutboxStore((s) => s.lastSyncedAt);
+
+  /**
+   * 동기화 상태 한 줄. 못 올린 게 있으면 그 사실을 먼저 알린다 —
+   * "언제 올라갔는지"보다 "아직 안 올라간 게 있는지"가 사용자에게 중요하다.
+   */
+  const syncLabel = pendingCount > 0
+    ? `기록 ${pendingCount}건 올리는 중`
+    : lastSyncedAt
+      ? `${formatSyncedAgo(lastSyncedAt)} 동기화됨`
+      : '아직 동기화한 기록이 없어요';
 
   /**
    * 로그아웃. 서버에 refreshToken 폐기를 요청하되, 실패해도 기기에서는 지운다 —
@@ -136,6 +159,7 @@ export default function SettingsScreen() {
           {authStatus === 'member' ? (
             <>
               <Text style={[styles.previewText, { color: colors.sub }]}>{authEmail}</Text>
+              <Text style={[styles.syncText, { color: colors.sub }]}>{syncLabel}</Text>
               <Divider colors={colors} />
               <NavRow label="로그아웃" actionLabel="실행" onPress={handleLogout} colors={colors} />
             </>
@@ -359,6 +383,10 @@ const styles = StyleSheet.create({
   previewText: {
     ...typography.bodySm,
     marginTop: 10,
+  },
+  syncText: {
+    ...typography.caption,
+    marginTop: 4,
   },
   divider: {
     borderTopWidth: StyleSheet.hairlineWidth,
