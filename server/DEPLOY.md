@@ -98,3 +98,20 @@ select email, created_at from users order by created_at;
 
 `https://`로 시작하지 않으면 운영 빌드가 첫 실행에서 에러를 냅니다(`src/api/client.ts`).
 개발 빌드에서는 이 검사를 하지 않으므로 `http://localhost:8080`을 그대로 쓸 수 있습니다.
+
+**`.env.local`이 시스템 환경변수를 덮습니다.** 그래서 개발용 파일이 남아 있는 상태로 내 컴퓨터에서 빌드하면,
+환경변수로 배포 주소를 줘도 번들에는 `http://localhost:8080`이 박힙니다. 확인한 값입니다.
+
+```bash
+# 환경변수를 줘도 .env.local이 이김
+EXPO_PUBLIC_API_URL=https://... npx expo export --platform web
+```
+
+빌드 서버(EAS 등)에는 `.env.local`이 없으므로(깃에 올리지 않음) 문제가 생기지 않습니다.
+내 컴퓨터에서 빌드해야 한다면 그 파일을 잠시 치우고 빌드합니다.
+
+빌드한 뒤에는 번들에 무엇이 들어갔는지 직접 확인할 수 있습니다.
+
+```bash
+grep -o "https\?://[a-z.:0-9-]*" dist/_expo/static/js/web/*.js | sort -u
+```
