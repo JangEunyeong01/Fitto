@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, Pressable, StyleSheet, Platform } from 'react-native';
+import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { BlurView } from 'expo-blur';
 import TextField from '../../components/TextField';
 import Icon from '../../components/Icon';
@@ -71,7 +71,6 @@ export default function TagPicker({
                 <BlurView
                   intensity={20}
                   tint={mode === 'dark' ? 'dark' : 'light'}
-                  experimentalBlurMethod={Platform.OS === 'android' ? 'dimezisBlurView' : undefined}
                   style={[styles.tag, { borderColor: on ? selection.border : colors.stroke }]}
                 >
                   <View style={[styles.tagInner, { backgroundColor: on ? selection.bg : colors.card }]}>

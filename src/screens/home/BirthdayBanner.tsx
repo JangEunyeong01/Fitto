@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, Pressable, StyleSheet, Platform } from 'react-native';
+import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import Icon from '../../components/Icon';
@@ -20,7 +20,6 @@ export default function BirthdayBanner({ name, onPress }: BirthdayBannerProps) {
       <BlurView
         intensity={30}
         tint={mode === 'dark' ? 'dark' : 'light'}
-        experimentalBlurMethod={Platform.OS === 'android' ? 'dimezisBlurView' : undefined}
         style={[styles.blur, { borderColor: colors.stroke }]}
       >
         <LinearGradient

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, Pressable, StyleSheet, Platform } from 'react-native';
+import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
@@ -77,7 +77,6 @@ export default function TabBar({ state, navigation }: BottomTabBarProps) {
         <BlurView
           intensity={40}
           tint={mode === 'dark' ? 'dark' : 'light'}
-          experimentalBlurMethod={Platform.OS === 'android' ? 'dimezisBlurView' : undefined}
           style={[styles.bar, { borderColor: colors.stroke }]}
         >
           <View style={[styles.barInner, { backgroundColor: colors.card }]}>
