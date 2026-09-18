@@ -25,6 +25,14 @@ COPY --from=build --chown=fitto:fitto /app/build/libs/*.jar app.jar
 ENV PORT=8080
 EXPOSE 8080
 
+# 무료 인스턴스(메모리 512MB, CPU 0.1개)에 맞춘 JVM 설정.
+# - MaxRAMPercentage: 기본값은 컨테이너 메모리의 25%(약 128MB)라 엔티티가 서른 개 가까운 서버에는 모자란다
+# - UseSerialGC: CPU가 0.1개면 병렬 GC가 오히려 느리다. 작은 힙에서는 직렬이 가장 싸다
+# - TieredStopAtLevel=1: 최적화 컴파일을 생략해 켜지는 시간을 줄인다. 잠들었다 깰 때마다 켜지므로 이쪽이 이득이다
+# - ExitOnOutOfMemoryError: 메모리가 모자라면 반쯤 죽은 채 버티지 말고 끝낸다. 호스팅이 다시 띄운다
+# 환경변수라서 호스팅 설정에서 바로 바꿀 수 있다(이미지를 다시 빌드하지 않아도 된다).
+ENV JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=75 -XX:+UseSerialGC -XX:TieredStopAtLevel=1 -XX:+ExitOnOutOfMemoryError"
+
 # sh를 거치지 않는다. 중간에 끼면 SIGTERM이 java까지 오지 않아,
 # 배포로 컨테이너가 교체될 때 처리 중이던 요청이 그대로 끊긴다.
 ENTRYPOINT ["java", "-jar", "app.jar"]
