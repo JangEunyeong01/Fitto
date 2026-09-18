@@ -5,6 +5,28 @@
 설정이 틀려도 서버는 대개 잘 뜹니다. 그래서 눈으로 보고 넘어가면 놓칩니다.
 아래는 전부 명령 한 줄로 확인할 수 있는 것만 모았습니다. `<도메인>`을 실제 주소로 바꿔서 그대로 실행하면 됩니다.
 
+## 지금 구성
+
+| 무엇 | 어디 | 비고 |
+|------|------|------|
+| 서버 | Render 무료 (싱가포르) | `server/Dockerfile`로 빌드. main에서 `server/`가 바뀌면 자동으로 다시 배포 |
+| DB | Neon 무료 (싱가포르) | 직접 연결(풀링 끔). 스키마는 서버가 켜질 때 Flyway가 만든다 |
+
+서버와 DB는 같은 지역에 둔다. 다르면 쿼리 한 번마다 대륙을 건너간다.
+
+Render의 DB 주소는 Neon이 주는 주소에서 앞에 `jdbc:`를 붙이고, 사용자·비밀번호와 `channel_binding` 옵션을 뺀 모양이다.
+
+```
+jdbc:postgresql://<호스트>/<DB 이름>?sslmode=require
+```
+
+## 처음 배포할 때 걸렸던 것
+
+- **환경변수가 하나도 안 들어갔다.** Render의 *Import from .env*에 붙여넣고 확인 버튼을 안 누르면 저장되지 않는다. 서버가 `localhost:5432`에 붙으려다 죽으면 이 경우다
+- **`JWT_SECRET`만 빠졌다.** *Generated secret*으로 만든 뒤 저장을 따로 해야 한다. 로그에 `[설정 오류] JWT_SECRET이 비어 있습니다`가 찍힌다
+- **Language를 Docker로 바꿔야 한다.** 기본값이 Node다
+- **Health Check Path에 보이는 `/healthz`는 예시 글자다.** 직접 `/health`를 입력해야 한다
+
 ## 부팅이 거부되는 설정
 
 다음은 서버가 아예 뜨지 않습니다(`StartupSecurityCheck`). 로그에 `[설정 오류]`로 원인이 찍힙니다.
@@ -72,7 +94,18 @@ curl -sI https://<도메인>/health
 curl -s -o /dev/null -w "%{http_code}\n" -X POST https://<도메인>/auth/login -H "Content-Type: application/json" -H "Transfer-Encoding: chunked" -d '{}'
 ```
 
-`413`이어야 합니다. 길이를 밝히지 않는 요청을 받지 않는다는 뜻입니다.
+로컬에서는 `413`입니다. 길이를 밝히지 않는 요청을 서버가 받지 않는다는 뜻입니다.
+
+Render에서는 `400`이 나옵니다. 앞단 프록시가 청크 요청을 받아 길이를 붙인 뒤 넘겨서, 서버에는 `{}` 2바이트짜리
+평범한 요청으로 도착하기 때문입니다(이메일이 비어 400). 우회 경로가 서버까지 오지 않는 것이라 문제가 아닙니다.
+큰 요청이 막히는지는 이렇게 따로 봅니다.
+
+```bash
+node -e "require('fs').writeFileSync('big.json',JSON.stringify({email:'a@b.com',password:'P'.repeat(6*1024*1024)}))"
+curl -s -o /dev/null -w "%{http_code}\n" -X POST https://<도메인>/auth/login -H "Content-Type: application/json" -d @big.json
+```
+
+`413`이어야 합니다.
 
 ### 7. 개발용 도구가 열려 있지 않은지
 
@@ -80,7 +113,8 @@ curl -s -o /dev/null -w "%{http_code}\n" -X POST https://<도메인>/auth/login 
 curl -s -o /dev/null -w "%{http_code}\n" https://<도메인>/actuator/env
 ```
 
-`404`여야 합니다. `actuator`·`springdoc`(Swagger)·H2 콘솔은 의존성에 넣지 않았으므로 경로 자체가 없습니다. 나중에 누가 추가하면 이 확인이 걸러줍니다.
+토큰 없이 부르면 인증 검사가 먼저 막아서 `401`, 로그인한 토큰을 붙이면 `404`입니다. 둘 다 정상입니다.
+`200`이 나오면 안 됩니다. `actuator`·`springdoc`(Swagger)·H2 콘솔은 의존성에 넣지 않았으므로 경로 자체가 없습니다. 나중에 누가 추가하면 이 확인이 걸러줍니다.
 
 ### 8. 모르는 사람이 가입할 수 없는지
 

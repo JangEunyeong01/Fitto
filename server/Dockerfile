@@ -25,6 +25,12 @@ COPY --from=build --chown=fitto:fitto /app/build/libs/*.jar app.jar
 ENV PORT=8080
 EXPOSE 8080
 
+# 이 이미지는 배포에만 쓴다. 프로파일을 기본으로 prod에 둔다.
+# 호스팅 설정에서 빠뜨리면 개발 설정(localhost DB, 개발용 JWT 시크릿)으로 켜지려 한다 —
+# 첫 배포에서 실제로 그랬다. DB가 없어 바로 죽었지만, DB 주소만 들어가 있었다면
+# 개발용 시크릿으로 운영 서버가 떴을 것이다. 부팅 검사도 prod일 때만 돌아서 못 잡는다.
+ENV SPRING_PROFILES_ACTIVE=prod
+
 # 무료 인스턴스(메모리 512MB, CPU 0.1개)에 맞춘 JVM 설정.
 # - MaxRAMPercentage: 기본값은 컨테이너 메모리의 25%(약 128MB)라 엔티티가 서른 개 가까운 서버에는 모자란다
 # - UseSerialGC: CPU가 0.1개면 병렬 GC가 오히려 느리다. 작은 힙에서는 직렬이 가장 싸다
