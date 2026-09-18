@@ -82,7 +82,15 @@ curl -s -o /dev/null -w "%{http_code}\n" https://<도메인>/actuator/env
 
 `404`여야 합니다. `actuator`·`springdoc`(Swagger)·H2 콘솔은 의존성에 넣지 않았으므로 경로 자체가 없습니다. 나중에 누가 추가하면 이 확인이 걸러줍니다.
 
-### 8. 운영 DB에 테스트 계정이 없는지
+### 8. 모르는 사람이 가입할 수 없는지
+
+```bash
+curl -s -o /dev/null -w "%{http_code}\n" -X POST https://<도메인>/auth/signup -H "Content-Type: application/json" -d '{"email":"stranger@example.com","password":"Password123","profile":{"name":"x","gender":"female","age":30,"height":165,"weight":60,"activityLevel":"sedentary","goal":"maintain","personality":"neutral"}}'
+```
+
+`403`이어야 합니다(`SIGNUP_CLOSED`). `201`이면 `SIGNUP_ALLOWED_EMAILS`가 비어 있는 것이고, 방금 그 요청으로 계정이 하나 생겼으니 지워야 합니다.
+
+### 9. 운영 DB에 테스트 계정이 없는지
 
 ```sql
 select email, created_at from users order by created_at;

@@ -14,6 +14,7 @@ import com.fitto.server.auth.dto.LoginRequest;
 import com.fitto.server.auth.dto.SignupRequest;
 import com.fitto.server.auth.dto.TokenRequest;
 import com.fitto.server.auth.dto.TokenResponse;
+import com.fitto.server.common.LogMask;
 import com.fitto.server.common.error.ApiException;
 import com.fitto.server.common.error.ErrorCode;
 
@@ -29,10 +30,12 @@ public class AuthController {
 
 	private final AuthService authService;
 	private final SignupThrottle signupThrottle;
+	private final SignupAllowlist signupAllowlist;
 
-	public AuthController(AuthService authService, SignupThrottle signupThrottle) {
+	public AuthController(AuthService authService, SignupThrottle signupThrottle, SignupAllowlist signupAllowlist) {
 		this.authService = authService;
 		this.signupThrottle = signupThrottle;
+		this.signupAllowlist = signupAllowlist;
 	}
 
 	@PostMapping("/signup")
@@ -43,6 +46,14 @@ public class AuthController {
 		if (signupThrottle.isBlocked(clientKey)) {
 			log.warn("가입 차단: ip={}", clientKey);
 			throw new ApiException(ErrorCode.TOO_MANY_REQUESTS, "가입 시도가 너무 잦아요. 잠시 후 다시 시도해 주세요.");
+		}
+
+		// 중복 확인보다 먼저 본다. 목록 밖의 사람이 "이미 가입된 이메일" 응답으로 가입 여부를 떠보지 못하게.
+		// 거절도 시도 횟수에 넣는다 — 목록에 있는 이메일을 맞히려고 두드리는 것도 막아야 한다.
+		if (!signupAllowlist.isAllowed(request.email())) {
+			signupThrottle.record(clientKey);
+			log.warn("가입 거절(허용 목록 밖): email={} ip={}", LogMask.email(request.email()), clientKey);
+			throw new ApiException(ErrorCode.SIGNUP_CLOSED);
 		}
 
 		AuthResponse response = authService.signup(request);
