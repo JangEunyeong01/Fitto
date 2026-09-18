@@ -27,7 +27,9 @@ dependencies {
 	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'
 	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'
 	// 운영 스키마는 마이그레이션으로 관리한다(ddl-auto는 개발 전용).
-	implementation 'org.flywaydb:flyway-core'
+	// Boot 4는 자동 설정을 모듈별로 나눴다. flyway-core만 넣으면 라이브러리만 들어오고
+	// "부팅할 때 마이그레이션을 돌리는" 자동 설정이 빠져서, 아무 오류 없이 Flyway가 안 돈다.
+	implementation 'org.springframework.boot:spring-boot-starter-flyway'
 	runtimeOnly 'org.flywaydb:flyway-database-postgresql'
 	compileOnly 'org.projectlombok:lombok'
 	runtimeOnly 'org.postgresql:postgresql'
