@@ -546,7 +546,13 @@ fertileEnd    = ovulation
 |------|------|
 | 201 | 가입 성공 |
 | 400 | `INVALID_INPUT` |
+| 403 | `SIGNUP_CLOSED` (허용 목록에 없는 이메일) |
 | 409 | `EMAIL_DUPLICATED` |
+| 429 | `TOO_MANY_REQUESTS` (같은 IP 1시간 5회) |
+
+**가입 허용 목록** — 운영 환경변수 `SIGNUP_ALLOWED_EMAILS`에 이메일을 적어두면 그 이메일만 가입할 수 있다. 비우면 누구나 가입한다.
+
+서버 주소는 공개하지 않아도 인터넷에 열려 있다. 기록 API는 토큰이 있어야 쓸 수 있지만 가입은 누구나 부를 수 있어서, 혼자 쓰는 동안에는 가입 문을 닫아둔다. 허용 목록 확인은 중복 확인보다 먼저 한다 — 목록 밖의 사람이 `409`로 가입 여부를 떠보지 못하게.
 
 ---
 
@@ -1596,6 +1602,7 @@ F-035 "사용" 버튼. 루틴 안의 운동을 그날 기록으로 한꺼번에 
 | 404 | `NOT_FOUND` | 리소스 없음 |
 | 404 | `FOOD_NOT_FOUND` | 식품 DB에 없는 `foodId` |
 | 404 | `PERIOD_NOT_SET` | 생리 주기 미입력 |
+| 403 | `SIGNUP_CLOSED` | 가입 허용 목록에 없는 이메일 |
 | 409 | `EMAIL_DUPLICATED` | 이미 가입된 이메일 |
 | 405 | `METHOD_NOT_ALLOWED` | 그 경로가 받지 않는 메서드 |
 | 409 | `ID_CONFLICT` | 다른 사용자가 쓰는 ID |

@@ -35,6 +35,9 @@ fitto:
   cors:
     # 배포된 앱 주소만 허용한다. 쉼표로 여러 개.
     allowed-origins: ${CORS_ORIGINS:}
+  signup:
+    # 가입을 받을 이메일. 쉼표로 여러 개. 비우면 누구나 가입할 수 있다.
+    allowed-emails: ${SIGNUP_ALLOWED_EMAILS:}
 
 server:
   port: ${PORT:8080}

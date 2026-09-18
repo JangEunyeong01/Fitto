@@ -17,6 +17,7 @@ public enum ErrorCode {
 	REFRESH_TOKEN_REUSED(HttpStatus.UNAUTHORIZED, "보안을 위해 모든 기기에서 로그아웃했어요. 다시 로그인해 주세요."),
 	TOO_MANY_REQUESTS(HttpStatus.TOO_MANY_REQUESTS, "시도가 너무 잦아요. 잠시 후 다시 시도해 주세요."),
 	FORBIDDEN(HttpStatus.FORBIDDEN, "권한이 없어요."),
+	SIGNUP_CLOSED(HttpStatus.FORBIDDEN, "지금은 초대받은 이메일만 가입할 수 있어요."),
 	NOT_FOUND(HttpStatus.NOT_FOUND, "찾을 수 없어요."),
 	// 직접 입력한 음식은 그램 환산 정보가 없어 g ↔ 인분을 바꿔 계산할 수 없다(명세 7장).
 	UNIT_CHANGE_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "단위를 바꾸려면 기록을 지우고 다시 추가해 주세요."),
