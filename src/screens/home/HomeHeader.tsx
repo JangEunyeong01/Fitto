@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, Pressable, StyleSheet, Platform } from 'react-native';
+import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { useNavigation } from '@react-navigation/native';
@@ -27,7 +27,6 @@ export default function HomeHeader() {
           <BlurView
             intensity={25}
             tint={mode === 'dark' ? 'dark' : 'light'}
-            experimentalBlurMethod={Platform.OS === 'android' ? 'dimezisBlurView' : undefined}
             style={[styles.settingsBtn, { borderColor: colors.stroke }]}
           >
             <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.card2 }]} />
