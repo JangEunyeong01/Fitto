@@ -9,6 +9,7 @@ import javax.crypto.SecretKey;
 
 import org.springframework.stereotype.Component;
 
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.security.Keys;
@@ -65,6 +66,22 @@ public class JwtTokenProvider {
 			return UUID.fromString(claims.getSubject());
 		} catch (JwtException | IllegalArgumentException e) {
 			return null;
+		}
+	}
+
+	/**
+	 * 서명은 맞는데 기한만 지난 토큰인지 확인한다.
+	 * 앱이 "다시 로그인"과 "갱신하면 되는 상태"를 구분할 수 있어야 해서 따로 본다(명세 0-6 TOKEN_EXPIRED).
+	 */
+	public boolean isExpired(String token) {
+		try {
+			Jwts.parser().verifyWith(key).build().parseSignedClaims(token);
+			return false;
+		} catch (ExpiredJwtException e) {
+			return true;
+		} catch (JwtException | IllegalArgumentException e) {
+			// 서명이 틀린 토큰은 기한과 상관없이 위조다.
+			return false;
 		}
 	}
 

@@ -4,7 +4,30 @@ import type { ApiErrorBody } from './types';
  * 서버 호출 공통 처리. 화면은 이 파일을 직접 쓰지 않고 리소스별 함수를 거친다.
  * 주소는 EXPO_PUBLIC_API_URL로 받는다(빌드에 그대로 박히므로 비밀값은 넣지 않는다).
  */
-const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? '';
+
+/**
+ * 개발용 주소가 그대로 배포되는 걸 막는다.
+ *
+ * 이 값은 빌드할 때 번들에 박혀서 나중에 고칠 수 없다. 그런데 틀려도 티가 안 난다 —
+ * 게스트는 서버를 안 부르므로 앱이 멀쩡히 돌고, 로그인한 사람만 동기화가 조용히 실패한다.
+ * 그래서 첫 실행에서 바로 드러나도록 여기서 끊는다.
+ *
+ * 평문 http는 안드로이드가 기본으로 차단하기도 한다. 주소가 http면 배포된 앱은 어차피 못 쓴다.
+ */
+function checkApiUrl(url: string, isDev: boolean): string {
+  if (isDev) {
+    return url;
+  }
+  if (!url) {
+    throw new Error('EXPO_PUBLIC_API_URL이 비어 있습니다. 빌드 환경변수를 확인해 주세요.');
+  }
+  if (url.startsWith('http://')) {
+    throw new Error(`운영 빌드의 서버 주소는 https여야 합니다: ${url}`);
+  }
+  return url;
+}
+
+const BASE_URL = checkApiUrl(process.env.EXPO_PUBLIC_API_URL ?? '', __DEV__);
 
 /** 서버가 내려준 에러. message는 그대로 토스트에 띄울 수 있는 한국어 문장이다(명세 0-6). */
 export class ApiError extends Error {

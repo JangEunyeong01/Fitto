@@ -11,4 +11,6 @@ public interface RoutineRepository extends JpaRepository<Routine, UUID> {
 	List<Routine> findAllByUserIdOrderByName(UUID userId);
 
 	Optional<Routine> findByIdAndUserId(UUID id, UUID userId);
+
+	boolean existsByIdAndUserId(UUID id, UUID userId);
 }

@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { tokenStorage } from './tokenStorage';
 
 /**
  * 로그인 상태(명세 3-1).
@@ -11,8 +11,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
  * 앱 데이터(useAppStore)와 저장소를 나눈 이유는 로그아웃 때문이다.
  * 로그아웃은 토큰만 지우면 되는데, 한 저장소에 두면 기록까지 건드릴 위험이 생긴다.
  *
- * ponytail: 토큰을 AsyncStorage에 평문으로 둔다. 기기가 탈취되면 읽힌다.
- * 네이티브 빌드로 넘어갈 때 expo-secure-store로 옮긴다(웹에는 SecureStore가 없어 지금은 못 쓴다).
+ * 토큰은 앱 데이터와 다른 저장소에 둔다(tokenStorage). 네이티브에서는 OS 보안 저장소를 쓴다.
  */
 export type AuthStatus = 'guest' | 'member';
 
@@ -46,7 +45,7 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'fitto-auth-storage',
-      storage: createJSONStorage(() => AsyncStorage),
+      storage: createJSONStorage(() => tokenStorage),
       version: 1,
     }
   )

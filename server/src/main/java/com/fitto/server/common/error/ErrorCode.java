@@ -23,6 +23,10 @@ public enum ErrorCode {
 	PERIOD_NOT_SET(HttpStatus.NOT_FOUND, "생리 주기 정보가 아직 없어요."),
 	EMAIL_DUPLICATED(HttpStatus.CONFLICT, "이미 가입된 이메일이에요."),
 	ID_CONFLICT(HttpStatus.CONFLICT, "다른 곳에서 쓰고 있는 기록이에요."),
+	PAYLOAD_TOO_LARGE(HttpStatus.PAYLOAD_TOO_LARGE, "보낸 데이터가 너무 커요."),
+	// 아래 둘은 앱이 정상 동작하면 나오지 않는다. 잘못 부른 요청을 500으로 돌려주지 않으려고 둔다.
+	METHOD_NOT_ALLOWED(HttpStatus.METHOD_NOT_ALLOWED, "요청 방식이 올바르지 않아요."),
+	UNSUPPORTED_MEDIA_TYPE(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "요청 형식이 올바르지 않아요."),
 	INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "잠시 후 다시 시도해 주세요.");
 
 	private final HttpStatus status;

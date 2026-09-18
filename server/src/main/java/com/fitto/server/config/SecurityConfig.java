@@ -1,5 +1,7 @@
 package com.fitto.server.config;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -28,6 +30,8 @@ import tools.jackson.databind.ObjectMapper;
 @EnableConfigurationProperties(JwtProperties.class)
 public class SecurityConfig {
 
+	private static final Logger log = LoggerFactory.getLogger(SecurityConfig.class);
+
 	@Bean
 	public SecurityFilterChain filterChain(HttpSecurity http, JwtAuthenticationFilter jwtFilter,
 			ObjectMapper objectMapper) throws Exception {
@@ -46,10 +50,20 @@ public class SecurityConfig {
 				.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
 				// 인증 실패도 명세 0-6의 모양으로 내려보낸다. 기본 응답은 본문이 비어 있어 앱이 처리할 게 없다.
 				.exceptionHandling(handler -> handler
-						.authenticationEntryPoint((request, response, e) -> write(response, objectMapper,
-								ErrorCode.UNAUTHORIZED))
-						.accessDeniedHandler((request, response, e) -> write(response, objectMapper,
-								ErrorCode.FORBIDDEN)))
+						.authenticationEntryPoint((request, response, e) -> {
+							boolean expired = request.getAttribute(JwtAuthenticationFilter.EXPIRED_ATTRIBUTE) != null;
+							// 만료는 정상적인 흐름(앱이 갱신한다)이라 남기지 않는다. 그 외는 토큰이 없거나 위조된 것이다.
+							if (!expired) {
+								log.warn("인증 실패: {} {} ip={}", request.getMethod(), request.getRequestURI(),
+										request.getRemoteAddr());
+							}
+							write(response, objectMapper, expired ? ErrorCode.TOKEN_EXPIRED : ErrorCode.UNAUTHORIZED);
+						})
+						.accessDeniedHandler((request, response, e) -> {
+							log.warn("권한 실패: {} {} userId={}", request.getMethod(), request.getRequestURI(),
+									request.getUserPrincipal() != null ? request.getUserPrincipal().getName() : "(없음)");
+							write(response, objectMapper, ErrorCode.FORBIDDEN);
+						}))
 				.build();
 	}
 

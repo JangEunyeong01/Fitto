@@ -32,12 +32,14 @@ public class DietService {
 
 	private final MealItemRepository mealItemRepository;
 	private final MealMemoRepository mealMemoRepository;
+	private final RecipeRepository recipeRepository;
 	private final DateGuard dateGuard;
 
 	public DietService(MealItemRepository mealItemRepository, MealMemoRepository mealMemoRepository,
-			DateGuard dateGuard) {
+			RecipeRepository recipeRepository, DateGuard dateGuard) {
 		this.mealItemRepository = mealItemRepository;
 		this.mealMemoRepository = mealMemoRepository;
+		this.recipeRepository = recipeRepository;
 		this.dateGuard = dateGuard;
 	}
 
@@ -87,7 +89,7 @@ public class DietService {
 		}
 
 		MealItem item = MealItem.create(request.id(), userId, request.date(), request.mealType(), request.name());
-		item.changeSource(request.foodId(), request.recipeId());
+		item.changeSource(request.foodId(), ownRecipeId(userId, request.recipeId()));
 		item.changeAmount(request.amount(), request.unit(), request.servingLabel());
 		// TODO 식품 DB(명세 14장)를 붙이면 foodId가 있을 때 서버가 영양소를 계산한다.
 		// 지금은 앱이 내장 음식 데이터로 계산한 값을 그대로 저장한다.
@@ -96,6 +98,17 @@ public class DietService {
 
 		mealItemRepository.save(item);
 		return new Created<>(MealItemResponse.from(item), true);
+	}
+
+	/**
+	 * 이 기록이 어느 레시피에서 나왔는지 적어두는 값이다. 남의 레시피를 가리키면 지우고 저장한다.
+	 * 레시피를 지운 뒤 밀린 기록이 올라오는 경우가 있어 거절하지는 않는다 — 기록은 살리고 출처만 비운다.
+	 */
+	private UUID ownRecipeId(UUID userId, UUID recipeId) {
+		if (recipeId == null) {
+			return null;
+		}
+		return recipeRepository.existsByIdAndUserId(recipeId, userId) ? recipeId : null;
 	}
 
 	@Transactional

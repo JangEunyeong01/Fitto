@@ -1,0 +1,55 @@
+# 운영 설정. `SPRING_PROFILES_ACTIVE=prod`로 켠다.
+#
+# 여기에는 기본값을 두지 않는다. 환경변수가 없으면 서버가 뜨지 않아야 한다 —
+# 기본값이 있으면 설정을 빠뜨린 채 배포해도 겉으로는 정상으로 보인다.
+spring:
+  datasource:
+    # 기본값을 빈 문자열로 둔 이유: 환경변수가 없을 때 스프링의 치환 실패 예외가 먼저 터지면
+    # "무엇이 빠졌는지" 안내(StartupSecurityCheck)가 나올 기회가 없다. 비어 있는지는 그쪽에서 판단한다.
+    url: ${DB_URL:}
+    username: ${DB_USER:}
+    password: ${DB_PASSWORD:}
+    hikari:
+      # 무료 티어 DB는 동시 연결 수가 적다. 넘치면 커넥션을 못 받아 요청이 줄줄이 막힌다.
+      maximum-pool-size: ${DB_POOL_SIZE:5}
+
+  jpa:
+    hibernate:
+      # 운영에서는 스키마를 자동으로 바꾸지 않는다. 엔티티와 실제 스키마가 다르면 부팅을 실패시킨다.
+      # update로 두면 컬럼 이름 하나 바꿨을 때 옛 컬럼이 남고 데이터가 갈라진다.
+      ddl-auto: validate
+    properties:
+      hibernate:
+        format_sql: false
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+
+fitto:
+  jwt:
+    # 기본값 없음. 없으면 부팅 실패(StartupSecurityCheck).
+    secret: ${JWT_SECRET:}
+    access-ttl: 30m
+    refresh-ttl: 14d
+  cors:
+    # 배포된 앱 주소만 허용한다. 쉼표로 여러 개.
+    allowed-origins: ${CORS_ORIGINS:}
+
+server:
+  port: ${PORT:8080}
+  # 배포로 컨테이너가 교체될 때 처리 중이던 요청을 끝내고 종료한다.
+  shutdown: graceful
+  # 프록시(Render·Railway 등) 뒤에 있을 때 원래 프로토콜·IP를 그대로 읽는다.
+  forward-headers-strategy: framework
+  tomcat:
+    # 요청 본문 상한. 게스트 기록 이전(POST /me/import)이 가장 큰 요청이라 넉넉히 두되 무제한은 아니다.
+    max-http-form-post-size: 2MB
+    max-swallow-size: 2MB
+
+logging:
+  level:
+    root: info
+    # 운영에서 쿼리 로그는 끈다. 값이 그대로 찍혀 민감 정보가 로그에 남는다.
+    org.hibernate.SQL: warn
+    com.fitto.server: info

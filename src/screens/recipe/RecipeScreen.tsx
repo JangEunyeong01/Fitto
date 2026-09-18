@@ -17,6 +17,10 @@ import { useToastStore } from '../../store/useToastStore';
 import { newId } from '../../utils/id';
 import { dateKey } from '../../utils/timeOfDay';
 
+// 서버가 받는 상한과 같은 값이다. 여기서 안 막으면 저장은 되지만 동기화에서 거절당해 기록이 사라진다.
+const MAX_GRAMS = 5000;
+const MAX_KCAL_100G = 900;
+
 export default function RecipeScreen() {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
@@ -68,6 +72,10 @@ export default function RecipeScreen() {
       showToast('그램 수를 입력해 주세요');
       return;
     }
+    if (g > MAX_GRAMS) {
+      showToast(`재료는 한 번에 ${MAX_GRAMS}g까지 넣을 수 있어요`);
+      return;
+    }
     const ing = allIngredients.find((i) => i.name === picked);
     if (!ing) return;
     setLines((prev) => [...prev, { ...ing, grams: g }]);
@@ -83,6 +91,10 @@ export default function RecipeScreen() {
     }
     if (!Number.isFinite(kcal) || kcal <= 0) {
       showToast('100g당 kcal을 입력해 주세요');
+      return;
+    }
+    if (kcal > MAX_KCAL_100G) {
+      showToast(`100g당 ${MAX_KCAL_100G}kcal까지 입력할 수 있어요`);
       return;
     }
     const ing = {
@@ -146,6 +158,7 @@ export default function RecipeScreen() {
           value={name}
           onChangeText={setName}
           placeholder="레시피 이름"
+          maxLength={30}
           style={styles.nameInput}
         />
 
@@ -181,7 +194,7 @@ export default function RecipeScreen() {
 
           {customOpen && (
             <View style={styles.customForm}>
-              <TextField size="sm" value={cName} onChangeText={setCName} placeholder="재료명" />
+              <TextField size="sm" value={cName} onChangeText={setCName} placeholder="재료명" maxLength={30} />
               <TextField
                 size="sm"
                 value={cKcal}

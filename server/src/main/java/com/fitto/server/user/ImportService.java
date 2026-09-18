@@ -94,6 +94,11 @@ public class ImportService {
 
 		ImportResult.Counter counter = new ImportResult.Counter();
 
+		// 레시피를 식단보다 먼저 넣는다. 식단이 레시피를 가리키는데, 아직 없는 레시피를 가리키면
+		// 남의 것인지 아닌지 확인할 수가 없다.
+		importRecipes(userId, request.recipes(), counter);
+		importRoutines(userId, request.routines(), counter);
+		importCustomIngredients(userId, request.customIngredients(), counter);
 		importMeals(userId, request.meals(), counter);
 		importMealMemos(userId, request.mealMemos(), counter);
 		importWorkouts(userId, request.workouts(), counter);
@@ -101,9 +106,6 @@ public class ImportService {
 		importSteps(userId, request.steps(), counter);
 		importWeights(userId, request.weights(), counter);
 		importPeriod(userId, request.period(), counter);
-		importRecipes(userId, request.recipes(), counter);
-		importRoutines(userId, request.routines(), counter);
-		importCustomIngredients(userId, request.customIngredients(), counter);
 
 		return counter.toResult(UserResponse.from(user), KEYS);
 	}
@@ -119,7 +121,10 @@ public class ImportService {
 			}
 
 			MealItem item = MealItem.create(meal.id(), userId, meal.date(), meal.mealType(), meal.name());
-			item.changeSource(meal.foodId(), meal.recipeId());
+			// 남의 레시피를 가리키면 출처만 지우고 기록은 살린다.
+			UUID recipeId = meal.recipeId() != null
+					&& recipeRepository.existsByIdAndUserId(meal.recipeId(), userId) ? meal.recipeId() : null;
+			item.changeSource(meal.foodId(), recipeId);
 			item.changeAmount(meal.amount(), meal.unit(), meal.servingLabel());
 			item.changeNutrition(meal.calories(), meal.carbs(), meal.protein(), meal.fat(), meal.sodium(),
 					meal.sugar());

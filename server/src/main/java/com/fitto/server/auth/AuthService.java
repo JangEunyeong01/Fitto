@@ -7,9 +7,13 @@ import java.time.Instant;
 import java.util.HexFormat;
 import java.util.UUID;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import com.fitto.server.common.LogMask;
 
 import com.fitto.server.auth.dto.AuthResponse;
 import com.fitto.server.auth.dto.LoginRequest;
@@ -24,6 +28,14 @@ import com.fitto.server.user.UserResponse;
 
 @Service
 public class AuthService {
+
+	private static final Logger log = LoggerFactory.getLogger(AuthService.class);
+
+	/**
+	 * 계정이 없을 때 비교용으로 쓰는 더미 BCrypt 해시.
+	 * 어떤 비밀번호와도 일치하지 않는 값이며, 비교에 걸리는 시간을 실제 계정과 맞추는 용도다.
+	 */
+	private static final String DUMMY_HASH = "$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy";
 
 	private final UserRepository userRepository;
 	private final RefreshTokenRepository refreshTokenRepository;
@@ -71,16 +83,29 @@ public class AuthService {
 	}
 
 	@Transactional
-	public AuthResponse login(LoginRequest request) {
+	public AuthResponse login(LoginRequest request, String clientIp) {
 		String email = request.email().toLowerCase();
-		if (loginAttemptGuard.isBlocked(email)) {
+		if (loginAttemptGuard.isBlocked(email, clientIp)) {
+			log.warn("로그인 차단: email={} ip={}", LogMask.email(email), clientIp);
 			throw new ApiException(ErrorCode.TOO_MANY_REQUESTS);
 		}
 
 		User user = userRepository.findByEmail(email).orElse(null);
-		// 계정이 없을 때도 같은 응답을 준다. 응답이 갈리면 가입 여부를 확인하는 통로가 된다.
-		if (user == null || !passwordEncoder.matches(request.password(), user.getPassword())) {
-			loginAttemptGuard.recordFailure(email);
+
+		/*
+		 * 계정이 없어도 비밀번호 비교를 수행한다.
+		 *
+		 * 응답 메시지를 같게 하는 것만으로는 부족하다. BCrypt는 일부러 느린 함수라(~100ms),
+		 * 계정이 없을 때 비교를 건너뛰면 응답이 눈에 띄게 빨라진다. 시간을 재면 가입 여부가 드러난다.
+		 * 존재하지 않는 계정에도 더미 해시와 비교시켜 걸리는 시간을 맞춘다.
+		 */
+		String hashToCompare = user != null ? user.getPassword() : DUMMY_HASH;
+		boolean matched = passwordEncoder.matches(request.password(), hashToCompare);
+
+		if (user == null || !matched) {
+			loginAttemptGuard.recordFailure(email, clientIp);
+			// 계정이 없었는지 비밀번호가 틀렸는지는 로그에도 적지 않는다. 로그가 유출되면 가입 여부가 드러난다.
+			log.warn("로그인 실패: email={} ip={}", LogMask.email(email), clientIp);
 			throw new ApiException(ErrorCode.INVALID_CREDENTIALS);
 		}
 
@@ -104,7 +129,9 @@ public class AuthService {
 				.orElseThrow(() -> new ApiException(ErrorCode.REFRESH_TOKEN_INVALID));
 
 		if (saved.getUsedAt() != null) {
-			revokeAll(saved.getUserId());
+			int revoked = refreshTokenRepository.revokeAllByUserId(saved.getUserId(), Instant.now());
+			// 탈취가 의심되는 상황이다. 사용자는 갑자기 전부 로그아웃되므로 원인을 찾을 수 있어야 한다.
+			log.warn("refreshToken 재사용 감지, 전체 세션 폐기: userId={} 폐기={}건", saved.getUserId(), revoked);
 			throw new ApiException(ErrorCode.REFRESH_TOKEN_REUSED);
 		}
 		if (!saved.isUsable(Instant.now())) {
@@ -125,10 +152,6 @@ public class AuthService {
 		String token = tokenProvider.createRefreshToken(userId);
 		refreshTokenRepository.save(RefreshToken.issue(userId, hash(token), tokenProvider.refreshExpiresAt()));
 		return token;
-	}
-
-	private void revokeAll(UUID userId) {
-		refreshTokenRepository.findAllByUserIdAndRevokedAtIsNull(userId).forEach(RefreshToken::revoke);
 	}
 
 	/**

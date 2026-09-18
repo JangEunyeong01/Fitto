@@ -1,5 +1,7 @@
 package com.fitto.server.auth;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -12,7 +14,10 @@ import com.fitto.server.auth.dto.LoginRequest;
 import com.fitto.server.auth.dto.SignupRequest;
 import com.fitto.server.auth.dto.TokenRequest;
 import com.fitto.server.auth.dto.TokenResponse;
+import com.fitto.server.common.error.ApiException;
+import com.fitto.server.common.error.ErrorCode;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 
 /** 명세 4장. 이 세 개(+로그아웃)만 토큰 없이 부를 수 있다. */
@@ -20,20 +25,35 @@ import jakarta.validation.Valid;
 @RequestMapping("/auth")
 public class AuthController {
 
-	private final AuthService authService;
+	private static final Logger log = LoggerFactory.getLogger(AuthController.class);
 
-	public AuthController(AuthService authService) {
+	private final AuthService authService;
+	private final SignupThrottle signupThrottle;
+
+	public AuthController(AuthService authService, SignupThrottle signupThrottle) {
 		this.authService = authService;
+		this.signupThrottle = signupThrottle;
 	}
 
 	@PostMapping("/signup")
-	public ResponseEntity<AuthResponse> signup(@Valid @RequestBody SignupRequest request) {
-		return ResponseEntity.status(HttpStatus.CREATED).body(authService.signup(request));
+	public ResponseEntity<AuthResponse> signup(@Valid @RequestBody SignupRequest request,
+			HttpServletRequest httpRequest) {
+		// 한 곳에서 계정을 무더기로 만드는 걸 막는다. 가입은 토큰 없이 부를 수 있는 API라 열려 있다.
+		String clientKey = httpRequest.getRemoteAddr();
+		if (signupThrottle.isBlocked(clientKey)) {
+			log.warn("가입 차단: ip={}", clientKey);
+			throw new ApiException(ErrorCode.TOO_MANY_REQUESTS, "가입 시도가 너무 잦아요. 잠시 후 다시 시도해 주세요.");
+		}
+
+		AuthResponse response = authService.signup(request);
+		signupThrottle.record(clientKey);
+		return ResponseEntity.status(HttpStatus.CREATED).body(response);
 	}
 
 	@PostMapping("/login")
-	public AuthResponse login(@Valid @RequestBody LoginRequest request) {
-		return authService.login(request);
+	public AuthResponse login(@Valid @RequestBody LoginRequest request, HttpServletRequest httpRequest) {
+		// IP도 함께 넘긴다. 이메일 기준만으로는 계정을 바꿔가며 훑는 공격을 못 막는다.
+		return authService.login(request, httpRequest.getRemoteAddr());
 	}
 
 	@PostMapping("/refresh")
