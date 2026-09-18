@@ -10,6 +10,7 @@ import { overlay, typography } from '../../theme/tokens';
 import { useAppStore } from '../../store/useAppStore';
 import { useExerciseSheetStore } from '../../store/useExerciseSheetStore';
 import { useToastStore } from '../../store/useToastStore';
+import { newId } from '../../utils/id';
 import { dateKey } from '../../utils/timeOfDay';
 import { EXERCISES, calcExerciseKcal, findExercise } from '../../data/workouts';
 
@@ -56,7 +57,7 @@ function ExerciseForm({ date, onClose }: { date: string; onClose: () => void }) 
       return;
     }
     addExercise(date, {
-      id: `${Date.now()}`,
+      id: newId(),
       code: exercise.code,
       name: exercise.name,
       minutes: mins,

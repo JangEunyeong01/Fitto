@@ -2,6 +2,9 @@ import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { calculateGoals } from '../utils/goals';
+// 기록이 바뀌면 동기화 대기열에 알린다. 게스트면 아무 일도 일어나지 않는다(sync/enqueue.ts).
+import { enqueueSync } from '../sync/enqueue';
+import { isUuid, newId } from '../utils/id';
 import { toDateKey, type PeriodSettings } from '../utils/periodCycle';
 import type { WorkoutPreference } from '../utils/workoutRecommend';
 import {
@@ -255,6 +258,19 @@ interface AppState {
   seedMockToday: (dateKey: string) => void;
   /** 설정 → 데이터 초기화. 저장된 모든 상태를 처음 설치한 상태로 되돌린다(온보딩부터 다시). */
   resetAll: () => void;
+  /**
+   * 서버에서 받은 값을 기기에 반영한다(동기화 내려받기).
+   * 다른 액션과 달리 동기화 대기열에 쌓지 않는다 — 서버에서 온 값을 서버로 되돌려 보낼 이유가 없다.
+   */
+  applyServerRecords: (patch: {
+    profile?: Profile;
+    goals?: Goals;
+    persona?: Persona;
+    dailyRecords?: Record<string, Partial<DailyRecord>>;
+    weightLog?: Record<string, number>;
+    periodSettings?: PeriodSettings;
+    periodSetupDone?: boolean;
+  }) => void;
 }
 
 export function emptyMeals(): Record<MealSlot, MealItem[]> {
@@ -356,7 +372,7 @@ export const useAppStore = create<AppState>()(
       // 계산에 쓰는 값이 바뀌면 목표 칼로리를 다시 잡는다(명세 F-040·F-041).
       // 모든 프로필 수정이 여기를 지나므로 화면마다 재계산을 부를 필요가 없다.
       // 물 목표는 물 상세에서 직접 바꾼 값을 덮어쓰지 않도록 건드리지 않는다.
-      setProfile: (patch) =>
+      setProfile: (patch) => {
         set((s) => {
           const profile = { ...s.profile, ...patch };
           const calcKeys: (keyof Profile)[] = ['gender', 'age', 'height', 'weight', 'activity', 'goalType'];
@@ -370,17 +386,24 @@ export const useAppStore = create<AppState>()(
             goal: profile.goalType,
           });
           return { profile, goals: { ...s.goals, kcal } };
-        }),
+        });
+        // 여기서 계산한 목표는 화면을 바로 채우기 위한 값이고, 로그인 상태에서는 서버 값이 최종값이다(명세 2장).
+        // 동기화가 끝나면 서버가 돌려준 값으로 덮어쓴다.
+        enqueueSync({ kind: 'profile.patch' });
+      },
 
       // 기록과 프로필 체중을 항상 같이 움직인다. 따로 두면 프로필엔 옛날 값이,
       // 추이 그래프엔 최신 값이 남아 같은 화면에서 숫자가 어긋난다.
-      logWeight: (dateKey, kg) =>
+      logWeight: (dateKey, kg) => {
         set((s) => ({
           weightLog: { ...s.weightLog, [dateKey]: kg },
           profile: { ...s.profile, weight: kg },
-        })),
+        }));
+        // 가장 최근 기록이면 서버가 목표를 다시 계산해 돌려준다(명세 2-6). 그 값은 동기화할 때 받아 반영한다.
+        enqueueSync({ kind: 'weight.put', date: dateKey });
+      },
 
-      removeWeight: (dateKey) =>
+      removeWeight: (dateKey) => {
         set((s) => {
           const next = { ...s.weightLog };
           delete next[dateKey];
@@ -390,32 +413,43 @@ export const useAppStore = create<AppState>()(
             weightLog: next,
             profile: latest ? { ...s.profile, weight: next[latest] } : s.profile,
           };
-        }),
+        });
+        enqueueSync({ kind: 'weight.remove', date: dateKey });
+      },
       setGoals: (patch) => set((s) => ({ goals: { ...s.goals, ...patch } })),
       setAlarms: (patch) => set((s) => ({ alarms: { ...s.alarms, ...patch } })),
       setWorkoutPreference: (patch) =>
         set((s) => ({ workoutPreference: { ...s.workoutPreference, ...patch } })),
       setPeriodOn: (v) => set({ periodOn: v }),
       // 주기·기간 숫자만 바꾼 건 입력 완료로 보지 않는다. 시작일이 없으면 예측 자체가 기본값 기준이라서.
-      setPeriodSettings: (patch) =>
+      setPeriodSettings: (patch) => {
         set((s) => ({
           periodSettings: { ...s.periodSettings, ...patch },
           periodSetupDone: s.periodSetupDone || 'lastStartDate' in patch,
-        })),
-      setDayCondition: (dateKey, condition) =>
+        }));
+        // 시작일을 고른 적이 없으면 서버에 올리지 않는다. 기본값을 사용자가 정한 값처럼 보낼 수 없다(F-017).
+        if (get().periodSetupDone) {
+          enqueueSync({ kind: 'period.settings' });
+        }
+      },
+      setDayCondition: (dateKey, condition) => {
         set((s) => {
           const rec = s.dailyRecords[dateKey] ?? emptyRecord();
           return { dailyRecords: { ...s.dailyRecords, [dateKey]: { ...rec, periodCondition: condition } } };
-        }),
-      toggleDaySymptom: (dateKey, symptom) =>
+        });
+        enqueueSync({ kind: 'period.daily', date: dateKey });
+      },
+      toggleDaySymptom: (dateKey, symptom) => {
         set((s) => {
           const rec = s.dailyRecords[dateKey] ?? emptyRecord();
           const cur = rec.periodSymptoms ?? [];
           const next = cur.includes(symptom) ? cur.filter((v) => v !== symptom) : [...cur, symptom];
           return { dailyRecords: { ...s.dailyRecords, [dateKey]: { ...rec, periodSymptoms: next } } };
-        }),
+        });
+        enqueueSync({ kind: 'period.daily', date: dateKey });
+      },
       // 빈 문자열이면 지운다. 빈 메모가 기록에 남으면 "쓴 적 있음"처럼 보인다.
-      setDayPeriodNote: (dateKey, patch) =>
+      setDayPeriodNote: (dateKey, patch) => {
         set((s) => {
           const rec = s.dailyRecords[dateKey] ?? emptyRecord();
           const next: DailyRecord = { ...rec };
@@ -430,7 +464,9 @@ export const useAppStore = create<AppState>()(
             else delete next.periodMemo;
           }
           return { dailyRecords: { ...s.dailyRecords, [dateKey]: next } };
-        }),
+        });
+        enqueueSync({ kind: 'period.daily', date: dateKey });
+      },
       setCardOrder: (order) => set({ cardOrder: order }),
       // 기본 카드는 어떤 경로로 들어와도 숨김 목록에 들어가지 않게 걸러낸다.
       setCardHidden: (hidden) => set({ cardHidden: hidden.filter((id) => !ESSENTIAL_CARDS.includes(id)) }),
@@ -511,14 +547,17 @@ export const useAppStore = create<AppState>()(
       setBirthdayShownYear: (y) => set({ birthdayShownYear: y }),
       setLayDownShownDate: (dateKey) => set({ layDownShownDate: dateKey }),
 
-      addWater: (dateKey, deltaMl) =>
+      addWater: (dateKey, deltaMl) => {
         set((s) => {
           const rec = s.dailyRecords[dateKey] ?? emptyRecord();
           const nextWater = Math.max(0, rec.water + deltaMl);
           return { dailyRecords: { ...s.dailyRecords, [dateKey]: { ...rec, water: nextWater } } };
-        }),
+        });
+        // 물은 절댓값으로 보낸다. 다섯 번 눌러도 큐에는 한 건만 남고, 보낼 때 최신 값을 읽는다.
+        enqueueSync({ kind: 'water.put', date: dateKey });
+      },
 
-      addExercise: (dateKey, entry) =>
+      addExercise: (dateKey, entry) => {
         set((s) => {
           const rec = s.dailyRecords[dateKey] ?? emptyRecord();
           return {
@@ -527,9 +566,11 @@ export const useAppStore = create<AppState>()(
               [dateKey]: { ...rec, exercises: [...rec.exercises, entry] },
             },
           };
-        }),
+        });
+        enqueueSync({ kind: 'workout.add', date: dateKey, workoutId: entry.id });
+      },
 
-      removeExercise: (dateKey, id) =>
+      removeExercise: (dateKey, id) => {
         set((s) => {
           const rec = s.dailyRecords[dateKey] ?? emptyRecord();
           return {
@@ -538,9 +579,11 @@ export const useAppStore = create<AppState>()(
               [dateKey]: { ...rec, exercises: rec.exercises.filter((e) => e.id !== id) },
             },
           };
-        }),
+        });
+        enqueueSync({ kind: 'workout.remove', workoutId: id });
+      },
 
-      addMealItem: (dateKey, slot, item) =>
+      addMealItem: (dateKey, slot, item) => {
         set((s) => {
           const rec = s.dailyRecords[dateKey] ?? emptyRecord();
           return {
@@ -549,9 +592,11 @@ export const useAppStore = create<AppState>()(
               [dateKey]: { ...rec, meals: { ...rec.meals, [slot]: [...rec.meals[slot], item] } },
             },
           };
-        }),
+        });
+        enqueueSync({ kind: 'meal.add', date: dateKey, mealType: slot, itemId: item.id });
+      },
 
-      removeMealItem: (dateKey, slot, id) =>
+      removeMealItem: (dateKey, slot, id) => {
         set((s) => {
           const rec = s.dailyRecords[dateKey];
           if (!rec) return s;
@@ -561,10 +606,12 @@ export const useAppStore = create<AppState>()(
               [dateKey]: { ...rec, meals: { ...rec.meals, [slot]: rec.meals[slot].filter((m) => m.id !== id) } },
             },
           };
-        }),
+        });
+        enqueueSync({ kind: 'meal.remove', mealItemId: id });
+      },
 
       // 빈 문자열로 저장하면 메모를 지운 것으로 보고 키째 뺀다. 빈 메모가 기록에 쌓이지 않게.
-      setMealMemo: (dateKey, slot, text) =>
+      setMealMemo: (dateKey, slot, text) => {
         set((s) => {
           const rec = s.dailyRecords[dateKey] ?? emptyRecord();
           const mealMemos = { ...rec.mealMemos };
@@ -572,7 +619,9 @@ export const useAppStore = create<AppState>()(
           if (t) mealMemos[slot] = t;
           else delete mealMemos[slot];
           return { dailyRecords: { ...s.dailyRecords, [dateKey]: { ...rec, mealMemos } } };
-        }),
+        });
+        enqueueSync({ kind: 'meal.memo', date: dateKey, mealType: slot, memo: text.trim() || null });
+      },
 
       addRecipe: (recipe) => set((s) => ({ recipes: [recipe, ...s.recipes] })),
       addRoutine: (routine) => set((s) => ({ routines: [routine, ...s.routines] })),
@@ -615,11 +664,31 @@ export const useAppStore = create<AppState>()(
       // getInitialState는 이 함수가 처음 만든 상태(액션 포함)라 replace로 통째로 바꿔도 액션이 사라지지 않는다.
       // persist가 바뀐 상태를 그대로 저장소에 다시 쓰므로 AsyncStorage를 따로 지울 필요는 없다.
       resetAll: () => set(api.getInitialState(), true),
+
+      applyServerRecords: (patch) =>
+        set((s) => {
+          const dailyRecords = { ...s.dailyRecords };
+          // 서버가 준 날짜만 덮어쓴다. 서버에 없는 날짜의 기기 기록은 그대로 둔다 —
+          // 아직 못 올린 기록일 수 있어서, 여기서 지우면 영영 사라진다.
+          Object.entries(patch.dailyRecords ?? {}).forEach(([date, record]) => {
+            dailyRecords[date] = { ...(dailyRecords[date] ?? emptyRecord()), ...record };
+          });
+
+          return {
+            dailyRecords,
+            weightLog: patch.weightLog ? { ...s.weightLog, ...patch.weightLog } : s.weightLog,
+            periodSettings: patch.periodSettings ?? s.periodSettings,
+            periodSetupDone: patch.periodSetupDone ?? s.periodSetupDone,
+            profile: patch.profile ?? s.profile,
+            goals: patch.goals ?? s.goals,
+            persona: patch.persona ?? s.persona,
+          };
+        }),
     }),
     {
       name: 'fitto-app-storage',
       storage: createJSONStorage(() => AsyncStorage),
-      version: 5,
+      version: 6,
       // 기본 병합은 얕은 병합이라 profile 같은 객체는 저장본이 통째로 덮어쓴다.
       // 그러면 나중에 필드를 추가했을 때 기존 사용자에게만 undefined가 남으므로,
       // 객체 필드는 기본값 위에 저장본을 얹는다.
@@ -652,6 +721,8 @@ export const useAppStore = create<AppState>()(
               cardHidden?: CardId[];
               onboardingDone?: boolean;
               startDate?: string | null;
+              recipes?: any[];
+              routines?: any[];
             }
           | undefined;
         if (!state) return state as unknown as AppState;
@@ -781,6 +852,27 @@ export const useAppStore = create<AppState>()(
         if (version < 5 && state.onboardingDone) {
           const keys = Object.keys(state.dailyRecords ?? {}).sort();
           state.startDate = keys[0] ?? toDateKey(new Date());
+        }
+
+        // v6: 기록 ID를 UUID로 맞춘다. 예전에는 `${Date.now()}` 형태로 만들었는데,
+        // 서버가 UUID만 받아서(명세 0-2) 그대로 두면 이미 쌓인 기록이 영영 안 올라간다.
+        if (version < 6) {
+          Object.values(state.dailyRecords ?? {}).forEach((rec: any) => {
+            rec?.exercises?.forEach((e: any) => {
+              if (!isUuid(e.id)) e.id = newId();
+            });
+            Object.values(rec?.meals ?? {}).forEach((items: any) => {
+              (items as any[]).forEach((item) => {
+                if (!isUuid(item.id)) item.id = newId();
+              });
+            });
+          });
+          (state.recipes ?? []).forEach((r: any) => {
+            if (!isUuid(r.id)) r.id = newId();
+          });
+          (state.routines ?? []).forEach((r: any) => {
+            if (!isUuid(r.id)) r.id = newId();
+          });
         }
 
         return state as AppState;

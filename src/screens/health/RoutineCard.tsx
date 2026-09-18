@@ -10,6 +10,7 @@ import { useTheme } from '../../theme/useTheme';
 import { overlay, selection, typography } from '../../theme/tokens';
 import { useAppStore, type WorkoutRoutine } from '../../store/useAppStore';
 import { useToastStore } from '../../store/useToastStore';
+import { newId } from '../../utils/id';
 import { EXERCISES, calcExerciseKcal, findExercise } from '../../data/workouts';
 
 const DEFAULT_MINUTES = 20;
@@ -39,7 +40,7 @@ export default function RoutineCard({ date }: RoutineCardProps) {
       const met = findExercise(e.code)?.met ?? 0;
       addExercise(date, {
         // 같은 밀리초에 여러 개가 들어가므로 순번을 붙여 id가 겹치지 않게 한다.
-        id: `${Date.now()}-${i}`,
+        id: newId(),
         code: e.code,
         name: e.name,
         minutes: e.minutes,
@@ -144,7 +145,7 @@ function RoutineForm({ onClose }: { onClose: () => void }) {
       return;
     }
     addRoutine({
-      id: `${Date.now()}`,
+      id: newId(),
       name: name.trim(),
       exercises: parsed.map((p) => ({
         code: p.code,

@@ -5,6 +5,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -39,6 +40,20 @@ public class GlobalExceptionHandler {
 
 		return ResponseEntity.status(ErrorCode.INVALID_INPUT.getStatus())
 				.body(ErrorResponse.of(ErrorCode.INVALID_INPUT, message, errors));
+	}
+
+	/**
+	 * 요청 본문을 읽지 못한 경우. 형식이 잘못된 JSON, UUID가 아닌 id, 목록에 없는 코드값 등이 여기로 온다.
+	 *
+	 * 이걸 따로 잡지 않으면 500이 나간다. 실제로 앱이 UUID가 아닌 id를 보내던 때
+	 * 서버 잘못처럼 보여서 원인을 찾는 데 시간이 걸렸다. 400으로 돌려주면 보낸 쪽 문제임이 드러난다.
+	 */
+	@ExceptionHandler(HttpMessageNotReadableException.class)
+	public ResponseEntity<ErrorResponse> handleUnreadable(HttpMessageNotReadableException e) {
+		log.warn("요청 본문을 읽지 못함: {}", e.getMessage());
+		ErrorCode code = ErrorCode.INVALID_INPUT;
+		return ResponseEntity.status(code.getStatus())
+				.body(ErrorResponse.of(code, "요청 형식이 올바르지 않아요."));
 	}
 
 	/** 예상 못 한 예외. 원인은 로그에만 남기고 사용자에게는 일반 문구를 준다. */

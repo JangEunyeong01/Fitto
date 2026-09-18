@@ -12,6 +12,7 @@ import { alpha, brand, selection, typography, weight } from '../../theme/tokens'
 import { useAppStore } from '../../store/useAppStore';
 import { useExerciseSheetStore } from '../../store/useExerciseSheetStore';
 import { useToastStore } from '../../store/useToastStore';
+import { newId } from '../../utils/id';
 import { dateKey } from '../../utils/timeOfDay';
 import { personaCopy } from '../../copy/persona';
 import { QUICK_WORKOUTS, QUICK_WORKOUT_MINUTES, calcExerciseKcal, findExercise } from '../../data/workouts';
@@ -77,7 +78,7 @@ export default function HealthScreen() {
   );
 
   const handleAdd = (name: string, minutes: number, kcal: number, code?: string) => {
-    addExercise(date, { id: `${Date.now()}`, code, name, minutes, kcal });
+    addExercise(date, { id: newId(), code, name, minutes, kcal });
     showToast(`${name} 기록 완료`);
   };
 

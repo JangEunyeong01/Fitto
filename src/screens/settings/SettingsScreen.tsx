@@ -18,6 +18,7 @@ import { useTutorialStore } from '../../store/useTutorialStore';
 import { useToastStore } from '../../store/useToastStore';
 import { useFoodSearchStore } from '../../store/useFoodSearchStore';
 import { useAuthStore } from '../../store/useAuthStore';
+import { useOutboxStore } from '../../store/useOutboxStore';
 import { logout as requestLogout } from '../../api/auth';
 import { PERSONA_OPTIONS } from '../onboarding/onboardingData';
 import { GOAL_OPTIONS, labelOf } from '../../constants/codes';
@@ -25,6 +26,16 @@ import { daysBetween, toDateKey } from '../../utils/periodCycle';
 import { alpha, semantic, typography } from '../../theme/tokens';
 // 버전은 app.json 한 곳에서만 올린다. 화면에 따로 적어두면 배포 때 둘 중 하나를 꼭 까먹는다.
 import appConfig from '../../../app.json';
+
+/** "3분 전"처럼 사람이 읽는 표현으로. 초 단위는 보여줘도 알 것이 없어 "방금"으로 묶는다. */
+function formatSyncedAgo(timestamp: number): string {
+  const minutes = Math.floor((Date.now() - timestamp) / 60_000);
+  if (minutes < 1) return '방금';
+  if (minutes < 60) return `${minutes}분 전`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}시간 전`;
+  return `${Math.floor(hours / 24)}일 전`;
+}
 
 const THEME_OPTIONS: { value: ThemeMode; label: string }[] = [
   { value: 'light', label: '라이트' },
@@ -53,6 +64,19 @@ export default function SettingsScreen() {
   const authEmail = useAuthStore((s) => s.email);
   const signOut = useAuthStore((s) => s.signOut);
 
+  const pendingCount = useOutboxStore((s) => s.items.length);
+  const lastSyncedAt = useOutboxStore((s) => s.lastSyncedAt);
+
+  /**
+   * 동기화 상태 한 줄. 못 올린 게 있으면 그 사실을 먼저 알린다 —
+   * "언제 올라갔는지"보다 "아직 안 올라간 게 있는지"가 사용자에게 중요하다.
+   */
+  const syncLabel = pendingCount > 0
+    ? `기록 ${pendingCount}건 올리는 중`
+    : lastSyncedAt
+      ? `${formatSyncedAgo(lastSyncedAt)} 동기화됨`
+      : '아직 동기화한 기록이 없어요';
+
   /**
    * 로그아웃. 서버에 refreshToken 폐기를 요청하되, 실패해도 기기에서는 지운다 —
    * 네트워크가 안 될 때 로그아웃이 막히면 기기를 빌려준 상황에서 빠져나올 수 없다.
@@ -67,6 +91,8 @@ export default function SettingsScreen() {
       }
     }
     signOut();
+    // 아직 못 올린 작업은 버린다. 남겨두면 다음에 로그인한 계정으로 올라간다.
+    useOutboxStore.getState().clear();
     showToast('로그아웃했어요');
   };
 
@@ -81,6 +107,8 @@ export default function SettingsScreen() {
     resetAll();
     // 최근 검색은 세션 스토어라 앱 스토어 초기화에 안 딸려온다.
     useFoodSearchStore.setState({ recent: [] });
+    // 기록을 지웠으니 올릴 것도 없다. 큐를 두면 지운 기록을 서버로 보낸다.
+    useOutboxStore.getState().clear();
   };
 
   const showCardOrderSheet = useCardOrderSheetStore((s) => s.show);
@@ -131,6 +159,7 @@ export default function SettingsScreen() {
           {authStatus === 'member' ? (
             <>
               <Text style={[styles.previewText, { color: colors.sub }]}>{authEmail}</Text>
+              <Text style={[styles.syncText, { color: colors.sub }]}>{syncLabel}</Text>
               <Divider colors={colors} />
               <NavRow label="로그아웃" actionLabel="실행" onPress={handleLogout} colors={colors} />
             </>
@@ -354,6 +383,10 @@ const styles = StyleSheet.create({
   previewText: {
     ...typography.bodySm,
     marginTop: 10,
+  },
+  syncText: {
+    ...typography.caption,
+    marginTop: 4,
   },
   divider: {
     borderTopWidth: StyleSheet.hairlineWidth,

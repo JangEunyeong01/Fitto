@@ -14,6 +14,7 @@ import { radius, selection, typography } from '../../theme/tokens';
 import { INGREDIENTS, calcNutrition, type Ingredient, type RecipeLine } from '../../data/ingredients';
 import { useAppStore } from '../../store/useAppStore';
 import { useToastStore } from '../../store/useToastStore';
+import { newId } from '../../utils/id';
 import { dateKey } from '../../utils/timeOfDay';
 
 export default function RecipeScreen() {
@@ -113,7 +114,7 @@ export default function RecipeScreen() {
     }
     const totals = calcNutrition(lines);
     addRecipe({
-      id: `r${Date.now()}`,
+      id: newId(),
       name: name.trim(),
       photoUri: null,
       ingredients: lines.map((l) => ({ name: l.name, grams: l.grams, kcal: Math.round((l.kcal100 * l.grams) / 100) })),
@@ -259,7 +260,7 @@ export default function RecipeScreen() {
                   <Pressable
                     onPress={() => {
                       addMealItem(dateKey(), 'dinner', {
-                        id: `${r.id}-${Date.now()}`,
+                        id: newId(),
                         name: r.name,
                         amount: 1,
                         unit: 'serving',

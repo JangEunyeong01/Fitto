@@ -6,6 +6,7 @@ import { alpha, radius, typography, weight, white } from '../../theme/tokens';
 import { personaCopy } from '../../copy/persona';
 import { useAppStore } from '../../store/useAppStore';
 import { useToastStore } from '../../store/useToastStore';
+import { newId } from '../../utils/id';
 import { dateKey } from '../../utils/timeOfDay';
 import { FITTO_HELLO } from '../../theme/assets';
 
@@ -35,7 +36,7 @@ export default function LayDownModal({ visible, onClose }: LayDownModalProps) {
   const body = personaCopy.layDownBody[persona]();
 
   const handleWalk = () => {
-    addExercise(dateKey(), { id: `walk-${Date.now()}`, name: '걷기', minutes: WALK_MINUTES, kcal: WALK_KCAL });
+    addExercise(dateKey(), { id: newId(), name: '걷기', minutes: WALK_MINUTES, kcal: WALK_KCAL });
     showToast(`걷기 ${WALK_MINUTES}분 기록 완료`);
     onClose();
   };
