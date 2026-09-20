@@ -11,6 +11,7 @@ import FoodSearchSheet from './src/screens/diet/FoodSearchSheet';
 import ExerciseSheet from './src/screens/health/ExerciseSheet';
 import BirthdayModal from './src/screens/home/BirthdayModal';
 import TutorialOverlay from './src/components/TutorialOverlay';
+import SessionExpiredModal from './src/components/SessionExpiredModal';
 import { useTheme } from './src/theme/useTheme';
 import { useFittoFonts } from './src/theme/fonts';
 import { lightColors } from './src/theme/tokens';
@@ -30,6 +31,8 @@ function AppShell() {
           <QuickLogSheet />
           <FoodSearchSheet />
           <ExerciseSheet />
+          {/* 로그인 화면으로 보내야 해서 NavigationContainer 안에 둔다. */}
+          <SessionExpiredModal />
         </View>
       </NavigationContainer>
       <BirthdayModal />

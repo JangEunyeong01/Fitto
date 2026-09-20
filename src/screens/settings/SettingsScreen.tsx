@@ -20,6 +20,7 @@ import { useFoodSearchStore } from '../../store/useFoodSearchStore';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useOutboxStore } from '../../store/useOutboxStore';
 import { logout as requestLogout } from '../../api/auth';
+import { describeOp } from '../../sync/types';
 import { PERSONA_OPTIONS } from '../onboarding/onboardingData';
 import { GOAL_OPTIONS, labelOf } from '../../constants/codes';
 import { daysBetween, toDateKey } from '../../utils/periodCycle';
@@ -66,6 +67,17 @@ export default function SettingsScreen() {
 
   const pendingCount = useOutboxStore((s) => s.items.length);
   const lastSyncedAt = useOutboxStore((s) => s.lastSyncedAt);
+  const failedItems = useOutboxStore((s) => s.failed);
+
+  const handleRetryFailed = () => {
+    useOutboxStore.getState().retryFailed();
+    showToast('다시 올려볼게요');
+  };
+
+  const handleClearFailed = () => {
+    useOutboxStore.getState().clearFailed();
+    showToast('목록을 비웠어요. 기록은 기기에 그대로 있어요');
+  };
 
   /**
    * 동기화 상태 한 줄. 못 올린 게 있으면 그 사실을 먼저 알린다 —
@@ -160,6 +172,34 @@ export default function SettingsScreen() {
             <>
               <Text style={[styles.previewText, { color: colors.sub }]}>{authEmail}</Text>
               <Text style={[styles.syncText, { color: colors.sub }]}>{syncLabel}</Text>
+
+              {/* 올리지 못한 기록은 숨기지 않는다. 기기에만 남아 있으면 폰을 바꿀 때 사라진다. */}
+              {failedItems.length > 0 && (
+                <View style={[styles.failedBox, { borderColor: semantic.danger }]}>
+                  <Text style={[styles.failedTitle, { color: semantic.danger }]}>
+                    올리지 못한 기록 {failedItems.length}건
+                  </Text>
+                  {failedItems.slice(0, 3).map((item) => (
+                    <Text key={item.id} style={[styles.failedRow, { color: colors.sub }]} numberOfLines={1}>
+                      · {describeOp(item.op)} — {item.reason}
+                    </Text>
+                  ))}
+                  {failedItems.length > 3 && (
+                    <Text style={[styles.failedRow, { color: colors.sub }]}>
+                      · 외 {failedItems.length - 3}건
+                    </Text>
+                  )}
+                  <View style={styles.failedButtons}>
+                    <Pressable onPress={handleRetryFailed} style={[styles.failedBtn, { borderColor: colors.line }]}>
+                      <Text style={[styles.previewBtnLabel, { color: colors.txt }]}>다시 시도</Text>
+                    </Pressable>
+                    <Pressable onPress={handleClearFailed} style={[styles.failedBtn, { borderColor: colors.line }]}>
+                      <Text style={[styles.previewBtnLabel, { color: colors.sub }]}>목록 비우기</Text>
+                    </Pressable>
+                  </View>
+                </View>
+              )}
+
               <Divider colors={colors} />
               <NavRow label="비밀번호 변경" onPress={() => navigation.navigate('PasswordChange')} colors={colors} />
               <Divider colors={colors} />
@@ -395,6 +435,28 @@ const styles = StyleSheet.create({
   syncText: {
     ...typography.caption,
     marginTop: 4,
+  },
+  failedBox: {
+    marginTop: 12,
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 12,
+    gap: 4,
+  },
+  failedTitle: typography.label,
+  failedRow: typography.caption,
+  failedButtons: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 8,
+  },
+  failedBtn: {
+    flex: 1,
+    height: 40,
+    borderRadius: 12,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   divider: {
     borderTopWidth: StyleSheet.hairlineWidth,
