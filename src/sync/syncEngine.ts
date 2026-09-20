@@ -32,7 +32,7 @@ let running = false;
 
 /** 401을 만나면 한 번만 갱신을 시도한다. 갱신도 실패하면 로그아웃시킨다(명세 0-4). */
 export async function refreshToken(): Promise<string | null> {
-  const { refreshToken: current, updateTokens, signOut } = useAuthStore.getState();
+  const { refreshToken: current, updateTokens, expireSession } = useAuthStore.getState();
   if (!current) {
     return null;
   }
@@ -46,7 +46,8 @@ export async function refreshToken(): Promise<string | null> {
     if (e instanceof NetworkError) {
       return null;
     }
-    signOut();
+    // 토큰이 만료됐거나 폐기됐다. 조용히 로그아웃시키면 기록이 왜 안 올라가는지 알 수 없다.
+    expireSession();
     return null;
   }
 }
@@ -88,7 +89,8 @@ export async function runSync(): Promise<void> {
         }
 
         // 서버가 거절한 요청(400·404 등). 다시 보내도 같은 결과라 횟수를 세고 넘어간다.
-        retryLater();
+        // 사유를 함께 남긴다 — 횟수를 다 쓰면 실패 목록에 들어가 설정 화면에 보인다.
+        retryLater(e instanceof ApiError ? e.message : '알 수 없는 이유로 실패했어요.');
       }
     }
   } finally {

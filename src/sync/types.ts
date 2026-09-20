@@ -37,6 +37,36 @@ export interface OutboxItem {
   tries: number;
 }
 
+/** 설정 화면에서 "무엇을 못 올렸는지" 보여줄 때 쓰는 이름. 개발 용어(kind)를 그대로 쓰지 않는다. */
+export function describeOp(op: SyncOp): string {
+  switch (op.kind) {
+    case 'meal.add':
+      return `${op.date} 식단 기록`;
+    case 'meal.remove':
+      return '식단 기록 삭제';
+    case 'meal.memo':
+      return `${op.date} 식사 메모`;
+    case 'workout.add':
+      return `${op.date} 운동 기록`;
+    case 'workout.remove':
+      return '운동 기록 삭제';
+    case 'water.put':
+      return `${op.date} 물 기록`;
+    case 'steps.put':
+      return `${op.date} 걸음 수`;
+    case 'weight.put':
+      return `${op.date} 체중`;
+    case 'weight.remove':
+      return `${op.date} 체중 삭제`;
+    case 'period.settings':
+      return '생리 주기 설정';
+    case 'period.daily':
+      return `${op.date} 생리 기록`;
+    case 'profile.patch':
+      return '프로필';
+  }
+}
+
 /** 같은 대상에 대한 작업인지. 큐에 이미 있으면 새로 쌓지 않고 자리만 유지한다. */
 export function isSameTarget(a: SyncOp, b: SyncOp): boolean {
   if (a.kind !== b.kind) {
