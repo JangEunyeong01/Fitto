@@ -15,6 +15,7 @@ import { useToastStore } from '../../store/useToastStore';
 import { login, importGuestData } from '../../api/auth';
 import { toImportPayload, fromUser } from '../../api/mappers';
 import { ApiError, NetworkError } from '../../api/client';
+import { useWakeNotice } from '../../hooks/useWakeNotice';
 
 /**
  * 로그인(명세 4장). 다른 기기에서 만든 계정으로 들어올 때 쓴다.
@@ -36,6 +37,7 @@ export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
+  const wakeNotice = useWakeNotice(busy);
 
   /** 기기에 옮길 만한 기록이 있는지. 없으면 합치기를 묻지 않는다. */
   const hasGuestRecords = () => {
@@ -131,6 +133,9 @@ export default function LoginScreen() {
             <PrimaryButton label="로그인" onPress={submit} loading={busy} inactive={!email.trim() || !password} />
           </View>
 
+          {/* 무료 서버가 잠들어 있으면 1분 넘게 걸린다. 스피너만 돌면 고장으로 보인다. */}
+          {wakeNotice && <Text style={[styles.wakeNotice, { color: colors.sub }]}>{wakeNotice}</Text>}
+
           {/* 로그인 화면에서 막히지 않게 가입으로 가는 길을 둔다. 비밀번호 찾기는 메일 발송을 붙인 뒤에 넣는다. */}
           <Pressable onPress={() => navigation.navigate('Signup')} style={styles.linkRow}>
             <Text style={[styles.link, { color: colors.txt }]}>계정이 없으신가요? 계정 만들기</Text>
@@ -173,6 +178,11 @@ const styles = StyleSheet.create({
   },
   buttonWrap: {
     marginTop: 20,
+  },
+  wakeNotice: {
+    ...typography.caption,
+    marginTop: 10,
+    textAlign: 'center',
   },
   linkRow: {
     height: 44,

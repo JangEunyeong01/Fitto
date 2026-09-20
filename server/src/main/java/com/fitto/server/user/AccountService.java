@@ -1,5 +1,6 @@
 package com.fitto.server.user;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
 
@@ -9,6 +10,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.fitto.server.auth.AttemptCounter;
 import com.fitto.server.common.error.ApiException;
 import com.fitto.server.common.error.ErrorCode;
 import com.fitto.server.diet.RecipeRepository;
@@ -39,6 +41,14 @@ public class AccountService {
 	private static final List<String> SIMPLE_ENTITIES = List.of("MealItem", "MealMemo", "DailyWater", "DailySteps",
 			"WeightLog", "Workout", "CustomIngredient", "PeriodSetting", "RefreshToken");
 
+	/**
+	 * 비밀번호 확인 시도 제한.
+	 *
+	 * 쓰기 요청 제한(분당 300)에는 걸리지만 비밀번호를 찍어보기에는 넉넉한 숫자다.
+	 * 남의 기기를 잠깐 쥔 사람이 비밀번호를 맞혀 계정을 지우는 일을 막는다. 비밀번호 변경과 같은 값.
+	 */
+	private final AttemptCounter deleteAttempts = new AttemptCounter(5, Duration.ofMinutes(10));
+
 	@PersistenceContext
 	private EntityManager entityManager;
 
@@ -60,9 +70,15 @@ public class AccountService {
 
 	@Transactional
 	public void delete(UUID userId, String password) {
+		if (deleteAttempts.isBlocked(userId.toString())) {
+			log.warn("탈퇴 차단(시도 초과): userId={}", userId);
+			throw new ApiException(ErrorCode.TOO_MANY_REQUESTS);
+		}
+
 		User user = userRepository.findById(userId).orElseThrow(() -> new ApiException(ErrorCode.UNAUTHORIZED));
 
 		if (!passwordEncoder.matches(password, user.getPassword())) {
+			deleteAttempts.record(userId.toString());
 			log.warn("탈퇴 실패(비밀번호 불일치): userId={}", userId);
 			throw new ApiException(ErrorCode.INVALID_CREDENTIALS);
 		}

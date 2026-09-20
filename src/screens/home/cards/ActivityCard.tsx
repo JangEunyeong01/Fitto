@@ -8,6 +8,7 @@ import { useTheme } from '../../../theme/useTheme';
 import { useAppStore } from '../../../store/useAppStore';
 import { dateKey } from '../../../utils/timeOfDay';
 import { getBurnedKcal } from '../../../utils/health';
+import { recentDays } from '../../../utils/history';
 import { typography } from '../../../theme/tokens';
 
 const SIZE = 104;
@@ -19,7 +20,8 @@ export default function ActivityCard() {
   const navigation = useNavigation<any>();
   const { colors, brand } = useTheme();
   const stepsGoal = useAppStore((s) => s.goals.steps);
-  const record = useAppStore((s) => s.dailyRecords[dateKey()]);
+  const records = useAppStore((s) => s.dailyRecords);
+  const record = records[dateKey()];
 
   const steps = record?.steps ?? 0;
   const exerciseMinutes = (record?.exercises ?? []).reduce((a, e) => a + e.minutes, 0);
@@ -28,7 +30,8 @@ export default function ActivityCard() {
   const dashOffset = CIRC * (1 - percent / 100);
 
   // 걸음 수는 건강 데이터를 연결해야 들어온다. 연결 전에는 "0%"가 아니라 값이 없다고 말한다.
-  const stepsConnected = steps > 0;
+  // 오늘 값만 보면 연결된 사람도 자정 직후엔 "연결 전"이 된다. 걸음수 카드와 같은 기준(최근 7일)으로 본다.
+  const stepsConnected = recentDays(records, 'steps').values.some((v) => v > 0);
 
   return (
     <GlassCard>
