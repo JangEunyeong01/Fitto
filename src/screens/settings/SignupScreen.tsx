@@ -15,6 +15,7 @@ import { useToastStore } from '../../store/useToastStore';
 import { signup, importGuestData } from '../../api/auth';
 import { toImportPayload } from '../../api/mappers';
 import { ApiError, NetworkError } from '../../api/client';
+import { useWakeNotice } from '../../hooks/useWakeNotice';
 
 /**
  * 계정 만들기(명세 3장, 4장).
@@ -36,6 +37,7 @@ export default function SignupScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
+  const wakeNotice = useWakeNotice(busy);
 
   const handleSignup = async () => {
     if (busy) return;
@@ -148,6 +150,8 @@ export default function SignupScreen() {
             />
           </View>
 
+          {wakeNotice && <Text style={[styles.wakeNotice, { color: colors.sub }]}>{wakeNotice}</Text>}
+
           <Pressable onPress={() => navigation.navigate('Login')} style={styles.linkRow}>
             <Text style={[styles.link, { color: colors.txt }]}>이미 계정이 있나요? 로그인</Text>
           </Pressable>
@@ -182,6 +186,11 @@ const styles = StyleSheet.create({
   },
   buttonWrap: {
     marginTop: 20,
+  },
+  wakeNotice: {
+    ...typography.caption,
+    marginTop: 10,
+    textAlign: 'center',
   },
   linkRow: {
     height: 44,

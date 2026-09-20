@@ -13,6 +13,7 @@ import { useAuthStore } from '../../store/useAuthStore';
 import { useToastStore } from '../../store/useToastStore';
 import { changePassword } from '../../api/auth';
 import { ApiError, NetworkError } from '../../api/client';
+import { useWakeNotice } from '../../hooks/useWakeNotice';
 
 /** 가입과 같은 규칙(명세 4장). 변경으로 더 약한 비밀번호를 넣을 수 있으면 규칙이 있으나 마나다. */
 function passwordError(value: string): string | null {
@@ -40,6 +41,7 @@ export default function PasswordChangeScreen() {
   const [confirm, setConfirm] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const wakeNotice = useWakeNotice(busy);
 
   const submit = async () => {
     if (busy) return;
@@ -120,6 +122,7 @@ export default function PasswordChangeScreen() {
           />
 
           {error && <Text style={[styles.error, { color: semantic.danger }]}>{error}</Text>}
+          {wakeNotice && <Text style={[styles.desc, { color: colors.sub }]}>{wakeNotice}</Text>}
 
           <Text style={[styles.desc, { color: colors.sub }]}>
             비밀번호를 바꾸면 다른 기기에서는 로그아웃돼요. 이 기기는 그대로 쓸 수 있어요.

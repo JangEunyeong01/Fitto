@@ -52,16 +52,66 @@ export class NetworkError extends Error {
   }
 }
 
+/**
+ * 기본 제한 시간. 서버가 깨어 있으면 응답은 1초 안에 온다.
+ * 이보다 오래 걸리는 건 연결이 끊겼거나 서버가 자고 있는 경우다.
+ */
+const DEFAULT_TIMEOUT_MS = 20_000;
+
 export interface RequestOptions {
   method?: 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE';
   body?: unknown;
   /** Bearer 토큰. 세션 관리는 인증을 붙일 때 이 위층에서 한다. */
   token?: string | null;
   query?: Record<string, string | number | undefined>;
+  /** 이 시간을 넘기면 끊는다. 기본 20초. */
+  timeoutMs?: number;
+  /**
+   * 시간 초과·연결 실패 때 다시 보낼 횟수.
+   *
+   * 무료 서버는 15분 쉬면 잠들고 깨는 데 1분 30초쯤 걸린다. 그런데 iOS는 요청 하나를
+   * 60초에서 스스로 끊어서, 첫 요청은 서버가 깨어나기 전에 실패한다.
+   * 다행히 그 실패한 요청이 서버를 깨워둔 상태라 **다시 보내면 붙는다.**
+   * 로그인·가입처럼 사용자가 기다리고 있는 요청에만 쓴다.
+   */
+  wakeRetries?: number;
+}
+
+/** 제한 시간을 걸어 한 번 보낸다. AbortController가 없으면(구형 환경) 그냥 보낸다. */
+async function fetchOnce(url: string, init: RequestInit, timeoutMs: number): Promise<Response> {
+  if (typeof AbortController === 'undefined') {
+    return fetch(url, init);
+  }
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function fetchWithTimeout(
+  url: string,
+  init: RequestInit,
+  timeoutMs: number,
+  retries: number
+): Promise<Response> {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      return await fetchOnce(url, init, timeoutMs);
+    } catch (e) {
+      if (attempt >= retries) {
+        throw e;
+      }
+      // 잠든 서버를 깨우는 중이라면 이 사이에 부팅이 이어진다. 바로 다시 보내면 또 깨는 중에 끊긴다.
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+    }
+  }
 }
 
 export async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
-  const { method = 'GET', body, token, query } = options;
+  const { method = 'GET', body, token, query, timeoutMs = DEFAULT_TIMEOUT_MS, wakeRetries = 0 } = options;
 
   const search = new URLSearchParams();
   Object.entries(query ?? {}).forEach(([k, v]) => {
@@ -69,16 +119,19 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
   });
   const qs = search.toString();
 
+  const url = `${BASE_URL}${path}${qs ? `?${qs}` : ''}`;
+  const init: RequestInit = {
+    method,
+    headers: {
+      ...(body ? { 'Content-Type': 'application/json' } : {}),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: body ? JSON.stringify(body) : undefined,
+  };
+
   let res: Response;
   try {
-    res = await fetch(`${BASE_URL}${path}${qs ? `?${qs}` : ''}`, {
-      method,
-      headers: {
-        ...(body ? { 'Content-Type': 'application/json' } : {}),
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-      body: body ? JSON.stringify(body) : undefined,
-    });
+    res = await fetchWithTimeout(url, init, timeoutMs, wakeRetries);
   } catch {
     throw new NetworkError();
   }

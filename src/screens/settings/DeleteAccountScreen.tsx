@@ -15,6 +15,7 @@ import { useFoodSearchStore } from '../../store/useFoodSearchStore';
 import { useToastStore } from '../../store/useToastStore';
 import { deleteAccount } from '../../api/auth';
 import { ApiError, NetworkError } from '../../api/client';
+import { useWakeNotice } from '../../hooks/useWakeNotice';
 
 /** 무엇이 지워지는지 먼저 보여준다. "정말요?"만 두 번 묻는 건 확인이 아니다. */
 const ERASED = [
@@ -47,6 +48,7 @@ export default function DeleteAccountScreen() {
   const [confirming, setConfirming] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const wakeNotice = useWakeNotice(busy);
 
   const submit = async () => {
     if (busy) return;
@@ -111,6 +113,7 @@ export default function DeleteAccountScreen() {
           />
 
           {error && <Text style={[styles.error, { color: semantic.danger }]}>{error}</Text>}
+          {wakeNotice && <Text style={[styles.error, { color: colors.sub }]}>{wakeNotice}</Text>}
 
           {!confirming ? (
             <Pressable
