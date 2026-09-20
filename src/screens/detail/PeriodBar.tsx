@@ -5,7 +5,7 @@ import SelectChip from '../../components/SelectChip';
 import Icon from '../../components/Icon';
 import { useTheme } from '../../theme/useTheme';
 import { typography } from '../../theme/tokens';
-import { YearMonth, ymAdd, ymFromIndex, ymIndex, ymRangeLabel } from '../../utils/periodMock';
+import { YearMonth, ymAdd, ymFromIndex, ymIndex, ymRangeLabel } from '../../utils/yearMonth';
 
 export type MonthPreset = '1m' | '3m' | '6m' | 'custom';
 

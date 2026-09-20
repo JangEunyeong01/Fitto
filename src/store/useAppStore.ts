@@ -255,7 +255,6 @@ interface AppState {
   addRoutine: (routine: WorkoutRoutine) => void;
   removeRoutine: (id: string) => void;
   addCustomIngredient: (ingredient: CustomIngredient) => void;
-  seedMockToday: (dateKey: string) => void;
   /** 설정 → 데이터 초기화. 저장된 모든 상태를 처음 설치한 상태로 되돌린다(온보딩부터 다시). */
   resetAll: () => void;
   /**
@@ -631,35 +630,6 @@ export const useAppStore = create<AppState>()(
         set((s) => ({
           customIngredients: [ingredient, ...s.customIngredients.filter((c) => c.name !== ingredient.name)],
         })),
-
-      // 실제 데이터 소스(건강 API·음식 영양성분 API) 연동 전까지 홈 화면을 채우는
-      // 예시 데이터. README 화면 명세의 예시 수치를 그대로 사용한다.
-      // 날짜가 바뀌면 그날 기록이 없으므로 다시 채운다.
-      seedMockToday: (dateKey) =>
-        set((s) => {
-          const patch: Partial<AppState> = {};
-
-          if (!s.dailyRecords[dateKey]) {
-            const rec: DailyRecord = {
-              water: 950,
-              meals: {
-                breakfast: [{ id: 'm1', name: '그릭요거트', amount: 150, unit: 'g', kcal: 130 }],
-                lunch: [
-                  { id: 'm2', name: '현미밥 · 닭가슴살 구이', amount: 1, unit: 'serving', kcal: 475 },
-                ],
-                dinner: [],
-                snack: [{ id: 'm3', name: '아몬드 한 줌', amount: 25, unit: 'g', kcal: 145, allergy: true }],
-              },
-              exercises: [{ id: 'e1', code: 'walking', name: '아침 걷기', minutes: 20, kcal: 130 }],
-              steps: 6420,
-              periodCondition: undefined,
-              periodSymptoms: [],
-            };
-            patch.dailyRecords = { ...s.dailyRecords, [dateKey]: rec };
-          }
-
-          return patch;
-        }),
 
       // getInitialState는 이 함수가 처음 만든 상태(액션 포함)라 replace로 통째로 바꿔도 액션이 사라지지 않는다.
       // persist가 바뀐 상태를 그대로 저장소에 다시 쓰므로 AsyncStorage를 따로 지울 필요는 없다.

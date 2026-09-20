@@ -12,12 +12,23 @@ interface DetailBarChartProps {
   values: number[];
   /** 오늘/이번 달처럼 강조할 막대의 인덱스. */
   highlightIndex?: number;
+  /** 보여줄 기록이 없을 때 막대 대신 띄울 문구. 없으면 값이 전부 0인 차트를 그대로 그린다. */
+  emptyMessage?: string;
 }
 
 // README: 막대 차트. 최대값 기준 스케일, 값 위에 라벨.
-export default function DetailBarChart({ labels, values, highlightIndex }: DetailBarChartProps) {
+export default function DetailBarChart({ labels, values, highlightIndex, emptyMessage }: DetailBarChartProps) {
   const { colors, brand } = useTheme();
   const maxVal = Math.max(...values, 1);
+
+  // 기록이 하나도 없으면 바닥에 붙은 막대만 늘어선다. 그건 "0을 기록했다"로 읽혀서 문구로 바꾼다.
+  if (emptyMessage && values.every((v) => v === 0)) {
+    return (
+      <GlassCard style={styles.card}>
+        <Text style={[styles.empty, { color: colors.sub }]}>{emptyMessage}</Text>
+      </GlassCard>
+    );
+  }
 
   return (
     <GlassCard style={styles.card}>
@@ -72,4 +83,9 @@ const styles = StyleSheet.create({
     borderRadius: 5,
   },
   label: typography.captionSm,
+  empty: {
+    ...typography.bodySm,
+    textAlign: 'center',
+    paddingVertical: 24,
+  },
 });

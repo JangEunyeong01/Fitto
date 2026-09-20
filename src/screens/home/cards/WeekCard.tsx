@@ -3,23 +3,32 @@ import { View, Text, StyleSheet } from 'react-native';
 import GlassCard from '../../../components/GlassCard';
 import { useTheme } from '../../../theme/useTheme';
 import { useAppStore } from '../../../store/useAppStore';
-import { dateKey } from '../../../utils/timeOfDay';
-import { sumMealKcal, getBurnedKcal } from '../../../utils/health';
-import { MOCK_INTAKE_PAST6, MOCK_BURN_PAST6, getWeekDayLabels } from '../mockData';
+import { recentDays } from '../../../utils/history';
 import { typography, weight } from '../../../theme/tokens';
 
 const MAX_KCAL = 2000;
 const CHART_HEIGHT = 70;
 
+/** 한 주의 흐름을 말하려면 최소 이만큼은 있어야 한다. 하루치 막대 하나로는 흐름이 아니다. */
+const MIN_DAYS = 3;
+
 export default function WeekCard() {
   const { colors, brand } = useTheme();
-  const record = useAppStore((s) => s.dailyRecords[dateKey()]);
-  const consumedToday = record ? sumMealKcal(record.meals) : 0;
-  const burnedToday = getBurnedKcal(record?.exercises ?? []);
+  const records = useAppStore((s) => s.dailyRecords);
 
-  const intake = [...MOCK_INTAKE_PAST6, consumedToday];
-  const burn = [...MOCK_BURN_PAST6, burnedToday];
-  const labels = getWeekDayLabels();
+  const { labels, values: intake, daysWithRecord } = recentDays(records, 'intake');
+  const { values: burn } = recentDays(records, 'burn');
+
+  if (daysWithRecord < MIN_DAYS) {
+    return (
+      <GlassCard>
+        <Text style={[styles.title, { color: colors.txt }]}>주간 요약</Text>
+        <Text style={[styles.empty, { color: colors.sub }]}>
+          3일 이상 기록하면 한 주의 섭취·소모 흐름을 보여드려요. 지금은 {daysWithRecord}일 기록했어요.
+        </Text>
+      </GlassCard>
+    );
+  }
 
   return (
     <GlassCard>
@@ -67,6 +76,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   title: typography.sectionTitle,
+  empty: {
+    ...typography.bodySm,
+    marginTop: 10,
+  },
   legend: {
     flexDirection: 'row',
     gap: 10,

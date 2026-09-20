@@ -29,7 +29,10 @@ export default function KcalCard() {
   const percent = Math.round((consumed / goal) * 100);
 
   const commentFn = personaCopy.kcalComment[persona] as (v: { remainKcal: number; consumedKcal: number; percent: number }) => string;
-  const comment = commentFn({ remainKcal: remain, consumedKcal: consumed, percent });
+  // 아직 아무것도 안 먹은 게 아니라 아직 기록을 안 한 것이다. "부족해요"라고 말하면 안 된다.
+  const comment = consumed === 0
+    ? '오늘 먹은 걸 기록하면 남은 칼로리를 계산해 드릴게요.'
+    : commentFn({ remainKcal: remain, consumedKcal: consumed, percent });
 
   return (
     <GlassCard>
@@ -41,7 +44,9 @@ export default function KcalCard() {
         </View>
         <View style={styles.numCol}>
           <View style={styles.labelRow}>
-            <Text style={[styles.label, { color: colors.sub }]}>오늘 칼로리 · {kcalStatusLabel[status]}</Text>
+            <Text style={[styles.label, { color: colors.sub }]}>
+              오늘 칼로리{consumed > 0 ? ` · ${kcalStatusLabel[status]}` : ''}
+            </Text>
             {/* 명세 F-011: 카드에서 식단 탭으로 바로 간다. */}
             <Pressable onPress={() => navigation.navigate('Diet')} hitSlop={6} style={styles.detailLink}>
               <Text style={[styles.label, { color: colors.sub }]}>식단</Text>

@@ -7,7 +7,7 @@ import ProgressBar from '../../../components/ProgressBar';
 import { useTheme } from '../../../theme/useTheme';
 import { useAppStore } from '../../../store/useAppStore';
 import { dateKey } from '../../../utils/timeOfDay';
-import { MOCK_STEPS_PAST6, getWeekDayLabels } from '../mockData';
+import { recentDays } from '../../../utils/history';
 import { typography, weight } from '../../../theme/tokens';
 
 const BAR_MAX_HEIGHT = 34;
@@ -16,12 +16,35 @@ export default function StepsCard() {
   const navigation = useNavigation<any>();
   const { colors, brand } = useTheme();
   const goal = useAppStore((s) => s.goals.steps);
-  const steps = useAppStore((s) => s.dailyRecords[dateKey()]?.steps ?? 0);
+  const records = useAppStore((s) => s.dailyRecords);
+  const steps = records[dateKey()]?.steps ?? 0;
 
-  const week = [...MOCK_STEPS_PAST6, steps];
-  const labels = getWeekDayLabels();
-  const avg = Math.round(week.reduce((a, v) => a + v, 0) / week.length);
+  const { labels, values: week } = recentDays(records, 'steps');
+  const total = week.reduce((a, v) => a + v, 0);
+  const avg = Math.round(total / week.length);
   const maxVal = Math.max(...week, 1);
+
+  /*
+   * 걸음 수는 폰의 건강 데이터에서 와야 한다. 아직 연결하지 않았으므로 한 번도 들어온 적이 없다.
+   * 이때 "0 / 8,000"을 보여주면 하루 종일 한 걸음도 안 걸은 것처럼 읽힌다.
+   * 기록이 하나라도 들어오면(연결 후) 아래 차트로 돌아간다.
+   */
+  if (total === 0) {
+    return (
+      <Pressable onPress={() => navigation.navigate('StepsDetail')} style={styles.pressFill}>
+        <GlassCard fill>
+          <View style={styles.topRow}>
+            <Text style={[styles.label, { color: colors.sub }]}>걸음수</Text>
+          </View>
+          <Text style={[styles.emptyTitle, { color: colors.txt }]}>아직 연결 전이에요</Text>
+          <Text style={[styles.emptyDesc, { color: colors.sub }]}>
+            폰의 건강 데이터를 연결하면 걸음 수가 여기에 보여요.
+          </Text>
+          <Text style={[styles.caption, { color: colors.sub }]}>목표 {goal.toLocaleString()}보</Text>
+        </GlassCard>
+      </Pressable>
+    );
+  }
 
   // README: 걸음수 카드는 어디를 탭해도 걸음 상세로 이동한다.
   return (
@@ -108,5 +131,13 @@ const styles = StyleSheet.create({
   caption: {
     ...typography.captionSm,
     marginTop: 8,
+  },
+  emptyTitle: {
+    ...typography.itemTitle,
+    marginTop: 6,
+  },
+  emptyDesc: {
+    ...typography.bodySm,
+    marginTop: 6,
   },
 });
