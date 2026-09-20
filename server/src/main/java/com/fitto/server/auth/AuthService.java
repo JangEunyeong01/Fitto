@@ -3,6 +3,7 @@ package com.fitto.server.auth;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.HexFormat;
 import java.util.UUID;
@@ -43,6 +44,9 @@ public class AuthService {
 	private final JwtTokenProvider tokenProvider;
 	private final UserGoalService userGoalService;
 	private final LoginAttemptGuard loginAttemptGuard;
+
+	/** 현재 비밀번호를 찍어보는 걸 막는다. 토큰이 있어야 부를 수 있으니 로그인보다 좁게 잡아도 된다. */
+	private final AttemptCounter passwordAttempts = new AttemptCounter(5, Duration.ofMinutes(10));
 
 	public AuthService(UserRepository userRepository, RefreshTokenRepository refreshTokenRepository,
 			PasswordEncoder passwordEncoder, JwtTokenProvider tokenProvider, UserGoalService userGoalService,
@@ -139,6 +143,38 @@ public class AuthService {
 		}
 
 		saved.markUsed();
+		return new TokenResponse(tokenProvider.createAccessToken(userId), issueRefreshToken(userId));
+	}
+
+	/**
+	 * 비밀번호 변경(명세 5장).
+	 *
+	 * 바꾸고 나면 그 계정의 refreshToken을 전부 폐기한다. 비밀번호를 바꾸는 이유 중 하나가
+	 * "누가 내 계정을 쓰는 것 같다"인데, 남의 기기가 로그인된 채로 남으면 바꾼 의미가 없다.
+	 * 대신 바꾼 기기는 새 토큰을 받아 그대로 쓴다 — 자기 자신까지 로그아웃시킬 이유는 없다.
+	 */
+	@Transactional
+	public TokenResponse changePassword(UUID userId, String currentPassword, String newPassword) {
+		if (passwordAttempts.isBlocked(userId.toString())) {
+			log.warn("비밀번호 변경 차단: userId={}", userId);
+			throw new ApiException(ErrorCode.TOO_MANY_REQUESTS);
+		}
+
+		User user = userRepository.findById(userId).orElseThrow(() -> new ApiException(ErrorCode.UNAUTHORIZED));
+
+		if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
+			passwordAttempts.record(userId.toString());
+			log.warn("비밀번호 변경 실패(현재 비밀번호 불일치): userId={}", userId);
+			throw new ApiException(ErrorCode.INVALID_CREDENTIALS);
+		}
+
+		passwordAttempts.clear(userId.toString());
+		user.changePassword(passwordEncoder.encode(newPassword));
+
+		// 폐기가 먼저다. 새로 발급한 토큰까지 같이 폐기되면 바꾼 기기도 로그아웃된다.
+		int revoked = refreshTokenRepository.revokeAllByUserId(userId, Instant.now());
+		log.info("비밀번호 변경: userId={} 폐기={}건", userId, revoked);
+
 		return new TokenResponse(tokenProvider.createAccessToken(userId), issueRefreshToken(userId));
 	}
 

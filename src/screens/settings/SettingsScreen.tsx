@@ -161,7 +161,15 @@ export default function SettingsScreen() {
               <Text style={[styles.previewText, { color: colors.sub }]}>{authEmail}</Text>
               <Text style={[styles.syncText, { color: colors.sub }]}>{syncLabel}</Text>
               <Divider colors={colors} />
+              <NavRow label="비밀번호 변경" onPress={() => navigation.navigate('PasswordChange')} colors={colors} />
+              <Divider colors={colors} />
               <NavRow label="로그아웃" actionLabel="실행" onPress={handleLogout} colors={colors} />
+              <Divider colors={colors} />
+              {/* 되돌릴 수 없는 동작이라 다른 줄과 색으로 구분한다. 확인은 탈퇴 화면에서 받는다. */}
+              <Pressable onPress={() => navigation.navigate('DeleteAccount')} style={styles.row}>
+                <Text style={[styles.rowLabel, { color: semantic.danger }]}>회원 탈퇴</Text>
+                <Icon name="chevronRight" size={17} color={semantic.danger} />
+              </Pressable>
             </>
           ) : (
             <>

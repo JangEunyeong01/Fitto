@@ -14,4 +14,7 @@ public interface PeriodDailyRepository extends JpaRepository<PeriodDaily, UUID> 
 	List<PeriodDaily> findAllByUserIdAndDateBetweenOrderByDate(UUID userId, LocalDate from, LocalDate to);
 
 	List<PeriodDaily> findAllByUserIdAndDateIn(UUID userId, List<LocalDate> dates);
+
+	/** 탈퇴할 때 쓴다. 엔티티를 읽어서 지우므로 period_daily_symptoms도 함께 지워진다. */
+	void deleteAllByUserId(UUID userId);
 }

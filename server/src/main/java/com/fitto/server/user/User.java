@@ -148,6 +148,11 @@ public class User {
 		return user;
 	}
 
+	/** 이미 BCrypt로 해시된 값만 받는다. 평문이 들어오면 로그인이 영영 안 된다. */
+	public void changePassword(String encodedPassword) {
+		this.password = encodedPassword;
+	}
+
 	public void changeStartedAt(Instant startedAt) {
 		this.startedAt = startedAt;
 	}
