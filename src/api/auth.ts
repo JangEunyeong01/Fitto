@@ -50,6 +50,22 @@ export function logout(refreshToken: string): Promise<void> {
   return request<void>('/auth/logout', { method: 'POST', body: { refreshToken } });
 }
 
+/**
+ * 비밀번호 변경(명세 5장). 바꾸면 다른 기기는 로그아웃되고, 이 기기가 쓸 새 토큰이 돌아온다.
+ * 돌려받은 토큰을 저장하지 않으면 이 기기까지 로그아웃된다.
+ */
+export function changePassword(
+  params: { currentPassword: string; newPassword: string },
+  token: string
+): Promise<AuthTokens> {
+  return request<AuthTokens>('/users/me/password', { method: 'PATCH', body: params, token });
+}
+
+/** 탈퇴(명세 5장). 서버의 기록이 모두 지워진다. 되돌릴 수 없다. */
+export function deleteAccount(password: string, token: string): Promise<void> {
+  return request<void>('/users/me', { method: 'DELETE', body: { password }, token });
+}
+
 /** 게스트로 쌓은 기기 기록을 계정으로 옮긴다(명세 6장). */
 export function importGuestData(payload: ImportPayload, token: string): Promise<ImportResult> {
   return request<ImportResult>('/me/import', { method: 'POST', body: payload, token });

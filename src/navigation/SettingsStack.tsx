@@ -6,6 +6,8 @@ import NotificationsScreen from '../screens/settings/NotificationsScreen';
 import PeriodSettingsScreen from '../screens/period/PeriodSettingsScreen';
 import SignupScreen from '../screens/settings/SignupScreen';
 import LoginScreen from '../screens/settings/LoginScreen';
+import PasswordChangeScreen from '../screens/settings/PasswordChangeScreen';
+import DeleteAccountScreen from '../screens/settings/DeleteAccountScreen';
 
 export type SettingsStackParamList = {
   SettingsMain: undefined;
@@ -14,6 +16,8 @@ export type SettingsStackParamList = {
   PeriodSettings: undefined;
   Signup: undefined;
   Login: undefined;
+  PasswordChange: undefined;
+  DeleteAccount: undefined;
 };
 
 const Stack = createNativeStackNavigator<SettingsStackParamList>();
@@ -28,6 +32,8 @@ export default function SettingsStack() {
       <Stack.Screen name="PeriodSettings" component={PeriodSettingsScreen} />
       <Stack.Screen name="Signup" component={SignupScreen} />
       <Stack.Screen name="Login" component={LoginScreen} />
+      <Stack.Screen name="PasswordChange" component={PasswordChangeScreen} />
+      <Stack.Screen name="DeleteAccount" component={DeleteAccountScreen} />
     </Stack.Navigator>
   );
 }
