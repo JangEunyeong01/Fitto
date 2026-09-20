@@ -40,7 +40,6 @@ export default function HomeScreen() {
   const cardHidden = useAppStore((s) => s.cardHidden);
   const periodOn = useAppStore((s) => s.periodOn);
   const periodSetupDone = useAppStore((s) => s.periodSetupDone);
-  const seedMockToday = useAppStore((s) => s.seedMockToday);
   const profile = useAppStore((s) => s.profile);
   const setBirthdayShownYear = useAppStore((s) => s.setBirthdayShownYear);
   const sheetVisible = useCardOrderSheetStore((s) => s.open);
@@ -79,10 +78,6 @@ export default function HomeScreen() {
     showBirthday();
     setBirthdayShownYear(new Date().getFullYear());
   };
-
-  useEffect(() => {
-    seedMockToday(dateKey());
-  }, []);
 
   // README: 운동 기록이 3일 비면 드러눕기 모달을 띄운다. 하루 한 번까지만.
   // 튜토리얼과 겹치지 않게 튜토리얼이 끝난 뒤에만 확인한다.

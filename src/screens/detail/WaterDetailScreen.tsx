@@ -10,21 +10,10 @@ import DetailBarChart from './DetailBarChart';
 import GoalField from './GoalField';
 import CupSizeField from './CupSizeField';
 import { useAppStore } from '../../store/useAppStore';
-import { dateKey, getTimeSlot } from '../../utils/timeOfDay';
-import { MOCK_WATER_PAST6, getWeekDayLabels } from '../home/mockData';
+import { dateKey } from '../../utils/timeOfDay';
+import { recentDays, weeklyTotals, monthlyTotals, daysWithRecordBetween, average } from '../../utils/history';
 import { WATER_GOAL_LIMITS } from '../../utils/goals';
-import {
-  TIME_SLOT_LABELS,
-  splitByTimeSlot,
-  getMonthWeeklyMock,
-  getMonthlyRangeMock,
-  ymAdd,
-  ymRange,
-  ymRangeLabel,
-  YearMonth,
-} from '../../utils/periodMock';
-
-const TIME_SLOT_ORDER = ['dawn', 'morning', 'day', 'after', 'evening', 'night'];
+import { ymAdd, ymRange, ymRangeLabel, YearMonth } from '../../utils/yearMonth';
 
 function currentYearMonth(): YearMonth {
   const now = new Date();
@@ -36,7 +25,8 @@ export default function WaterDetailScreen() {
   const goal = useAppStore((s) => s.goals.water);
   const cup = useAppStore((s) => s.goals.cup);
   const setGoals = useAppStore((s) => s.setGoals);
-  const today = useAppStore((s) => s.dailyRecords[dateKey()]?.water ?? 0);
+  const records = useAppStore((s) => s.dailyRecords);
+  const today = records[dateKey()]?.water ?? 0;
 
   const [period, setPeriod] = useState<Period>('day');
   const [preset, setPreset] = useState<MonthPreset>('1m');
@@ -66,28 +56,36 @@ export default function WaterDetailScreen() {
   let highlightIndex: number | undefined;
   let summaryValue = 0;
   let summaryDesc = '';
+  let emptyMessage = '';
 
   if (period === 'day') {
-    chartLabels = TIME_SLOT_LABELS;
-    chartValues = splitByTimeSlot('water', today);
-    highlightIndex = TIME_SLOT_ORDER.indexOf(getTimeSlot());
+    // 물은 하루 총량만 기록한다. 마신 시각을 남기지 않으므로 시간대별로 나눠 보여줄 수 없다.
+    chartLabels = [];
+    chartValues = [];
     summaryValue = today;
     summaryDesc = '오늘';
+    emptyMessage = '물은 하루 총량으로 기록해요. 주 단위로 바꾸면 흐름을 볼 수 있어요.';
   } else if (period === 'week') {
-    const week = [...MOCK_WATER_PAST6, today];
-    chartLabels = getWeekDayLabels();
-    chartValues = week;
-    highlightIndex = week.length - 1;
-    summaryValue = Math.round(week.reduce((a, v) => a + v, 0) / week.length);
-    summaryDesc = '이번 주 7일 평균';
+    const week = recentDays(records, 'water');
+    chartLabels = week.labels;
+    chartValues = week.values;
+    highlightIndex = week.values.length - 1;
+    // 기록하지 않은 날까지 나누면 평균이 실제보다 낮게 나온다. 기록한 날로만 나눈다.
+    summaryValue = average(week.values);
+    summaryDesc = '기록한 날의 하루 평균';
+    emptyMessage = '아직 물 기록이 없어요. 한 잔을 기록하면 여기에 쌓여요.';
   } else {
     const months = ymRange(start, end);
     const isSingle = months.length === 1;
     chartLabels = isSingle ? ['1주', '2주', '3주', '4주'] : months.map((m) => `${m.month}월`);
-    chartValues = isSingle ? getMonthWeeklyMock('water', start) : getMonthlyRangeMock('water', months);
-    const totalDays = isSingle ? 28 : months.length * 30;
-    summaryValue = Math.round(chartValues.reduce((a, v) => a + v, 0) / totalDays);
-    summaryDesc = `${ymRangeLabel(start, end)} 평균`;
+    chartValues = isSingle
+      ? weeklyTotals(records, 'water', start.year, start.month)
+      : monthlyTotals(records, 'water', months);
+    const recordedDays = daysWithRecordBetween(records, months);
+    const total = chartValues.reduce((a, v) => a + v, 0);
+    summaryValue = recordedDays > 0 ? Math.round(total / recordedDays) : 0;
+    summaryDesc = `${ymRangeLabel(start, end)} · 기록한 날의 하루 평균`;
+    emptyMessage = '이 기간에는 물 기록이 없어요.';
   }
 
   return (
@@ -116,7 +114,12 @@ export default function WaterDetailScreen() {
         )}
 
         <DetailSummaryCard value={summaryValue} unit="ml" goal={goal} periodDesc={summaryDesc} />
-        <DetailBarChart labels={chartLabels} values={chartValues} highlightIndex={highlightIndex} />
+        <DetailBarChart
+          labels={chartLabels}
+          values={chartValues}
+          highlightIndex={highlightIndex}
+          emptyMessage={emptyMessage}
+        />
 
         <GoalField
           title="물 목표"

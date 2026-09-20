@@ -27,6 +27,9 @@ export default function ActivityCard() {
   const percent = Math.max(0, Math.min(100, Math.round((steps / stepsGoal) * 100)));
   const dashOffset = CIRC * (1 - percent / 100);
 
+  // 걸음 수는 건강 데이터를 연결해야 들어온다. 연결 전에는 "0%"가 아니라 값이 없다고 말한다.
+  const stepsConnected = steps > 0;
+
   return (
     <GlassCard>
       <View style={styles.headerRow}>
@@ -41,27 +44,36 @@ export default function ActivityCard() {
         <View style={styles.ringWrap}>
           <Svg width={SIZE} height={SIZE}>
             <Circle cx={SIZE / 2} cy={SIZE / 2} r={RADIUS} stroke={colors.ink} strokeWidth={STROKE} fill="none" />
-            <Circle
-              cx={SIZE / 2}
-              cy={SIZE / 2}
-              r={RADIUS}
-              stroke={brand.blue}
-              strokeWidth={STROKE}
-              fill="none"
-              strokeDasharray={`${CIRC} ${CIRC}`}
-              strokeDashoffset={dashOffset}
-              strokeLinecap="round"
-              transform={`rotate(-90 ${SIZE / 2} ${SIZE / 2})`}
-            />
+            {stepsConnected && (
+              <Circle
+                cx={SIZE / 2}
+                cy={SIZE / 2}
+                r={RADIUS}
+                stroke={brand.blue}
+                strokeWidth={STROKE}
+                fill="none"
+                strokeDasharray={`${CIRC} ${CIRC}`}
+                strokeDashoffset={dashOffset}
+                strokeLinecap="round"
+                transform={`rotate(-90 ${SIZE / 2} ${SIZE / 2})`}
+              />
+            )}
           </Svg>
           <View style={styles.ringCenter}>
-            <Text style={[styles.percent, { color: colors.txt }]}>{percent}%</Text>
+            <Text style={[styles.percent, { color: stepsConnected ? colors.txt : colors.sub }]}>
+              {stepsConnected ? `${percent}%` : '—'}
+            </Text>
             <Text style={[styles.percentLabel, { color: colors.sub }]}>활동</Text>
           </View>
         </View>
 
         <View style={styles.statCol}>
-          <StatRow dot={brand.blue} label="걸음수" value={steps.toLocaleString()} colors={colors} />
+          <StatRow
+            dot={brand.blue}
+            label="걸음수"
+            value={stepsConnected ? steps.toLocaleString() : '연결 전'}
+            colors={colors}
+          />
           <StatRow dot={brand.mint} label="운동 시간" value={`${exerciseMinutes}분`} colors={colors} />
           <StatRow dot={brand.lavender} label="소모 칼로리" value={`${burned.toLocaleString()}kcal`} colors={colors} />
         </View>

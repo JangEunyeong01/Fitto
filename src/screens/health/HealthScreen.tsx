@@ -18,9 +18,9 @@ import { personaCopy } from '../../copy/persona';
 import { QUICK_WORKOUTS, QUICK_WORKOUT_MINUTES, calcExerciseKcal, findExercise } from '../../data/workouts';
 import { recommendWorkouts } from '../../utils/workoutRecommend';
 import { sumMealKcal } from '../../utils/health';
+import { recentDays, recentDateKeys } from '../../utils/history';
 import WorkoutSettingCard from './WorkoutSettingCard';
 import RoutineCard from './RoutineCard';
-import { MOCK_STEPS_PAST6 } from '../home/mockData';
 
 export default function HealthScreen() {
   const insets = useSafeAreaInsets();
@@ -32,8 +32,9 @@ export default function HealthScreen() {
   const persona = useAppStore((s) => s.persona);
   const periodOn = useAppStore((s) => s.periodOn);
   const periodSetupDone = useAppStore((s) => s.periodSetupDone);
-  const todayRecord = useAppStore((s) => s.dailyRecords[dateKey()]);
-  const record = useAppStore((s) => s.dailyRecords[date]);
+  const records = useAppStore((s) => s.dailyRecords);
+  const todayRecord = records[dateKey()];
+  const record = records[date];
   const weightLog = useAppStore((s) => s.weightLog);
   const profile = useAppStore((s) => s.profile);
   const weightKg = profile.weight;
@@ -47,18 +48,21 @@ export default function HealthScreen() {
   const exercises = record?.exercises ?? [];
   const totalMinutes = exercises.reduce((a, e) => a + e.minutes, 0);
   const totalKcal = exercises.reduce((a, e) => a + e.kcal, 0);
-  const steps = todayRecord?.steps ?? 0;
 
   // 카드 부제에 보여줄 최근 체중. 기록이 없으면 프로필 값도 쓰지 않는다 —
   // 온보딩에서 한 번 적은 값을 "최근 기록"처럼 보여주면 오해를 준다.
   const weightDates = Object.keys(weightLog).sort();
   const latestWeight = weightDates.length > 0 ? weightLog[weightDates[weightDates.length - 1]] : null;
 
-  // 움직임 현황: 실제 헬스 API 연동 전까지 주간 목데이터 + 오늘 기록으로 계산한다.
-  const week = [...MOCK_STEPS_PAST6, steps];
-  const activeDays = week.filter((v) => v >= 5000).length;
-  const avgSteps = Math.round(week.reduce((a, v) => a + v, 0) / week.length);
-  const sittingHours = 6.5; // 기기 센서 연동 전 예시값
+  // 움직임 현황은 최근 7일 기록으로만 계산한다. 걸음은 건강 데이터를 연결해야 들어온다.
+  const weekSteps = recentDays(records, 'steps');
+  const stepsConnected = weekSteps.values.some((v) => v > 0);
+  const avgSteps = Math.round(weekSteps.values.reduce((a, v) => a + v, 0) / weekSteps.values.length);
+  const workoutDays = recentDays(records, 'burn').values.filter((v) => v > 0).length;
+  const weekMinutes = recentDateKeys().reduce(
+    (sum, key) => sum + (records[key]?.exercises ?? []).reduce((a, e) => a + e.minutes, 0),
+    0
+  );
 
   const trainingComment = personaCopy.exerciseComment[persona]();
 
@@ -107,10 +111,16 @@ export default function HealthScreen() {
             <GlassCard style={styles.card}>
               <Text style={[styles.cardTitle, { color: colors.txt }]}>움직임 현황</Text>
               <View style={styles.statRow}>
-                <Stat label="주간 활동" value={`${activeDays}일`} colors={colors} />
-                <Stat label="평균 걸음" value={`${(avgSteps / 1000).toFixed(1)}천`} colors={colors} />
-                <Stat label="앉은 시간" value={`${sittingHours}h`} colors={colors} />
+                <Stat label="운동한 날" value={`${workoutDays}일`} colors={colors} />
+                <Stat label="운동 시간" value={`${weekMinutes}분`} colors={colors} />
+                {/* 앉은 시간은 센서가 필요해 아직 보여줄 값이 없다. 걸음도 연결 전에는 값 대신 상태를 적는다. */}
+                <Stat
+                  label="평균 걸음"
+                  value={stepsConnected ? avgSteps.toLocaleString() : '연결 전'}
+                  colors={colors}
+                />
               </View>
+              <Text style={[styles.statCaption, { color: colors.sub }]}>최근 7일 기록 기준</Text>
             </GlassCard>
 
             <WorkoutSettingCard />
@@ -293,6 +303,10 @@ const styles = StyleSheet.create({
   statRow: {
     flexDirection: 'row',
     marginTop: 14,
+  },
+  statCaption: {
+    ...typography.caption,
+    marginTop: 10,
   },
   statCol: {
     flex: 1,
