@@ -18,7 +18,7 @@ import { useTutorialStore } from '../../store/useTutorialStore';
 import { useToastStore } from '../../store/useToastStore';
 import { useFoodSearchStore } from '../../store/useFoodSearchStore';
 import { useAuthStore } from '../../store/useAuthStore';
-import { useOutboxStore } from '../../store/useOutboxStore';
+import { useOutboxStore, type FailedItem } from '../../store/useOutboxStore';
 import { logout as requestLogout } from '../../api/auth';
 import { describeOp } from '../../sync/types';
 import { PERSONA_OPTIONS } from '../onboarding/onboardingData';
@@ -172,33 +172,12 @@ export default function SettingsScreen() {
             <>
               <Text style={[styles.previewText, { color: colors.sub }]}>{authEmail}</Text>
               <Text style={[styles.syncText, { color: colors.sub }]}>{syncLabel}</Text>
-
-              {/* 올리지 못한 기록은 숨기지 않는다. 기기에만 남아 있으면 폰을 바꿀 때 사라진다. */}
-              {failedItems.length > 0 && (
-                <View style={[styles.failedBox, { borderColor: semantic.danger }]}>
-                  <Text style={[styles.failedTitle, { color: semantic.danger }]}>
-                    올리지 못한 기록 {failedItems.length}건
-                  </Text>
-                  {failedItems.slice(0, 3).map((item) => (
-                    <Text key={item.id} style={[styles.failedRow, { color: colors.sub }]} numberOfLines={1}>
-                      · {describeOp(item.op)} — {item.reason}
-                    </Text>
-                  ))}
-                  {failedItems.length > 3 && (
-                    <Text style={[styles.failedRow, { color: colors.sub }]}>
-                      · 외 {failedItems.length - 3}건
-                    </Text>
-                  )}
-                  <View style={styles.failedButtons}>
-                    <Pressable onPress={handleRetryFailed} style={[styles.failedBtn, { borderColor: colors.line }]}>
-                      <Text style={[styles.previewBtnLabel, { color: colors.txt }]}>다시 시도</Text>
-                    </Pressable>
-                    <Pressable onPress={handleClearFailed} style={[styles.failedBtn, { borderColor: colors.line }]}>
-                      <Text style={[styles.previewBtnLabel, { color: colors.sub }]}>목록 비우기</Text>
-                    </Pressable>
-                  </View>
-                </View>
-              )}
+              <FailedRecords
+                items={failedItems}
+                colors={colors}
+                onRetry={handleRetryFailed}
+                onClear={handleClearFailed}
+              />
 
               <Divider colors={colors} />
               <NavRow label="비밀번호 변경" onPress={() => navigation.navigate('PasswordChange')} colors={colors} />
@@ -216,6 +195,13 @@ export default function SettingsScreen() {
               <Text style={[styles.previewText, { color: colors.sub }]}>
                 계정을 만들면 기록을 백업하고 다른 기기에서도 이어서 볼 수 있어요.
               </Text>
+              {/* 로그인이 풀린 뒤에도 못 올린 기록은 보여야 한다. 안 보이면 있는 줄도 모른다. */}
+              <FailedRecords
+                items={failedItems}
+                colors={colors}
+                onRetry={handleRetryFailed}
+                onClear={handleClearFailed}
+              />
               <Divider colors={colors} />
               <NavRow label="계정 만들기" onPress={() => navigation.navigate('Signup')} colors={colors} />
               <Divider colors={colors} />
@@ -344,6 +330,44 @@ export default function SettingsScreen() {
         </GlassCard>
       </ScrollView>
     </ScreenBackground>
+  );
+}
+
+/**
+ * 서버로 올리지 못한 기록. 기기에는 남아 있지만 폰을 바꾸면 사라지므로 숨기지 않는다.
+ * 로그인 상태와 상관없이 보여준다 — 로그인이 풀린 뒤에 더 필요한 정보다.
+ */
+function FailedRecords({
+  items,
+  colors,
+  onRetry,
+  onClear,
+}: {
+  items: FailedItem[];
+  colors: any;
+  onRetry: () => void;
+  onClear: () => void;
+}) {
+  if (items.length === 0) return null;
+
+  return (
+    <View style={[styles.failedBox, { borderColor: semantic.danger }]}>
+      <Text style={[styles.failedTitle, { color: semantic.danger }]}>올리지 못한 기록 {items.length}건</Text>
+      {items.slice(0, 3).map((item) => (
+        <Text key={item.id} style={[styles.failedRow, { color: colors.sub }]} numberOfLines={1}>
+          · {describeOp(item.op)} — {item.reason}
+        </Text>
+      ))}
+      {items.length > 3 && <Text style={[styles.failedRow, { color: colors.sub }]}>· 외 {items.length - 3}건</Text>}
+      <View style={styles.failedButtons}>
+        <Pressable onPress={onRetry} style={[styles.failedBtn, { borderColor: colors.line }]}>
+          <Text style={[styles.previewBtnLabel, { color: colors.txt }]}>다시 시도</Text>
+        </Pressable>
+        <Pressable onPress={onClear} style={[styles.failedBtn, { borderColor: colors.line }]}>
+          <Text style={[styles.previewBtnLabel, { color: colors.sub }]}>목록 비우기</Text>
+        </Pressable>
+      </View>
+    </View>
   );
 }
 
