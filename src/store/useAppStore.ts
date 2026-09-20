@@ -207,6 +207,11 @@ interface AppState {
   obPick: ObPick;
   onboardingDone: boolean;
   /**
+   * 온보딩 끝에 "계정을 만들까요?"를 한 번 물어봤는지(명세 3-2).
+   * 가입 유도는 여기 한 번과 설정 화면뿐이다. 매번 띄우면 게스트로 쓰겠다는 선택을 무시하는 것이 된다.
+   */
+  accountPromptSeen: boolean;
+  /**
    * 앱을 쓰기 시작한 날(dateKey, 명세 F-008). 온보딩을 마칠 때 한 번만 찍는다.
    * 온보딩을 다시 봐도 유지된다 — 프로필을 고친 것이지 처음부터 다시 쓰는 건 아니라서.
    * 데이터 초기화(resetAll)는 설치 직후 상태로 돌리는 것이라 null로 돌아간다.
@@ -217,6 +222,9 @@ interface AppState {
   /** 드러눕기 모달을 띄운 날짜(dateKey). 하루 한 번만 뜨게 한다. */
   layDownShownDate: string | null;
   timeSlotOverride: string | null;
+
+  /** 온보딩 끝 계정 선택을 지나갔다고 표시한다. 가입했든 나중에 하기를 골랐든 같다. */
+  dismissAccountPrompt: () => void;
 
   setTheme: (t: ThemeMode) => void;
   setPersona: (p: Persona) => void;
@@ -360,11 +368,14 @@ export const useAppStore = create<AppState>()(
       dailyRecords: {},
       weightLog: {},
       onboardingDone: false,
+      accountPromptSeen: false,
       startDate: null,
       tutorialDone: false,
       birthdayShownYear: null,
       layDownShownDate: null,
       timeSlotOverride: null,
+
+      dismissAccountPrompt: () => set({ accountPromptSeen: true }),
 
       setTheme: (t) => set({ theme: t }),
       setPersona: (p) => set({ persona: p }),
@@ -658,7 +669,7 @@ export const useAppStore = create<AppState>()(
     {
       name: 'fitto-app-storage',
       storage: createJSONStorage(() => AsyncStorage),
-      version: 6,
+      version: 7,
       // 기본 병합은 얕은 병합이라 profile 같은 객체는 저장본이 통째로 덮어쓴다.
       // 그러면 나중에 필드를 추가했을 때 기존 사용자에게만 undefined가 남으므로,
       // 객체 필드는 기본값 위에 저장본을 얹는다.
@@ -690,6 +701,7 @@ export const useAppStore = create<AppState>()(
               cardOrder?: CardId[];
               cardHidden?: CardId[];
               onboardingDone?: boolean;
+              accountPromptSeen?: boolean;
               startDate?: string | null;
               recipes?: any[];
               routines?: any[];
@@ -843,6 +855,12 @@ export const useAppStore = create<AppState>()(
           (state.routines ?? []).forEach((r: any) => {
             if (!isUuid(r.id)) r.id = newId();
           });
+        }
+
+        // v7: 온보딩 끝 계정 선택 화면을 뒤늦게 넣었다. 이미 온보딩을 마친 사람에게
+        // 앱을 열자마자 가입 화면을 띄우면 쓰던 흐름이 끊긴다. 물어본 것으로 친다.
+        if (version < 7 && state.onboardingDone) {
+          state.accountPromptSeen = true;
         }
 
         return state as AppState;
