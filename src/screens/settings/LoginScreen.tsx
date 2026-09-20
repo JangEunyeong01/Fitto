@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import ScreenBackground from '../../components/ScreenBackground';
@@ -75,7 +75,8 @@ export default function LoginScreen() {
         showToast('로그인했어요');
       }
 
-      navigation.goBack();
+      // 온보딩 직후에 들어온 경우에는 로그인과 동시에 화면 구성이 홈으로 바뀐다(RootNavigator).
+      if (navigation.canGoBack()) navigation.goBack();
     } catch (e) {
       if (e instanceof ApiError || e instanceof NetworkError) {
         showToast(e.message);
@@ -129,6 +130,11 @@ export default function LoginScreen() {
           <View style={styles.buttonWrap}>
             <PrimaryButton label="로그인" onPress={submit} loading={busy} inactive={!email.trim() || !password} />
           </View>
+
+          {/* 로그인 화면에서 막히지 않게 가입으로 가는 길을 둔다. 비밀번호 찾기는 메일 발송을 붙인 뒤에 넣는다. */}
+          <Pressable onPress={() => navigation.navigate('Signup')} style={styles.linkRow}>
+            <Text style={[styles.link, { color: colors.txt }]}>계정이 없으신가요? 계정 만들기</Text>
+          </Pressable>
         </GlassCard>
 
         {/* 기기에 기록이 있을 때만 묻는다. 둘 중 하나를 고르기 전에는 로그인하지 않는다. */}
@@ -168,6 +174,12 @@ const styles = StyleSheet.create({
   buttonWrap: {
     marginTop: 20,
   },
+  linkRow: {
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  link: typography.label,
   mergeTitle: typography.sectionTitle,
   desc: {
     ...typography.bodySm,

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import ScreenBackground from '../../components/ScreenBackground';
@@ -90,7 +90,9 @@ export default function SignupScreen() {
         showToast('계정은 만들었지만 기록 옮기기는 실패했어요. 나중에 다시 시도할게요');
       }
 
-      navigation.goBack();
+      // 온보딩 직후에 들어온 경우에는 가입과 동시에 화면 구성이 홈으로 바뀐다(RootNavigator).
+      // 그때는 돌아갈 화면이 없으므로 확인하고 부른다.
+      if (navigation.canGoBack()) navigation.goBack();
     } catch (e) {
       // 서버가 준 문장을 그대로 보여준다(명세 0-6). 앱이 코드별 문구를 따로 들고 있지 않아도 된다.
       if (e instanceof ApiError || e instanceof NetworkError) {
@@ -145,6 +147,10 @@ export default function SignupScreen() {
               inactive={!email.trim() || password.length < 8}
             />
           </View>
+
+          <Pressable onPress={() => navigation.navigate('Login')} style={styles.linkRow}>
+            <Text style={[styles.link, { color: colors.txt }]}>이미 계정이 있나요? 로그인</Text>
+          </Pressable>
         </GlassCard>
 
         <Text style={[styles.note, { color: colors.sub }]}>
@@ -177,6 +183,12 @@ const styles = StyleSheet.create({
   buttonWrap: {
     marginTop: 20,
   },
+  linkRow: {
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  link: typography.label,
   note: {
     ...typography.caption,
     lineHeight: 11 * 1.6,
