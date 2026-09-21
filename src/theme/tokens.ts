@@ -274,58 +274,77 @@ export function weight(w: FontWeightKey) {
 }
 
 /**
- * 텍스트 역할표. 화면에서 fontSize를 직접 쓰지 말고 여기서 골라 쓴다.
+ * 글자 크기 단계 (UI 기준서 3장). 5계층 10단계, **가장 작은 글자는 12px.**
  *
- * 예전에는 화면마다 숫자를 직접 박아서 11/11.5/12/12.5/13/13.5/14가 뒤섞였고,
- * 같은 역할인데 0.5px씩 달라 보이는 게 UI가 어긋나 보이는 주된 원인이었다.
- * README가 픽셀을 지정한 것(화면 제목·홈 카드·큰 수치)은 그 값을 그대로 지킨다.
+ * 예전에는 크기가 16종(9.5~27)이었고 0.5px 차이는 눈으로 구분되지 않아 위계만 흐려졌다.
+ * 카드 제목(12.5)과 본문(12.5)이 같은 크기라 무엇이 제목인지 읽히지 않았고,
+ * 9.5·10.5px 글자는 폰에서 읽기 어려웠다.
+ */
+const TYPE_SCALE = {
+  displayLg: 28,
+  displayMd: 24,
+  heading1: 20,
+  heading2: 17,
+  heading3: 15,
+  bodyLg: 15,
+  bodyMd: 14,
+  labelLg: 15,
+  labelMd: 13,
+  caption: 12,
+} as const;
+
+/**
+ * 텍스트 역할표. 화면에서 fontSize를 직접 쓰지 말고 여기서 골라 쓴다.
+ * 역할 이름은 화면 코드가 이미 쓰고 있는 것을 유지하고, 크기만 위 단계에 맞췄다.
  */
 export const typography = {
-  // 화면 제목 (README 지정)
-  screenTitle: { fontSize: 20, ...weight(700), letterSpacing: -0.6 },
-  subScreenTitle: { fontSize: 18, ...weight(700), letterSpacing: -0.5 },
-  onboardingTitle: { fontSize: 25, ...weight(700), letterSpacing: -0.7, lineHeight: 25 * 1.32 },
+  // Heading
+  screenTitle: { fontSize: TYPE_SCALE.heading1, ...weight(700), letterSpacing: -0.6, lineHeight: 20 * 1.35 },
+  subScreenTitle: { fontSize: TYPE_SCALE.heading2, ...weight(700), letterSpacing: -0.4, lineHeight: 17 * 1.4 },
+  onboardingTitle: { fontSize: TYPE_SCALE.displayMd, ...weight(700), letterSpacing: -0.7, lineHeight: 24 * 1.32 },
 
-  // 수치. 카드별 크기는 README가 정해두어 각 화면에서 fontSize만 덮어쓴다.
-  bigNumber: { fontSize: 27, ...weight(700), letterSpacing: -1.05, fontVariant: tabularNums },
-  midNumber: { fontSize: 23, ...weight(700), letterSpacing: -0.9, fontVariant: tabularNums },
+  // Display — 대표 수치. 카드별 크기가 따로 필요한 곳은 화면에서 fontSize만 덮어쓴다.
+  bigNumber: { fontSize: TYPE_SCALE.displayLg, ...weight(700), letterSpacing: -1.05, fontVariant: tabularNums },
+  midNumber: { fontSize: TYPE_SCALE.displayMd, ...weight(700), letterSpacing: -0.9, fontVariant: tabularNums },
 
-  /** 홈 카드 제목 (README 12.5/700). */
-  cardTitle: { fontSize: 12.5, ...weight(700) },
-  /** README가 픽셀을 지정하지 않은 화면들의 카드·섹션 제목. */
-  sectionTitle: { fontSize: 13, ...weight(700) },
-  /** 목록 행의 이름. */
-  rowLabel: { fontSize: 13, ...weight(600) },
-  /** 입력 위 라벨, 칩 글씨 같은 작은 라벨. */
-  label: { fontSize: 11.5, ...weight(600) },
-  /** 표에서 강조되는 값. */
-  value: { fontSize: 12.5, ...weight(700) },
-  /** 단위·보조 수치. */
-  unit: { fontSize: 12.5, ...weight(600) },
-
-  /** 설명 문단. */
-  body: { fontSize: 12.5, ...weight(500), lineHeight: 12.5 * 1.55 },
-  /** 좁은 자리의 설명. */
-  bodySm: { fontSize: 11.5, ...weight(500), lineHeight: 11.5 * 1.5 },
-  /** 캡션·메타 정보. */
-  caption: { fontSize: 11, ...weight(500) },
-  /** 차트 축 라벨, 카드 하단 캡션처럼 더 작은 자리. */
-  captionSm: { fontSize: 10.5, ...weight(500) },
-  /** 범례·요일 머리글처럼 아주 좁은 자리. */
-  micro: { fontSize: 9.5, ...weight(600) },
+  /** 카드 제목. 본문(14)보다 커야 제목으로 읽힌다(예전 12.5 = 본문과 같은 크기). */
+  cardTitle: { fontSize: TYPE_SCALE.heading3, ...weight(700), lineHeight: 15 * 1.4 },
+  sectionTitle: { fontSize: TYPE_SCALE.heading3, ...weight(700), lineHeight: 15 * 1.4 },
   /** 시트·모달 제목. */
-  sheetTitle: { fontSize: 16, ...weight(700) },
+  sheetTitle: { fontSize: TYPE_SCALE.heading2, ...weight(700), lineHeight: 17 * 1.4 },
   /** 강조되는 항목 이름(닉네임, 빈 상태 제목). */
-  itemTitle: { fontSize: 14.5, ...weight(700) },
-  /** V2 같은 작은 배지. */
-  badge: { fontSize: 10, ...weight(700) },
+  itemTitle: { fontSize: TYPE_SCALE.bodyLg, ...weight(700), lineHeight: 15 * 1.45 },
+
+  // Label
+  /** 목록 행의 이름. */
+  rowLabel: { fontSize: 14, ...weight(600) },
+  /** 입력 위 라벨, 칩 글씨 같은 작은 라벨. */
+  label: { fontSize: TYPE_SCALE.labelMd, ...weight(600) },
+  /** 표에서 강조되는 값. */
+  value: { fontSize: 14, ...weight(700) },
+  /** 단위·보조 수치. */
+  unit: { fontSize: TYPE_SCALE.labelMd, ...weight(600) },
+
+  // Body
+  /** 설명 문단. */
+  body: { fontSize: TYPE_SCALE.bodyMd, ...weight(400), lineHeight: 14 * 1.55 },
+  /** 좁은 자리의 설명. */
+  bodySm: { fontSize: TYPE_SCALE.labelMd, ...weight(500), lineHeight: 13 * 1.5 },
+
+  // Caption — 12px 아래로 내려가지 않는다.
+  caption: { fontSize: TYPE_SCALE.caption, ...weight(500), lineHeight: 12 * 1.4 },
+  /** 차트 축·카드 하단 캡션. 예전 10.5px. */
+  captionSm: { fontSize: TYPE_SCALE.caption, ...weight(500) },
+  /** 범례·요일 머리글. 예전 9.5px. */
+  micro: { fontSize: TYPE_SCALE.caption, ...weight(600) },
+  badge: { fontSize: TYPE_SCALE.caption, ...weight(700) },
 
   // 입력·버튼
-  input: { fontSize: 13.5, ...weight(500) },
-  buttonLabel: { fontSize: 15, ...weight(700) },
-  buttonLabelSm: { fontSize: 13, ...weight(700) },
+  input: { fontSize: TYPE_SCALE.labelLg, ...weight(500) },
+  buttonLabel: { fontSize: TYPE_SCALE.labelLg, ...weight(700) },
+  buttonLabelSm: { fontSize: TYPE_SCALE.labelMd, ...weight(700) },
 
-  sectionLabel: { fontSize: 11, ...weight(700), letterSpacing: 0.8, textTransform: 'uppercase' as const },
+  sectionLabel: { fontSize: TYPE_SCALE.caption, ...weight(700), letterSpacing: 0.8, textTransform: 'uppercase' as const },
 };
 
 export const spacing = {

@@ -115,7 +115,7 @@ const styles = StyleSheet.create({
     transform: [{ rotate: '98deg' }, { translateY: 6 }],
   },
   title: {
-    fontSize: 16.5,
+    fontSize: 17,
     ...weight(700),
     marginTop: 14,
     textAlign: 'center',

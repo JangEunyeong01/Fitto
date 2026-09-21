@@ -93,7 +93,7 @@ const styles = StyleSheet.create({
     elevation: 12,
   },
   title: {
-    fontSize: 16.5,
+    fontSize: 17,
     ...weight(700),
   },
   body: {

@@ -143,7 +143,7 @@ const styles = StyleSheet.create({
     gap: 3,
   },
   label: {
-    fontSize: 11.5,
+    fontSize: 12,
   },
   fabSpacer: {
     width: 56,

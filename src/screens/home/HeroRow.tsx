@@ -57,7 +57,7 @@ const styles = StyleSheet.create({
   },
   meta: typography.label,
   greeting: {
-    fontSize: 16.5,
+    fontSize: 17,
     ...weight(700),
     lineHeight: 16.5 * 1.42,
   },
