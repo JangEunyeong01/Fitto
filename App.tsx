@@ -1,5 +1,5 @@
 import React from 'react';
-import { View } from 'react-native';
+import { View, Platform } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -16,6 +16,22 @@ import { useTheme } from './src/theme/useTheme';
 import { useFittoFonts } from './src/theme/fonts';
 import { lightColors } from './src/theme/tokens';
 import { useSyncRunner } from './src/sync/useSyncRunner';
+
+/**
+ * 한글이 단어 중간에서 끊기지 않게 한다("드릴게 / 요.").
+ *
+ * 브라우저는 한글을 글자 단위로 줄바꿈해서, 좁은 카드에서 단어가 쪼개진다.
+ * keep-all로 띄어쓰기 단위로만 끊고, 한 단어가 줄보다 길 때만 글자 단위로 넘긴다.
+ * 웹에서만 필요한 처리라 한 번만 전역으로 넣는다.
+ *
+ * ponytail: 웹 전용. iOS는 Text마다 lineBreakStrategyIOS="hangul-word"가 필요하고
+ * 안드로이드는 대응 옵션이 없어, 네이티브 빌드로 확인할 때 공용 Text 래퍼로 옮긴다.
+ */
+if (Platform.OS === 'web' && typeof document !== 'undefined') {
+  const style = document.createElement('style');
+  style.textContent = 'body * { word-break: keep-all; overflow-wrap: anywhere; }';
+  document.head.appendChild(style);
+}
 
 function AppShell() {
   const { mode } = useTheme();

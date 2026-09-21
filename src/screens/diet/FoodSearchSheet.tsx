@@ -254,14 +254,7 @@ function FoodSearchForm() {
                                 ? `${labelOf(DISEASE_TAGS, caution)} 주의`
                                 : '가능'
                           }
-                          color={
-                            hit
-                              ? alpha(brand.peach, 0.28)
-                              : caution
-                                ? alpha(brand.yellow, 0.4)
-                                : alpha(brand.mint, 0.28)
-                          }
-                          textColor={colors.textPrimary}
+                          tone={hit ? 'danger' : caution ? 'warn' : 'good'}
                         />
                       </View>
                       <Text style={[styles.meta, { color: colors.textSecondary }]}>

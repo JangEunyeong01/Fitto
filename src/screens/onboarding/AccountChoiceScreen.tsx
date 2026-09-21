@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import ScreenBackground from '../../components/ScreenBackground';
@@ -61,15 +61,10 @@ export default function AccountChoiceScreen() {
         </GlassCard>
 
         <View style={styles.actions}>
+          {/* 주 버튼은 한 화면에 하나. 로그인은 보조, 나중에 하기는 가장 가볍게. */}
           <PrimaryButton label="계정 만들기" onPress={() => navigation.navigate('Signup')} />
-
-          <Pressable onPress={() => navigation.navigate('Login')} style={styles.textButton}>
-            <Text style={[styles.textButtonLabel, { color: colors.textPrimary }]}>이미 계정이 있어요</Text>
-          </Pressable>
-
-          <Pressable onPress={dismiss} style={styles.textButton}>
-            <Text style={[styles.skipLabel, { color: colors.textSecondary }]}>나중에 하기</Text>
-          </Pressable>
+          <PrimaryButton label="이미 계정이 있어요" variant="secondary" onPress={() => navigation.navigate('Login')} />
+          <PrimaryButton label="나중에 하기" variant="text" onPress={dismiss} />
         </View>
       </ScrollView>
     </ScreenBackground>
@@ -108,13 +103,6 @@ const styles = StyleSheet.create({
   },
   actions: {
     marginTop: 28,
-    gap: 4,
+    gap: 10,
   },
-  textButton: {
-    height: 48,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  textButtonLabel: typography.buttonLabelSm,
-  skipLabel: typography.label,
 });

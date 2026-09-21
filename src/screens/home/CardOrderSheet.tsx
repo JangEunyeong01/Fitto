@@ -175,7 +175,6 @@ const styles = StyleSheet.create({
   },
   essentialBtn: {
     // 누를 수 없는 상태라는 걸 눌리는 버튼과 구분해서 보여준다.
-    borderStyle: 'dashed',
   },
   toggleText: typography.label,
   bottomRow: {

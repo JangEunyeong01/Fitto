@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, Image, Pressable, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import TextLink from '../../../components/TextLink';
 import GlassCard from '../../../components/GlassCard';
 import ProgressBar from '../../../components/ProgressBar';
 import Icon from '../../../components/Icon';
@@ -48,10 +49,7 @@ export default function KcalCard() {
               오늘 칼로리{consumed > 0 ? ` · ${kcalStatusLabel[status]}` : ''}
             </Text>
             {/* 명세 F-011: 카드에서 식단 탭으로 바로 간다. */}
-            <Pressable onPress={() => navigation.navigate('Diet')} hitSlop={6} style={styles.detailLink}>
-              <Text style={[styles.label, { color: colors.textSecondary }]}>식단</Text>
-              <Icon name="chevronRight" size={13} color={colors.textSecondary} />
-            </Pressable>
+            <TextLink label="식단" onPress={() => navigation.navigate('Diet')} />
           </View>
           <View style={styles.numRow}>
             <Text style={[styles.bigNum, { color: colors.textPrimary }]}>{consumed.toLocaleString()}</Text>
@@ -75,7 +73,7 @@ export default function KcalCard() {
       </View>
 
       {/* 홈에서 바로 한 끼 기록. 시트가 지금 시각에 맞는 끼니를 골라준다. */}
-      <Pressable onPress={() => openFoodSearch()} style={[styles.quickBtn, { borderColor: colors.borderDivider }]}>
+      <Pressable onPress={() => openFoodSearch()} style={[styles.quickBtn, { borderColor: colors.borderInput }]}>
         <Text style={[styles.quickLabel, { color: colors.textPrimary }]}>+ 음식 기록</Text>
       </Pressable>
     </GlassCard>
@@ -188,7 +186,6 @@ const styles = StyleSheet.create({
     height: 36,
     borderRadius: 12,
     borderWidth: 1,
-    borderStyle: 'dashed',
     alignItems: 'center',
     justifyContent: 'center',
   },

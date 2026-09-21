@@ -77,7 +77,7 @@ export default function DietScreen() {
             <GlassCard style={styles.card}>
               <View style={styles.summaryTop}>
                 <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>{isToday ? '오늘 섭취' : '이날 섭취'}</Text>
-                {over && <Badge label="목표 초과!" color={alpha(brand.peach, 0.32)} textColor={colors.textPrimary} />}
+                {over && <Badge label="조금 넘었어요" tone="warn" />}
               </View>
               <Text style={[styles.summaryNum, { color: colors.textPrimary }]}>
                 {totalKcal.toLocaleString()}

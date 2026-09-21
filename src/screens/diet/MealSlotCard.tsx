@@ -55,7 +55,7 @@ export default function MealSlotCard({ date, slot, items, memo, onAdd }: MealSlo
       </View>
 
       {items.length === 0 ? (
-        <Pressable onPress={() => onAdd(slot)} style={[styles.emptyBtn, { borderColor: colors.borderDivider }]}>
+        <Pressable onPress={() => onAdd(slot)} style={[styles.emptyBtn, { borderColor: colors.borderInput }]}>
           <Text style={[styles.emptyLabel, { color: colors.textSecondary }]}>+ {label} 추가</Text>
         </Pressable>
       ) : (
@@ -124,7 +124,6 @@ const styles = StyleSheet.create({
     height: 42,
     borderRadius: 14,
     borderWidth: 1,
-    borderStyle: 'dashed',
     alignItems: 'center',
     justifyContent: 'center',
   },

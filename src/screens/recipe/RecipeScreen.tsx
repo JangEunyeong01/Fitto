@@ -188,7 +188,7 @@ export default function RecipeScreen() {
             <PrimaryButton small label="재료 추가 (g)" onPress={addLine} style={styles.addBtn} />
           </View>
 
-          <Pressable onPress={() => setCustomOpen((v) => !v)} style={[styles.customToggle, { borderColor: colors.borderDivider }]}>
+          <Pressable onPress={() => setCustomOpen((v) => !v)} style={[styles.customToggle, { borderColor: colors.borderInput }]}>
             <Text style={[styles.customToggleLabel, { color: colors.textSecondary }]}>목록에 없는 재료 직접 입력</Text>
           </Pressable>
 
@@ -310,7 +310,6 @@ const styles = StyleSheet.create({
     height: 150,
     borderRadius: radius.optionRow,
     borderWidth: 1,
-    borderStyle: 'dashed',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
@@ -342,7 +341,6 @@ const styles = StyleSheet.create({
     height: 42,
     borderRadius: 13,
     borderWidth: 1,
-    borderStyle: 'dashed',
     alignItems: 'center',
     justifyContent: 'center',
   },

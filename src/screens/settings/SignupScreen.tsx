@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import ScreenBackground from '../../components/ScreenBackground';
 import GlassCard from '../../components/GlassCard';
+import TextLink from '../../components/TextLink';
 import TextField from '../../components/TextField';
 import PrimaryButton from '../../components/PrimaryButton';
 import DetailHeader from '../detail/DetailHeader';
@@ -152,9 +153,10 @@ export default function SignupScreen() {
 
           {wakeNotice && <Text style={[styles.wakeNotice, { color: colors.textSecondary }]}>{wakeNotice}</Text>}
 
-          <Pressable onPress={() => navigation.navigate('Login')} style={styles.linkRow}>
-            <Text style={[styles.link, { color: colors.textPrimary }]}>이미 계정이 있나요? 로그인</Text>
-          </Pressable>
+          <View style={styles.linkRow}>
+            <Text style={[styles.link, { color: colors.textSecondary }]}>이미 계정이 있나요?</Text>
+            <TextLink label="로그인" onPress={() => navigation.navigate('Login')} />
+          </View>
         </GlassCard>
 
         <Text style={[styles.note, { color: colors.textSecondary }]}>

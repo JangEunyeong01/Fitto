@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import ScreenBackground from '../../components/ScreenBackground';
 import GlassCard from '../../components/GlassCard';
+import TextLink from '../../components/TextLink';
 import TextField from '../../components/TextField';
 import PrimaryButton from '../../components/PrimaryButton';
 import DetailHeader from '../detail/DetailHeader';
@@ -137,9 +138,10 @@ export default function LoginScreen() {
           {wakeNotice && <Text style={[styles.wakeNotice, { color: colors.textSecondary }]}>{wakeNotice}</Text>}
 
           {/* 로그인 화면에서 막히지 않게 가입으로 가는 길을 둔다. 비밀번호 찾기는 메일 발송을 붙인 뒤에 넣는다. */}
-          <Pressable onPress={() => navigation.navigate('Signup')} style={styles.linkRow}>
-            <Text style={[styles.link, { color: colors.textPrimary }]}>계정이 없으신가요? 계정 만들기</Text>
-          </Pressable>
+          <View style={styles.linkRow}>
+            <Text style={[styles.link, { color: colors.textSecondary }]}>계정이 없으신가요?</Text>
+            <TextLink label="계정 만들기" onPress={() => navigation.navigate('Signup')} />
+          </View>
         </GlassCard>
 
         {/* 기기에 기록이 있을 때만 묻는다. 둘 중 하나를 고르기 전에는 로그인하지 않는다. */}

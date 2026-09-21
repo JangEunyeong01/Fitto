@@ -1,73 +1,158 @@
 import React from 'react';
-import { Pressable, Text, StyleSheet, StyleProp, ViewStyle, ActivityIndicator } from 'react-native';
+import { Pressable, Text, StyleSheet, StyleProp, ViewStyle, ActivityIndicator, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../theme/useTheme';
 import { typography } from '../theme/tokens';
 
+/**
+ * 버튼 변형(UI 기준서 5-1).
+ *
+ * - primary: 그 화면의 가장 중요한 동작 하나. 파스텔 면 + 짙은 글씨
+ * - secondary: 보조 동작(이전, 취소, 기록에 추가). 흰 면 + 입력 테두리
+ * - text: 가벼운 이동(건너뛰기, 나중에 하기). 면 없음
+ * - danger: 되돌릴 수 없는 동작의 **최종 확인에만**(탈퇴, 데이터 초기화)
+ */
+export type ButtonVariant = 'primary' | 'secondary' | 'text' | 'danger';
+
+/** lg 52: 화면 하단 전폭 / md 44: 카드 안 주요 동작 / sm 36: 행 끝 보조 동작(누르는 영역은 44로 넓힌다). */
+export type ButtonSize = 'lg' | 'md' | 'sm';
+
 interface PrimaryButtonProps {
   label: string;
   onPress: () => void;
-  style?: StyleProp<ViewStyle>;
-  disabled?: boolean;
+  variant?: ButtonVariant;
+  size?: ButtonSize;
+  /** 예전 호출부 호환. size="md"와 같다. */
   small?: boolean;
-  loading?: boolean;
+  style?: StyleProp<ViewStyle>;
   /**
-   * 아직 진행할 수 없는 상태. 회색으로 보이지만 누를 수는 있다.
-   * 완전히 막아버리면 왜 못 넘어가는지 알려줄 수 없어서(온보딩은 토스트로 안내한다) 이렇게 나눴다.
+   * 기능 자체가 불가한 상태. **눌리지 않는다.** (예: 바꾼 게 없어서 저장할 게 없음)
+   */
+  disabled?: boolean;
+  /**
+   * 조건이 덜 찬 상태. disabled와 모양은 같지만 **눌린다.**
+   * 누르면 호출부가 무엇이 빠졌는지 알려준다. 막아버리면 왜 못 넘어가는지 알려줄 방법이 없다.
    */
   inactive?: boolean;
+  /** 진행 중. 글씨 자리에 스피너를 두고 너비는 그대로 둔다. 눌리지 않는다. */
+  loading?: boolean;
+  accessibilityLabel?: string;
 }
 
-export default function PrimaryButton({ label, onPress, style, disabled, small, loading, inactive }: PrimaryButtonProps) {
-  const { colors, primaryGradient, primaryButtonShadow, primaryButtonShadowSmall, radius, minTouchTarget } = useTheme();
+const HEIGHT: Record<ButtonSize, number> = { lg: 52, md: 44, sm: 36 };
+
+/**
+ * 위험 버튼 면. 흰 글씨와 5.7:1. 다크 모드에서도 같은 값을 쓴다 —
+ * 다크의 textDanger는 밝은 주황이라 면으로 쓰면 흰 글씨가 안 읽힌다.
+ */
+const DANGER_FACE = '#A84B32';
+const DANGER_PRESSED = '#8F3F29';
+/** 보이는 높이가 44보다 작을 때 위아래로 넓혀 누르는 영역을 44로 맞춘다. */
+const HIT_SLOP: Record<ButtonSize, number> = { lg: 0, md: 0, sm: 4 };
+
+export default function PrimaryButton({
+  label,
+  onPress,
+  variant = 'primary',
+  size,
+  small,
+  style,
+  disabled,
+  inactive,
+  loading,
+  accessibilityLabel,
+}: PrimaryButtonProps) {
+  const { colors, primaryGradient, primaryButtonShadow, primaryButtonShadowSmall, radius } = useTheme();
+  const resolvedSize: ButtonSize = size ?? (small ? 'md' : 'lg');
+  const muted = disabled || inactive;
+
+  const labelColor = muted
+    ? colors.textDisabled
+    : variant === 'primary'
+      ? colors.textOnPrimary
+      : variant === 'danger'
+        ? '#FFFFFF'
+        : variant === 'text'
+          ? colors.textAccent
+          : colors.textPrimary;
+
+  const labelStyle = resolvedSize === 'lg' ? typography.buttonLabel : typography.buttonLabelSm;
+  const content = loading ? (
+    <ActivityIndicator color={labelColor} />
+  ) : (
+    <Text style={[labelStyle, { color: labelColor }]} numberOfLines={1}>
+      {label}
+    </Text>
+  );
+
+  // 그림자는 주 버튼에만. 비활성일 땐 걷어서 눌러야 할 버튼처럼 보이지 않게 한다.
+  const showShadow = variant === 'primary' && !muted;
 
   return (
     <Pressable
       onPress={onPress}
       disabled={disabled || loading}
-      style={({ pressed }) => [
-        {
-          opacity: disabled ? 0.5 : pressed ? 0.85 : 1,
-          height: small ? 42 : Math.max(minTouchTarget, 52),
-          borderRadius: radius.button,
-          // 비활성일 땐 그림자도 걷어서 눌러야 할 버튼처럼 보이지 않게 한다.
-          shadowColor: inactive ? 'transparent' : small ? primaryButtonShadowSmall : primaryButtonShadow,
-          shadowOffset: { width: 0, height: small ? 6 : 8 },
-          shadowOpacity: inactive ? 0 : 1,
-          shadowRadius: small ? 14 : 20,
-          elevation: inactive ? 0 : 5,
-        },
-        style,
-      ]}
+      hitSlop={HIT_SLOP[resolvedSize]}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel ?? label}
+      accessibilityState={{ disabled: !!(disabled || inactive), busy: !!loading }}
+      style={(state) => {
+        // 웹에서는 키보드 포커스가 오면 focused가 들어온다. 네이티브에는 없는 값이라 선택적으로 읽는다.
+        const focused = (state as { focused?: boolean }).focused;
+        return [
+          {
+            height: HEIGHT[resolvedSize],
+            borderRadius: radius.button,
+            transform: [{ scale: state.pressed && !muted ? 0.97 : 1 }],
+            shadowColor: showShadow ? (resolvedSize === 'lg' ? primaryButtonShadow : primaryButtonShadowSmall) : 'transparent',
+            shadowOffset: { width: 0, height: resolvedSize === 'lg' ? 8 : 6 },
+            shadowOpacity: showShadow && !state.pressed ? 1 : 0,
+            shadowRadius: resolvedSize === 'lg' ? 20 : 14,
+            elevation: showShadow && !state.pressed ? 5 : 0,
+          },
+          focused && { borderWidth: 2, borderColor: colors.focusRing },
+          style,
+        ];
+      }}
     >
-      <LinearGradient
-        colors={inactive ? [colors.surfaceMuted, colors.surfaceMuted] : primaryGradient}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={[styles.gradient, { borderRadius: radius.button }]}
-      >
-        {/* 파스텔 면 위 흰 글씨는 1.9:1이라 읽기 어렵다. 면은 두고 글씨를 짙게 바꾼다(UI 기준서 2-3). */}
-        {loading ? (
-          <ActivityIndicator color={inactive ? colors.textDisabled : colors.textOnPrimary} />
-        ) : (
-          <Text
-            style={[
-              small ? typography.buttonLabelSm : typography.buttonLabel,
-              { color: inactive ? colors.textDisabled : colors.textOnPrimary },
-            ]}
-          >
-            {label}
-          </Text>
-        )}
-      </LinearGradient>
+      {({ pressed }) => {
+        if (variant === 'primary' && !muted) {
+          return (
+            <LinearGradient
+              colors={pressed ? [primaryGradient[1], primaryGradient[1]] : primaryGradient}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={[styles.fill, { borderRadius: radius.button }]}
+            >
+              {content}
+            </LinearGradient>
+          );
+        }
+
+        const face =
+          muted
+            ? { backgroundColor: colors.surfaceMuted }
+            : variant === 'danger'
+              ? { backgroundColor: pressed ? DANGER_PRESSED : DANGER_FACE }
+              : variant === 'secondary'
+                ? {
+                    backgroundColor: pressed ? colors.surfaceMuted : colors.surfaceSolid,
+                    borderWidth: 1,
+                    borderColor: colors.borderInput,
+                  }
+                : { opacity: pressed ? 0.6 : 1 };
+
+        return <View style={[styles.fill, { borderRadius: radius.button }, face]}>{content}</View>;
+      }}
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  gradient: {
+  fill: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: 16,
   },
 });

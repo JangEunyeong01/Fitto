@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import { useNavigation } from '@react-navigation/native';
+import TextLink from '../../../components/TextLink';
 import GlassCard from '../../../components/GlassCard';
 import Icon from '../../../components/Icon';
 import { useTheme } from '../../../theme/useTheme';
@@ -37,10 +38,7 @@ export default function ActivityCard() {
     <GlassCard>
       <View style={styles.headerRow}>
         <Text style={[styles.title, { color: colors.textPrimary }]}>활동</Text>
-        <Pressable onPress={() => navigation.navigate('ActivityDetail')} hitSlop={6} style={styles.detailLink}>
-          <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>상세</Text>
-          <Icon name="chevronRight" size={13} color={colors.textSecondary} />
-        </Pressable>
+        <TextLink label="상세" onPress={() => navigation.navigate('ActivityDetail')} />
       </View>
 
       <View style={styles.row}>
