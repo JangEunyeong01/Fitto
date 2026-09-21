@@ -6,7 +6,6 @@ import { useNavigation } from '@react-navigation/native';
 import TextLink from '../../../components/TextLink';
 import GlassCard from '../../../components/GlassCard';
 import PrimaryButton from '../../../components/PrimaryButton';
-import Icon from '../../../components/Icon';
 import WaterCup from './WaterCup';
 import { useTheme } from '../../../theme/useTheme';
 import { useAppStore } from '../../../store/useAppStore';

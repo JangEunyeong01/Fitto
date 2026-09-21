@@ -17,7 +17,7 @@ import { MEAL_SLOTS } from '../../constants/codes';
 import { useFoodSearchStore } from '../../store/useFoodSearchStore';
 import { dateKey } from '../../utils/timeOfDay';
 import { sumMealKcal } from '../../utils/health';
-import { alpha, brand, typography } from '../../theme/tokens';
+import { brand, typography } from '../../theme/tokens';
 
 const SLOTS: MealSlot[] = MEAL_SLOTS.map((s) => s.code);
 

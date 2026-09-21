@@ -4,7 +4,6 @@ import { useNavigation } from '@react-navigation/native';
 import TextLink from '../../../components/TextLink';
 import GlassCard from '../../../components/GlassCard';
 import ProgressBar from '../../../components/ProgressBar';
-import Icon from '../../../components/Icon';
 import { useTheme } from '../../../theme/useTheme';
 import { useAppStore } from '../../../store/useAppStore';
 import { useFoodSearchStore } from '../../../store/useFoodSearchStore';
