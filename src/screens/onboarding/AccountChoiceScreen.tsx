@@ -41,8 +41,8 @@ export default function AccountChoiceScreen() {
       >
         <View style={styles.hero}>
           <FittoCharacter current={4} goal={5} size={92} glowSize={112} />
-          <Text style={[styles.title, { color: colors.txt }]}>기록을 어디에 저장할까요?</Text>
-          <Text style={[styles.desc, { color: colors.sub }]}>
+          <Text style={[styles.title, { color: colors.textPrimary }]}>기록을 어디에 저장할까요?</Text>
+          <Text style={[styles.desc, { color: colors.textSecondary }]}>
             {nickname}님의 기록은 지금 이 폰에 저장돼요. 계정을 만들면 서버에도 함께 보관할 수 있어요.
           </Text>
         </View>
@@ -50,12 +50,12 @@ export default function AccountChoiceScreen() {
         <GlassCard style={styles.card}>
           <View style={styles.benefitList}>
             {BENEFITS.map((item) => (
-              <Text key={item} style={[styles.benefit, { color: colors.txt }]}>
+              <Text key={item} style={[styles.benefit, { color: colors.textPrimary }]}>
                 · {item}
               </Text>
             ))}
           </View>
-          <Text style={[styles.note, { color: colors.sub }]}>
+          <Text style={[styles.note, { color: colors.textSecondary }]}>
             계정이 없어도 앱의 모든 기능을 쓸 수 있어요. 나중에 설정에서 만들어도 기록은 그대로 옮겨져요.
           </Text>
         </GlassCard>
@@ -64,11 +64,11 @@ export default function AccountChoiceScreen() {
           <PrimaryButton label="계정 만들기" onPress={() => navigation.navigate('Signup')} />
 
           <Pressable onPress={() => navigation.navigate('Login')} style={styles.textButton}>
-            <Text style={[styles.textButtonLabel, { color: colors.txt }]}>이미 계정이 있어요</Text>
+            <Text style={[styles.textButtonLabel, { color: colors.textPrimary }]}>이미 계정이 있어요</Text>
           </Pressable>
 
           <Pressable onPress={dismiss} style={styles.textButton}>
-            <Text style={[styles.skipLabel, { color: colors.sub }]}>나중에 하기</Text>
+            <Text style={[styles.skipLabel, { color: colors.textSecondary }]}>나중에 하기</Text>
           </Pressable>
         </View>
       </ScrollView>

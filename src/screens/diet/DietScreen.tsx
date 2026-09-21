@@ -49,7 +49,7 @@ export default function DietScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.headerRow}>
-          <Text style={[typography.screenTitle, { color: colors.txt }]}>식단</Text>
+          <Text style={[typography.screenTitle, { color: colors.textPrimary }]}>식단</Text>
           <PrimaryButton small label="+ 음식 기록" onPress={openSearchForDate} style={styles.recordBtn} />
         </View>
 
@@ -62,10 +62,10 @@ export default function DietScreen() {
                 <FittoCharacter current={1} goal={5} size={96} glow={false} />
               </View>
               {/* 명세 F-051 빈 상태 문구 */}
-              <Text style={[styles.emptyTitle, { color: colors.txt }]}>
+              <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>
                 {isToday ? '오늘 뭐 드셨나요?' : '이날 뭐 드셨나요?'}
               </Text>
-              <Text style={[styles.emptyDesc, { color: colors.sub }]}>
+              <Text style={[styles.emptyDesc, { color: colors.textSecondary }]}>
                 먹은 음식을 한 개만 추가해도 피또가 상태를 알려줄 수 있어요.
               </Text>
               <PrimaryButton label="첫 기록 시작하기" onPress={openSearchForDate} style={styles.emptyBtn} />
@@ -76,12 +76,12 @@ export default function DietScreen() {
             {/* 명세 F-021: 총 섭취 칼로리와 목표 대비 진행 바, 넘으면 "목표 초과!" */}
             <GlassCard style={styles.card}>
               <View style={styles.summaryTop}>
-                <Text style={[styles.summaryLabel, { color: colors.sub }]}>{isToday ? '오늘 섭취' : '이날 섭취'}</Text>
-                {over && <Badge label="목표 초과!" color={alpha(brand.peach, 0.32)} textColor={colors.txt} />}
+                <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>{isToday ? '오늘 섭취' : '이날 섭취'}</Text>
+                {over && <Badge label="목표 초과!" color={alpha(brand.peach, 0.32)} textColor={colors.textPrimary} />}
               </View>
-              <Text style={[styles.summaryNum, { color: colors.txt }]}>
+              <Text style={[styles.summaryNum, { color: colors.textPrimary }]}>
                 {totalKcal.toLocaleString()}
-                <Text style={[styles.summaryGoal, { color: colors.sub }]}> / {goal.toLocaleString()} kcal</Text>
+                <Text style={[styles.summaryGoal, { color: colors.textSecondary }]}> / {goal.toLocaleString()} kcal</Text>
               </Text>
               <View style={styles.summaryBar}>
                 <ProgressBar progress={totalKcal / goal} height={8} radius={5} color={over ? brand.peach : brand.blue} />
@@ -106,15 +106,15 @@ export default function DietScreen() {
         <View style={styles.bottomRow}>
           <Pressable
             onPress={() => navigation.navigate('Recipe')}
-            style={[styles.bottomBtn, { borderColor: colors.line, backgroundColor: colors.card2 }]}
+            style={[styles.bottomBtn, { borderColor: colors.borderDivider, backgroundColor: colors.surfaceSubtle }]}
           >
-            <Text style={[styles.bottomLabel, { color: colors.txt }]}>나만의 레시피</Text>
+            <Text style={[styles.bottomLabel, { color: colors.textPrimary }]}>나만의 레시피</Text>
           </Pressable>
           <Pressable
             onPress={() => navigation.navigate('DietAnalysis')}
-            style={[styles.bottomBtn, { borderColor: colors.line, backgroundColor: colors.card2 }]}
+            style={[styles.bottomBtn, { borderColor: colors.borderDivider, backgroundColor: colors.surfaceSubtle }]}
           >
-            <Text style={[styles.bottomLabel, { color: colors.txt }]}>식단 분석</Text>
+            <Text style={[styles.bottomLabel, { color: colors.textPrimary }]}>식단 분석</Text>
           </Pressable>
         </View>
       </ScrollView>

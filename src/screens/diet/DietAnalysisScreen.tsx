@@ -42,17 +42,17 @@ export default function DietAnalysisScreen() {
         <DetailHeader title="식단 분석" />
 
         <GlassCard style={styles.card}>
-          <Text style={[styles.cardTitle, { color: colors.txt }]}>최근 7일 섭취</Text>
+          <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>최근 7일 섭취</Text>
 
           {daysWithRecord < MIN_DAYS ? (
-            <Text style={[styles.empty, { color: colors.sub }]}>
+            <Text style={[styles.empty, { color: colors.textSecondary }]}>
               3일 이상 기록하면 한 주의 흐름을 보여드려요. 지금은 {daysWithRecord}일 기록했어요.
             </Text>
           ) : (
             <>
-              <Text style={[styles.avgKcal, { color: colors.txt }]}>
+              <Text style={[styles.avgKcal, { color: colors.textPrimary }]}>
                 {avgKcal.toLocaleString()}
-                <Text style={[styles.avgUnit, { color: colors.sub }]}> kcal · 기록한 날의 하루 평균</Text>
+                <Text style={[styles.avgUnit, { color: colors.textSecondary }]}> kcal · 기록한 날의 하루 평균</Text>
               </Text>
 
               <View style={styles.stackRow}>
@@ -63,7 +63,7 @@ export default function DietAnalysisScreen() {
                   return (
                     <View key={`${label}-${i}`} style={styles.stackCol}>
                       {/* 빈 칸에 배경을 깔면 기록이 없는 날도 막대가 꽉 찬 것처럼 보인다. 바닥선만 둔다. */}
-                      <View style={[styles.stackTrack, { height: BAR_HEIGHT, borderBottomColor: colors.line }]}>
+                      <View style={[styles.stackTrack, { height: BAR_HEIGHT, borderBottomColor: colors.borderDivider }]}>
                         {value > 0 &&
                           (isToday ? (
                             <LinearGradient colors={[brand.blue, brand.blueDeep]} style={{ height: h }} />
@@ -71,13 +71,13 @@ export default function DietAnalysisScreen() {
                             <View style={{ height: h, backgroundColor: brand.blue }} />
                           ))}
                       </View>
-                      <Text style={[styles.stackLabel, { color: isToday ? colors.txt : colors.sub }]}>{label}</Text>
+                      <Text style={[styles.stackLabel, { color: isToday ? colors.textPrimary : colors.textSecondary }]}>{label}</Text>
                     </View>
                   );
                 })}
               </View>
 
-              <Text style={[styles.caption, { color: colors.sub }]}>
+              <Text style={[styles.caption, { color: colors.textSecondary }]}>
                 목표 {goal.toLocaleString()}kcal · 기록이 없는 날은 막대가 없어요
               </Text>
             </>
@@ -85,15 +85,15 @@ export default function DietAnalysisScreen() {
         </GlassCard>
 
         <GlassCard style={styles.card}>
-          <Text style={[styles.cardTitle, { color: colors.txt }]}>영양소 분석</Text>
-          <Text style={[styles.empty, { color: colors.sub }]}>
+          <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>영양소 분석</Text>
+          <Text style={[styles.empty, { color: colors.textSecondary }]}>
             지금은 음식의 칼로리만 기록해요. 식품 영양 정보를 연결하면 탄수화물·단백질·지방 비율과
             나트륨·식이섬유를 함께 보여드릴게요.
           </Text>
         </GlassCard>
 
         <GlassCard style={styles.card}>
-          <Text style={[styles.notice, { color: colors.sub }]}>
+          <Text style={[styles.notice, { color: colors.textSecondary }]}>
             분석은 기록된 식단만 반영해요. 의료 진단을 대체하지 않아요.
           </Text>
         </GlassCard>

@@ -64,33 +64,33 @@ export default function CardOrderSheet({ visible, onClose }: CardOrderSheetProps
         <View
           style={[
             styles.sheet,
-            { backgroundColor: colors.solid, paddingHorizontal: spacing.screenX, borderTopLeftRadius: radius.sheetTop, borderTopRightRadius: radius.sheetTop },
+            { backgroundColor: colors.surfaceSolid, paddingHorizontal: spacing.screenX, borderTopLeftRadius: radius.sheetTop, borderTopRightRadius: radius.sheetTop },
           ]}
         >
-          <View style={[styles.grabber, { backgroundColor: colors.line }]} />
-          <Text style={[styles.title, { color: colors.txt }]}>홈 카드 순서</Text>
+          <View style={[styles.grabber, { backgroundColor: colors.borderDivider }]} />
+          <Text style={[styles.title, { color: colors.textPrimary }]}>홈 카드 순서</Text>
 
           {rows.map((id, index) => {
             const hidden = cardHidden.includes(id);
             const atTop = index === 0;
             const atBottom = index === rows.length - 1;
             return (
-              <View key={id} style={[styles.row, { borderColor: colors.line }]}>
-                <Text style={[styles.rowLabel, { color: hidden ? colors.sub : colors.txt }]}>{CARD_LABELS[id]}</Text>
+              <View key={id} style={[styles.row, { borderColor: colors.borderDivider }]}>
+                <Text style={[styles.rowLabel, { color: hidden ? colors.textSecondary : colors.textPrimary }]}>{CARD_LABELS[id]}</Text>
                 <View style={styles.rowActions}>
                   <Pressable onPress={() => move(id, -1)} disabled={atTop} style={styles.iconBtn}>
-                    <Icon name="arrowUp" size={16} color={atTop ? colors.line : colors.txt} />
+                    <Icon name="arrowUp" size={16} color={atTop ? colors.borderDivider : colors.textPrimary} />
                   </Pressable>
                   <Pressable onPress={() => move(id, 1)} disabled={atBottom} style={styles.iconBtn}>
-                    <Icon name="arrowDown" size={16} color={atBottom ? colors.line : colors.txt} />
+                    <Icon name="arrowDown" size={16} color={atBottom ? colors.borderDivider : colors.textPrimary} />
                   </Pressable>
                   {ESSENTIAL_CARDS.includes(id) ? (
-                    <View style={[styles.toggleBtn, styles.essentialBtn, { borderColor: colors.line }]}>
-                      <Text style={[styles.toggleText, { color: colors.sub }]}>항상 표시</Text>
+                    <View style={[styles.toggleBtn, styles.essentialBtn, { borderColor: colors.borderDivider }]}>
+                      <Text style={[styles.toggleText, { color: colors.textSecondary }]}>항상 표시</Text>
                     </View>
                   ) : (
-                    <Pressable onPress={() => toggleHidden(id)} style={[styles.toggleBtn, { borderColor: colors.line }]}>
-                      <Text style={[styles.toggleText, { color: colors.txt }]}>{hidden ? '표시' : '숨김'}</Text>
+                    <Pressable onPress={() => toggleHidden(id)} style={[styles.toggleBtn, { borderColor: colors.borderDivider }]}>
+                      <Text style={[styles.toggleText, { color: colors.textPrimary }]}>{hidden ? '표시' : '숨김'}</Text>
                     </Pressable>
                   )}
                 </View>
@@ -99,8 +99,8 @@ export default function CardOrderSheet({ visible, onClose }: CardOrderSheetProps
           })}
 
           <View style={styles.bottomRow}>
-            <Pressable onPress={resetCardOrder} style={[styles.defaultBtn, { borderColor: colors.line }]}>
-              <Text style={[styles.defaultLabel, { color: colors.txt }]}>기본값</Text>
+            <Pressable onPress={resetCardOrder} style={[styles.defaultBtn, { borderColor: colors.borderDivider }]}>
+              <Text style={[styles.defaultLabel, { color: colors.textPrimary }]}>기본값</Text>
             </Pressable>
             <PrimaryButton label="완료" onPress={onClose} style={styles.doneBtn} />
           </View>

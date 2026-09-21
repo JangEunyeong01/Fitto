@@ -101,22 +101,22 @@ export default function NotificationsScreen() {
           {alarms.quiet && (
             <View style={styles.quietRow}>
               <TimeField label="시작" value={alarms.quietFrom} onChange={(v) => setAlarms({ quietFrom: v })} colors={colors} />
-              <Text style={[styles.quietDash, { color: colors.sub }]}>–</Text>
+              <Text style={[styles.quietDash, { color: colors.textSecondary }]}>–</Text>
               <TimeField label="종료" value={alarms.quietTo} onChange={(v) => setAlarms({ quietTo: v })} colors={colors} />
             </View>
           )}
         </GlassCard>
 
         <GlassCard style={styles.card}>
-          <Text style={[styles.cardTitle, { color: colors.txt }]}>알림 미리보기</Text>
+          <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>알림 미리보기</Text>
           <View style={styles.previewRow}>
             <Image source={FITTO_FACE} style={styles.previewFace} resizeMode="contain" />
-            <Text style={[styles.previewText, { color: colors.txt }]}>{previewCopy}</Text>
+            <Text style={[styles.previewText, { color: colors.textPrimary }]}>{previewCopy}</Text>
           </View>
         </GlassCard>
 
         <GlassCard style={styles.card}>
-          <Text style={[styles.cardTitle, { color: colors.txt }]}>피또 표정 5단계</Text>
+          <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>피또 표정 5단계</Text>
           <View style={styles.galleryRow}>
             {waterStageNames.map((name, i) => {
               const on = i === activeStage;
@@ -125,19 +125,19 @@ export default function NotificationsScreen() {
                   <View
                     style={[
                       styles.galleryCircle,
-                      { borderColor: on ? selection.border : colors.line, backgroundColor: on ? selection.bg : colors.card2 },
+                      { borderColor: on ? selection.border : colors.borderDivider, backgroundColor: on ? selection.bg : colors.surfaceSubtle },
                     ]}
                   >
                     <FittoCharacter current={i} goal={4} size={34} variant="face" glow={false} />
                   </View>
-                  <Text style={[styles.galleryLabel, { color: colors.sub }]} numberOfLines={1}>
+                  <Text style={[styles.galleryLabel, { color: colors.textSecondary }]} numberOfLines={1}>
                     {name}
                   </Text>
                 </Pressable>
               );
             })}
           </View>
-          <Text style={[styles.stageComment, { color: colors.sub }]}>{stageComment}</Text>
+          <Text style={[styles.stageComment, { color: colors.textSecondary }]}>{stageComment}</Text>
         </GlassCard>
       </ScrollView>
     </ScreenBackground>
@@ -160,8 +160,8 @@ function ToggleRow({
   return (
     <View style={styles.toggleRow}>
       <View style={styles.toggleTextCol}>
-        <Text style={[styles.rowLabel, { color: colors.txt }]}>{label}</Text>
-        {!!desc && <Text style={[styles.rowDesc, { color: colors.sub }]}>{desc}</Text>}
+        <Text style={[styles.rowLabel, { color: colors.textPrimary }]}>{label}</Text>
+        {!!desc && <Text style={[styles.rowDesc, { color: colors.textSecondary }]}>{desc}</Text>}
       </View>
       <ToggleSwitch value={value} onChange={onChange} />
     </View>
@@ -213,7 +213,7 @@ function TimeField({
   };
   return (
     <View style={styles.timeCol}>
-      <Text style={[styles.timeLabel, { color: colors.sub }]}>{label}</Text>
+      <Text style={[styles.timeLabel, { color: colors.textSecondary }]}>{label}</Text>
       <TextField
         size="sm"
         value={text}

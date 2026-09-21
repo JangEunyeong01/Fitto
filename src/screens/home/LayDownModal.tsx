@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, Pressable, Image, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../../theme/useTheme';
-import { alpha, radius, typography, weight, white } from '../../theme/tokens';
+import { alpha, radius, typography, weight } from '../../theme/tokens';
 import { personaCopy } from '../../copy/persona';
 import { useAppStore } from '../../store/useAppStore';
 import { useToastStore } from '../../store/useToastStore';
@@ -45,21 +45,21 @@ export default function LayDownModal({ visible, onClose }: LayDownModalProps) {
     <View style={styles.overlay}>
       <Pressable style={[styles.backdrop, { backgroundColor: DIM }]} onPress={onClose} />
       <View style={styles.center} pointerEvents="box-none">
-        <View style={[styles.card, { backgroundColor: colors.solid, borderColor: colors.stroke, shadowColor: CARD_SHADOW }]}>
+        <View style={[styles.card, { backgroundColor: colors.surfaceSolid, borderColor: colors.borderGlass, shadowColor: CARD_SHADOW }]}>
           <View style={styles.charSlot}>
             <Image source={FITTO_HELLO} style={styles.char} resizeMode="contain" accessibilityLabel="드러누운 피또" />
           </View>
 
-          <Text style={[styles.title, { color: colors.txt }]}>{title}</Text>
-          <Text style={[styles.body, { color: colors.sub }]}>{body}</Text>
+          <Text style={[styles.title, { color: colors.textPrimary }]}>{title}</Text>
+          <Text style={[styles.body, { color: colors.textSecondary }]}>{body}</Text>
 
           <View style={styles.buttonRow}>
-            <Pressable onPress={onClose} style={[styles.laterBtn, { borderColor: colors.line }]}>
-              <Text style={[styles.laterLabel, { color: colors.sub }]}>나중에</Text>
+            <Pressable onPress={onClose} style={[styles.laterBtn, { borderColor: colors.borderDivider }]}>
+              <Text style={[styles.laterLabel, { color: colors.textSecondary }]}>나중에</Text>
             </Pressable>
             <Pressable onPress={handleWalk} style={styles.walkWrap}>
               <LinearGradient colors={primaryGradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.walkBtn}>
-                <Text style={styles.walkLabel}>{WALK_MINUTES}분만 걷기</Text>
+                <Text style={[styles.walkLabel, { color: colors.textOnPrimary }]}>{WALK_MINUTES}분만 걷기</Text>
               </LinearGradient>
             </Pressable>
           </View>
@@ -115,7 +115,7 @@ const styles = StyleSheet.create({
     transform: [{ rotate: '98deg' }, { translateY: 6 }],
   },
   title: {
-    fontSize: 16.5,
+    fontSize: 17,
     ...weight(700),
     marginTop: 14,
     textAlign: 'center',
@@ -151,6 +151,5 @@ const styles = StyleSheet.create({
   },
   walkLabel: {
     ...typography.sectionTitle,
-    color: white,
   },
 });

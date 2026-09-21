@@ -39,41 +39,41 @@ export default function MealSlotCard({ date, slot, items, memo, onAdd }: MealSlo
   return (
     <GlassCard style={styles.card}>
       <View style={styles.headerRow}>
-        <Text style={[styles.title, { color: colors.txt }]}>{label}</Text>
+        <Text style={[styles.title, { color: colors.textPrimary }]}>{label}</Text>
         <View style={styles.headerRight}>
-          <Text style={[styles.total, { color: colors.sub }]}>{total.toLocaleString()} kcal</Text>
+          <Text style={[styles.total, { color: colors.textSecondary }]}>{total.toLocaleString()} kcal</Text>
           <Pressable
             onPress={() => onAdd(slot)}
             hitSlop={8}
-            style={[styles.plusBtn, { borderColor: colors.line }]}
+            style={[styles.plusBtn, { borderColor: colors.borderDivider }]}
             accessibilityRole="button"
             accessibilityLabel={`${label}에 음식 추가`}
           >
-            <Icon name="plus" size={14} color={colors.txt} />
+            <Icon name="plus" size={14} color={colors.textPrimary} />
           </Pressable>
         </View>
       </View>
 
       {items.length === 0 ? (
-        <Pressable onPress={() => onAdd(slot)} style={[styles.emptyBtn, { borderColor: colors.line }]}>
-          <Text style={[styles.emptyLabel, { color: colors.sub }]}>+ {label} 추가</Text>
+        <Pressable onPress={() => onAdd(slot)} style={[styles.emptyBtn, { borderColor: colors.borderDivider }]}>
+          <Text style={[styles.emptyLabel, { color: colors.textSecondary }]}>+ {label} 추가</Text>
         </Pressable>
       ) : (
         <View style={styles.list}>
           {items.map((item) => (
             <View key={item.id} style={styles.itemRow}>
-              <Text style={[styles.itemName, { color: colors.txt }]} numberOfLines={1}>
+              <Text style={[styles.itemName, { color: colors.textPrimary }]} numberOfLines={1}>
                 {item.name}
               </Text>
-              <Text style={[styles.itemAmount, { color: colors.sub }]}>{formatAmount(item)}</Text>
-              <Text style={[styles.itemKcal, { color: colors.txt }]}>{item.kcal}</Text>
+              <Text style={[styles.itemAmount, { color: colors.textSecondary }]}>{formatAmount(item)}</Text>
+              <Text style={[styles.itemKcal, { color: colors.textPrimary }]}>{item.kcal}</Text>
               <Pressable
                 onPress={() => removeMealItem(date, slot, item.id)}
                 hitSlop={8}
                 accessibilityRole="button"
                 accessibilityLabel={`${item.name} 삭제`}
               >
-                <Icon name="close" size={15} color={colors.sub} />
+                <Icon name="close" size={15} color={colors.textSecondary} />
               </Pressable>
             </View>
           ))}

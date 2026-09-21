@@ -25,7 +25,7 @@ interface GlassCardProps {
 export default function GlassCard({ children, style, radius, variant = 'card', intensity = 30, noPadding, fill }: GlassCardProps) {
   const { colors, shadow, radius: radiusTokens, spacing, mode } = useTheme();
   const r = radius ?? radiusTokens.cardBig;
-  const bg = variant === 'solid' ? colors.solid : variant === 'card2' ? colors.card2 : colors.card;
+  const bg = variant === 'solid' ? colors.surfaceSolid : variant === 'card2' ? colors.surfaceSubtle : colors.surface;
 
   return (
     <View style={[{ borderRadius: r }, shadow, fill && styles.fill, style]}>
@@ -35,7 +35,7 @@ export default function GlassCard({ children, style, radius, variant = 'card', i
         style={[
           styles.blur,
           fill && styles.fill,
-          { borderRadius: r, borderColor: colors.stroke },
+          { borderRadius: r, borderColor: colors.borderGlass },
         ]}
       >
         <View

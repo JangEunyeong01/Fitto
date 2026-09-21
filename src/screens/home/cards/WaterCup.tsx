@@ -55,7 +55,7 @@ export default function WaterCup({ progress, percent, onPress }: WaterCupProps) 
 
   return (
     <Pressable onPress={onPress} style={styles.press}>
-      <View style={[styles.cup, { borderColor: colors.stroke, backgroundColor: colors.card2 }]}>
+      <View style={[styles.cup, { borderColor: colors.borderGlass, backgroundColor: colors.surfaceSubtle }]}>
         <Animated.View style={[styles.fill, { height: fill }]}>
           <LinearGradient
             colors={[brand.blue, brand.blueDeep]}
@@ -73,7 +73,7 @@ export default function WaterCup({ progress, percent, onPress }: WaterCupProps) 
         </Animated.View>
 
         <View style={styles.pctWrap} pointerEvents="none">
-          <Text style={[styles.pct, { color: colors.txt }]}>{percent}%</Text>
+          <Text style={[styles.pct, { color: colors.textPrimary }]}>{percent}%</Text>
         </View>
       </View>
     </Pressable>

@@ -64,8 +64,8 @@ export default function CompleteStep() {
       <View style={styles.greetRow}>
         <FittoCharacter current={4} goal={5} size={62} variant="face" glowSize={74} />
         <View style={styles.greetText}>
-          <Text style={[styles.greetName, { color: colors.txt }]}>{name}님, 반가워요!</Text>
-          <Text style={[styles.greetMeta, { color: colors.sub }]}>
+          <Text style={[styles.greetName, { color: colors.textPrimary }]}>{name}님, 반가워요!</Text>
+          <Text style={[styles.greetMeta, { color: colors.textSecondary }]}>
             {[labelOf(ACTIVITY_OPTIONS, obPick.activity), labelOf(GOAL_OPTIONS, obPick.goal)]
               .filter(Boolean)
               .join(' · ')}
@@ -74,30 +74,30 @@ export default function CompleteStep() {
       </View>
 
       <View style={styles.cardRow}>
-        <View style={[styles.card, { backgroundColor: colors.card2, borderColor: colors.stroke }]}>
-          <Text style={[styles.cardLabel, { color: colors.sub }]}>목표 칼로리</Text>
-          <Text style={[styles.cardValue, { color: colors.txt }]}>{result.kcal.toLocaleString()}</Text>
-          <Text style={[styles.cardCaption, { color: colors.sub }]}>kcal · BMR {result.bmr.toLocaleString()}</Text>
+        <View style={[styles.card, { backgroundColor: colors.surfaceSubtle, borderColor: colors.borderGlass }]}>
+          <Text style={[styles.cardLabel, { color: colors.textSecondary }]}>목표 칼로리</Text>
+          <Text style={[styles.cardValue, { color: colors.textPrimary }]}>{result.kcal.toLocaleString()}</Text>
+          <Text style={[styles.cardCaption, { color: colors.textSecondary }]}>kcal · BMR {result.bmr.toLocaleString()}</Text>
         </View>
-        <View style={[styles.card, { backgroundColor: colors.card2, borderColor: colors.stroke }]}>
-          <Text style={[styles.cardLabel, { color: colors.sub }]}>물 목표</Text>
-          <Text style={[styles.cardValue, { color: colors.txt }]}>{result.water.toLocaleString()}</Text>
-          <Text style={[styles.cardCaption, { color: colors.sub }]}>ml · 체중·활동량 기준</Text>
+        <View style={[styles.card, { backgroundColor: colors.surfaceSubtle, borderColor: colors.borderGlass }]}>
+          <Text style={[styles.cardLabel, { color: colors.textSecondary }]}>물 목표</Text>
+          <Text style={[styles.cardValue, { color: colors.textPrimary }]}>{result.water.toLocaleString()}</Text>
+          <Text style={[styles.cardCaption, { color: colors.textSecondary }]}>ml · 체중·활동량 기준</Text>
         </View>
       </View>
 
-      <View style={[styles.summary, { backgroundColor: colors.card2 }]}>
+      <View style={[styles.summary, { backgroundColor: colors.surfaceSubtle }]}>
         {summaryRows.map((row) => (
           <View key={row.label} style={styles.summaryRow}>
-            <Text style={[styles.summaryLabel, { color: colors.sub }]}>{row.label}</Text>
-            <Text style={[styles.summaryValue, { color: colors.txt }]} numberOfLines={2}>
+            <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>{row.label}</Text>
+            <Text style={[styles.summaryValue, { color: colors.textPrimary }]} numberOfLines={2}>
               {row.values.length ? row.values.join(', ') : row.empty}
             </Text>
           </View>
         ))}
       </View>
 
-      <Text style={[styles.notice, { color: colors.sub }]}>
+      <Text style={[styles.notice, { color: colors.textSecondary }]}>
         이 정보를 반영한 추천 식단이 준비됐어요. 의료 진단을 대체하지 않습니다.
       </Text>
     </View>

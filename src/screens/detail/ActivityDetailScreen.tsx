@@ -48,7 +48,7 @@ export default function ActivityDetailScreen() {
         <DetailHeader title="활동" />
 
         <GlassCard style={styles.card}>
-          <Text style={[styles.cardTitle, { color: colors.txt }]}>오늘</Text>
+          <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>오늘</Text>
           <View style={styles.statRow}>
             <Stat label="걸음수" value={(todayRecord?.steps ?? 0).toLocaleString()} unit="보" colors={colors} />
             <Stat label="운동 시간" value={`${minutes}`} unit="분" colors={colors} />
@@ -56,20 +56,20 @@ export default function ActivityDetailScreen() {
           </View>
         </GlassCard>
 
-        <Text style={[styles.sectionLabel, { color: colors.sub }]}>최근 7일 소모 칼로리 · 하루 평균 {weekAvg.toLocaleString()}kcal</Text>
+        <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>최근 7일 소모 칼로리 · 하루 평균 {weekAvg.toLocaleString()}kcal</Text>
         <DetailBarChart labels={labels} values={burnedByDay} highlightIndex={DAYS - 1} />
 
         <GlassCard style={styles.card}>
-          <Text style={[styles.cardTitle, { color: colors.txt }]}>오늘 운동</Text>
+          <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>오늘 운동</Text>
           {exercises.length === 0 ? (
-            <Text style={[styles.empty, { color: colors.sub }]}>오늘 운동 기록이 없어요.</Text>
+            <Text style={[styles.empty, { color: colors.textSecondary }]}>오늘 운동 기록이 없어요.</Text>
           ) : (
             <View style={styles.list}>
               {exercises.map((e) => (
                 <View key={e.id} style={styles.row}>
                   <View style={[styles.dot, { backgroundColor: brand.mint }]} />
-                  <Text style={[styles.name, { color: colors.txt }]}>{e.name}</Text>
-                  <Text style={[styles.detail, { color: colors.sub }]}>
+                  <Text style={[styles.name, { color: colors.textPrimary }]}>{e.name}</Text>
+                  <Text style={[styles.detail, { color: colors.textSecondary }]}>
                     {e.minutes}분 · {e.kcal}kcal
                   </Text>
                 </View>
@@ -87,10 +87,10 @@ export default function ActivityDetailScreen() {
 function Stat({ label, value, unit, colors }: { label: string; value: string; unit: string; colors: any }) {
   return (
     <View style={styles.statCol}>
-      <Text style={[styles.statLabel, { color: colors.sub }]}>{label}</Text>
+      <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{label}</Text>
       <View style={styles.statValueRow}>
-        <Text style={[styles.statValue, { color: colors.txt }]}>{value}</Text>
-        <Text style={[styles.statUnit, { color: colors.sub }]}>{unit}</Text>
+        <Text style={[styles.statValue, { color: colors.textPrimary }]}>{value}</Text>
+        <Text style={[styles.statUnit, { color: colors.textSecondary }]}>{unit}</Text>
       </View>
     </View>
   );

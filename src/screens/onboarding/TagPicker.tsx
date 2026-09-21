@@ -71,10 +71,10 @@ export default function TagPicker({
                 <BlurView
                   intensity={20}
                   tint={mode === 'dark' ? 'dark' : 'light'}
-                  style={[styles.tag, { borderColor: on ? selection.border : colors.stroke }]}
+                  style={[styles.tag, { borderColor: on ? selection.border : colors.borderGlass }]}
                 >
-                  <View style={[styles.tagInner, { backgroundColor: on ? selection.bg : colors.card }]}>
-                    <Text style={[styles.tagText, { color: colors.txt }, weight(on ? 700 : 500)]} numberOfLines={1}>
+                  <View style={[styles.tagInner, { backgroundColor: on ? selection.bg : colors.surface }]}>
+                    <Text style={[styles.tagText, { color: colors.textPrimary }, weight(on ? 700 : 500)]} numberOfLines={1}>
                       {tag.label}
                     </Text>
                   </View>
@@ -85,7 +85,7 @@ export default function TagPicker({
         })}
       </View>
 
-      <Text style={[styles.sectionLabel, { color: colors.sub }]}>직접 입력</Text>
+      <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>직접 입력</Text>
       <View style={styles.inputRow}>
         <TextField
           onBackground
@@ -99,15 +99,15 @@ export default function TagPicker({
           style={styles.input}
         />
         {/* 화면의 주요 액션은 하단 "다음"이다. 여기까지 그라데이션을 쓰면 CTA가 둘로 보여서 아웃라인으로 낮췄다. */}
-        <Pressable onPress={addCustom} style={[styles.addBtn, { borderColor: colors.stroke, backgroundColor: colors.card }]}>
-          <Text style={[styles.addLabel, { color: colors.txt }]}>추가</Text>
+        <Pressable onPress={addCustom} style={[styles.addBtn, { borderColor: colors.borderGlass, backgroundColor: colors.surface }]}>
+          <Text style={[styles.addLabel, { color: colors.textPrimary }]}>추가</Text>
         </Pressable>
       </View>
 
       {/* 그리드에 있는 태그는 위에서 이미 선택 표시가 되므로 여기에는 직접 적은 값만 나열한다. */}
       {value.custom.length > 0 && (
         <>
-          <Text style={[styles.sectionLabel, { color: colors.sub }]}>직접 입력한 항목</Text>
+          <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>직접 입력한 항목</Text>
           <View style={styles.chipWrap}>
             {value.custom.map((item) => (
               <Pressable
@@ -115,8 +115,8 @@ export default function TagPicker({
                 onPress={() => onToggleCustom(item)}
                 style={[styles.chip, { backgroundColor: selection.bg, borderColor: alpha(brand.blue, 0.7) }]}
               >
-                <Text style={[styles.chipText, { color: colors.txt }]}>{item}</Text>
-                <Icon name="close" size={13} color={colors.sub} />
+                <Text style={[styles.chipText, { color: colors.textPrimary }]}>{item}</Text>
+                <Icon name="close" size={13} color={colors.textSecondary} />
               </Pressable>
             ))}
           </View>
@@ -124,7 +124,7 @@ export default function TagPicker({
       )}
 
       <Pressable onPress={onClear} style={styles.noneWrap}>
-        <Text style={[styles.noneText, { color: colors.sub }]}>{noneLabel}</Text>
+        <Text style={[styles.noneText, { color: colors.textSecondary }]}>{noneLabel}</Text>
       </Pressable>
     </View>
   );

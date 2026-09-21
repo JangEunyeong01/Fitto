@@ -54,23 +54,23 @@ export default function RoutineCard({ date }: RoutineCardProps) {
     <>
       <GlassCard style={styles.card}>
         <View style={styles.headerRow}>
-          <Text style={[styles.cardTitle, { color: colors.txt }]}>나만의 루틴</Text>
+          <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>나만의 루틴</Text>
           <Pressable onPress={() => setFormOpen(true)} hitSlop={8}>
-            <Text style={[styles.addLink, { color: colors.sub }]}>+ 만들기</Text>
+            <Text style={[styles.addLink, { color: colors.textSecondary }]}>+ 만들기</Text>
           </Pressable>
         </View>
 
         {routines.length === 0 ? (
-          <Text style={[styles.empty, { color: colors.sub }]}>
+          <Text style={[styles.empty, { color: colors.textSecondary }]}>
             자주 하는 운동을 묶어두면 한 번에 기록할 수 있어요.
           </Text>
         ) : (
           <View style={styles.list}>
             {routines.map((r) => (
-              <View key={r.id} style={[styles.row, { backgroundColor: colors.card2 }]}>
+              <View key={r.id} style={[styles.row, { backgroundColor: colors.surfaceSubtle }]}>
                 <View style={styles.rowText}>
-                  <Text style={[styles.name, { color: colors.txt }]}>{r.name}</Text>
-                  <Text style={[styles.meta, { color: colors.sub }]}>
+                  <Text style={[styles.name, { color: colors.textPrimary }]}>{r.name}</Text>
+                  <Text style={[styles.meta, { color: colors.textSecondary }]}>
                     {r.exercises.map((e) => e.name).join(' · ')} · 총{' '}
                     {r.exercises.reduce((a, e) => a + e.minutes, 0)}분
                   </Text>
@@ -79,7 +79,7 @@ export default function RoutineCard({ date }: RoutineCardProps) {
                   onPress={() => use(r)}
                   style={[styles.useBtn, { borderColor: selection.border, backgroundColor: selection.bg }]}
                 >
-                  <Text style={[styles.useLabel, { color: colors.txt }]}>사용</Text>
+                  <Text style={[styles.useLabel, { color: colors.textPrimary }]}>사용</Text>
                 </Pressable>
                 <Pressable
                   onPress={() => removeRoutine(r.id)}
@@ -87,7 +87,7 @@ export default function RoutineCard({ date }: RoutineCardProps) {
                   accessibilityRole="button"
                   accessibilityLabel={`${r.name} 삭제`}
                 >
-                  <Icon name="close" size={15} color={colors.sub} />
+                  <Icon name="close" size={15} color={colors.textSecondary} />
                 </Pressable>
               </View>
             ))}
@@ -169,7 +169,7 @@ function RoutineForm({ onClose }: { onClose: () => void }) {
           style={[
             styles.sheet,
             {
-              backgroundColor: colors.solid,
+              backgroundColor: colors.surfaceSolid,
               paddingHorizontal: spacing.screenX,
               paddingBottom: insets.bottom + 16,
               borderTopLeftRadius: r.sheetTop,
@@ -177,11 +177,11 @@ function RoutineForm({ onClose }: { onClose: () => void }) {
             },
           ]}
         >
-          <View style={[styles.grabber, { backgroundColor: colors.line }]} />
+          <View style={[styles.grabber, { backgroundColor: colors.borderDivider }]} />
           <View style={styles.headerRow}>
-            <Text style={[styles.sheetTitle, { color: colors.txt }]}>루틴 만들기</Text>
+            <Text style={[styles.sheetTitle, { color: colors.textPrimary }]}>루틴 만들기</Text>
             <Pressable onPress={onClose} hitSlop={8} accessibilityRole="button" accessibilityLabel="닫기">
-              <Icon name="close" size={18} color={colors.sub} />
+              <Icon name="close" size={18} color={colors.textSecondary} />
             </Pressable>
           </View>
 
@@ -195,7 +195,7 @@ function RoutineForm({ onClose }: { onClose: () => void }) {
               maxLength={30}
             />
 
-            <Text style={[styles.label, { color: colors.sub }]}>운동 (최대 {MAX_EXERCISES}개)</Text>
+            <Text style={[styles.label, { color: colors.textSecondary }]}>운동 (최대 {MAX_EXERCISES}개)</Text>
             <View style={styles.chipWrap}>
               {EXERCISES.map((e) => (
                 <SelectChip
@@ -210,11 +210,11 @@ function RoutineForm({ onClose }: { onClose: () => void }) {
 
             {picked.length > 0 && (
               <>
-                <Text style={[styles.label, { color: colors.sub }]}>시간</Text>
+                <Text style={[styles.label, { color: colors.textSecondary }]}>시간</Text>
                 <View style={styles.minutesList}>
                   {picked.map((p) => (
                     <View key={p.code} style={styles.minutesRow}>
-                      <Text style={[styles.minutesName, { color: colors.txt }]}>{findExercise(p.code)?.name}</Text>
+                      <Text style={[styles.minutesName, { color: colors.textPrimary }]}>{findExercise(p.code)?.name}</Text>
                       <TextField
                         size="sm"
                         value={p.minutes}
@@ -223,7 +223,7 @@ function RoutineForm({ onClose }: { onClose: () => void }) {
                         center
                         style={styles.minutesInput}
                       />
-                      <Text style={[styles.minutesUnit, { color: colors.sub }]}>분</Text>
+                      <Text style={[styles.minutesUnit, { color: colors.textSecondary }]}>분</Text>
                     </View>
                   ))}
                 </View>

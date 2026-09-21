@@ -31,12 +31,12 @@ export default function PeriodChips({ value, onChange }: PeriodChipsProps) {
             style={[
               styles.chip,
               {
-                backgroundColor: on ? selection.bg : colors.card,
-                borderColor: on ? selection.border : colors.stroke,
+                backgroundColor: on ? selection.bg : colors.surface,
+                borderColor: on ? selection.border : colors.borderGlass,
               },
             ]}
           >
-            <Text style={[styles.label, { color: colors.txt }, weight(on ? 700 : 500)]}>{o.label}</Text>
+            <Text style={[styles.label, { color: colors.textPrimary }, weight(on ? 700 : 500)]}>{o.label}</Text>
           </Pressable>
         );
       })}

@@ -34,13 +34,13 @@ export default function StepsCard() {
       <Pressable onPress={() => navigation.navigate('StepsDetail')} style={styles.pressFill}>
         <GlassCard fill>
           <View style={styles.topRow}>
-            <Text style={[styles.label, { color: colors.sub }]}>걸음수</Text>
+            <Text style={[styles.label, { color: colors.textSecondary }]}>걸음수</Text>
           </View>
-          <Text style={[styles.emptyTitle, { color: colors.txt }]}>아직 연결 전이에요</Text>
-          <Text style={[styles.emptyDesc, { color: colors.sub }]}>
+          <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>아직 연결 전이에요</Text>
+          <Text style={[styles.emptyDesc, { color: colors.textSecondary }]}>
             폰의 건강 데이터를 연결하면 걸음 수가 여기에 보여요.
           </Text>
-          <Text style={[styles.caption, { color: colors.sub }]}>목표 {goal.toLocaleString()}보</Text>
+          <Text style={[styles.caption, { color: colors.textSecondary }]}>목표 {goal.toLocaleString()}보</Text>
         </GlassCard>
       </Pressable>
     );
@@ -51,11 +51,11 @@ export default function StepsCard() {
     <Pressable onPress={() => navigation.navigate('StepsDetail')} style={styles.pressFill}>
       <GlassCard fill>
         <View style={styles.topRow}>
-          <Text style={[styles.label, { color: colors.sub }]}>걸음수</Text>
+          <Text style={[styles.label, { color: colors.textSecondary }]}>걸음수</Text>
         </View>
         <View style={styles.numRow}>
-          <Text style={[styles.bigNum, { color: colors.txt }]}>{steps.toLocaleString()}</Text>
-          <Text style={[styles.goalNum, { color: colors.sub }]}> / {goal.toLocaleString()}</Text>
+          <Text style={[styles.bigNum, { color: colors.textPrimary }]}>{steps.toLocaleString()}</Text>
+          <Text style={[styles.goalNum, { color: colors.textSecondary }]}> / {goal.toLocaleString()}</Text>
         </View>
         <View style={styles.barWrap}>
           <ProgressBar progress={steps / goal} height={8} radius={5} gradientColors={[brand.mint, brand.blue]} />
@@ -71,15 +71,15 @@ export default function StepsCard() {
                   {isToday ? (
                     <LinearGradient colors={[brand.blue, brand.blueDeep]} style={[styles.bar, { height: h }]} />
                   ) : (
-                    <View style={[styles.bar, { height: h, backgroundColor: colors.ink }]} />
+                    <View style={[styles.bar, { height: h, backgroundColor: colors.fillMuted }]} />
                   )}
                 </View>
-                <Text style={[styles.dayLabel, { color: colors.sub }]}>{labels[i]}</Text>
+                <Text style={[styles.dayLabel, { color: colors.textSecondary }]}>{labels[i]}</Text>
               </View>
             );
           })}
         </View>
-        <Text style={[styles.caption, { color: colors.sub }]}>최근 7일 · 평균 {avg.toLocaleString()}</Text>
+        <Text style={[styles.caption, { color: colors.textSecondary }]}>최근 7일 · 평균 {avg.toLocaleString()}</Text>
       </GlassCard>
     </Pressable>
   );

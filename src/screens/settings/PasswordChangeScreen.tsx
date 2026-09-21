@@ -91,7 +91,7 @@ export default function PasswordChangeScreen() {
         <DetailHeader title="비밀번호 변경" />
 
         <GlassCard style={styles.card}>
-          <Text style={[styles.label, { color: colors.sub }]}>현재 비밀번호</Text>
+          <Text style={[styles.label, { color: colors.textSecondary }]}>현재 비밀번호</Text>
           <TextField
             value={current}
             onChangeText={setCurrent}
@@ -101,7 +101,7 @@ export default function PasswordChangeScreen() {
             maxLength={64}
           />
 
-          <Text style={[styles.label, { color: colors.sub }]}>새 비밀번호</Text>
+          <Text style={[styles.label, { color: colors.textSecondary }]}>새 비밀번호</Text>
           <TextField
             value={next}
             onChangeText={setNext}
@@ -111,7 +111,7 @@ export default function PasswordChangeScreen() {
             maxLength={64}
           />
 
-          <Text style={[styles.label, { color: colors.sub }]}>새 비밀번호 확인</Text>
+          <Text style={[styles.label, { color: colors.textSecondary }]}>새 비밀번호 확인</Text>
           <TextField
             value={confirm}
             onChangeText={setConfirm}
@@ -121,10 +121,10 @@ export default function PasswordChangeScreen() {
             maxLength={64}
           />
 
-          {error && <Text style={[styles.error, { color: semantic.danger }]}>{error}</Text>}
-          {wakeNotice && <Text style={[styles.desc, { color: colors.sub }]}>{wakeNotice}</Text>}
+          {error && <Text style={[styles.error, { color: colors.textDanger }]}>{error}</Text>}
+          {wakeNotice && <Text style={[styles.desc, { color: colors.textSecondary }]}>{wakeNotice}</Text>}
 
-          <Text style={[styles.desc, { color: colors.sub }]}>
+          <Text style={[styles.desc, { color: colors.textSecondary }]}>
             비밀번호를 바꾸면 다른 기기에서는 로그아웃돼요. 이 기기는 그대로 쓸 수 있어요.
           </Text>
 

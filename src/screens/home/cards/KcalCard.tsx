@@ -36,7 +36,7 @@ export default function KcalCard() {
 
   return (
     <GlassCard>
-      <View pointerEvents="none" style={[styles.deco, { backgroundColor: colors.ink }]} />
+      <View pointerEvents="none" style={[styles.deco, { backgroundColor: colors.fillMuted }]} />
 
       <View style={styles.topRow}>
         <View style={[styles.ring, { borderColor: statusColor, shadowColor: statusColor, backgroundColor: alpha(statusColor, 0.13) }]}>
@@ -44,18 +44,18 @@ export default function KcalCard() {
         </View>
         <View style={styles.numCol}>
           <View style={styles.labelRow}>
-            <Text style={[styles.label, { color: colors.sub }]}>
+            <Text style={[styles.label, { color: colors.textSecondary }]}>
               오늘 칼로리{consumed > 0 ? ` · ${kcalStatusLabel[status]}` : ''}
             </Text>
             {/* 명세 F-011: 카드에서 식단 탭으로 바로 간다. */}
             <Pressable onPress={() => navigation.navigate('Diet')} hitSlop={6} style={styles.detailLink}>
-              <Text style={[styles.label, { color: colors.sub }]}>식단</Text>
-              <Icon name="chevronRight" size={13} color={colors.sub} />
+              <Text style={[styles.label, { color: colors.textSecondary }]}>식단</Text>
+              <Icon name="chevronRight" size={13} color={colors.textSecondary} />
             </Pressable>
           </View>
           <View style={styles.numRow}>
-            <Text style={[styles.bigNum, { color: colors.txt }]}>{consumed.toLocaleString()}</Text>
-            <Text style={[styles.goalNum, { color: colors.sub }]}> / {goal.toLocaleString()} kcal</Text>
+            <Text style={[styles.bigNum, { color: colors.textPrimary }]}>{consumed.toLocaleString()}</Text>
+            <Text style={[styles.goalNum, { color: colors.textSecondary }]}> / {goal.toLocaleString()} kcal</Text>
           </View>
         </View>
       </View>
@@ -70,13 +70,13 @@ export default function KcalCard() {
         <SummaryCol label="남음" value={remain} colors={colors} align="flex-end" />
       </View>
 
-      <View style={[styles.commentBox, { backgroundColor: colors.card2 }]}>
-        <Text style={[styles.commentText, { color: colors.txt }]}>{comment}</Text>
+      <View style={[styles.commentBox, { backgroundColor: colors.surfaceSubtle }]}>
+        <Text style={[styles.commentText, { color: colors.textPrimary }]}>{comment}</Text>
       </View>
 
       {/* 홈에서 바로 한 끼 기록. 시트가 지금 시각에 맞는 끼니를 골라준다. */}
-      <Pressable onPress={() => openFoodSearch()} style={[styles.quickBtn, { borderColor: colors.line }]}>
-        <Text style={[styles.quickLabel, { color: colors.txt }]}>+ 음식 기록</Text>
+      <Pressable onPress={() => openFoodSearch()} style={[styles.quickBtn, { borderColor: colors.borderDivider }]}>
+        <Text style={[styles.quickLabel, { color: colors.textPrimary }]}>+ 음식 기록</Text>
       </Pressable>
     </GlassCard>
   );
@@ -97,8 +97,8 @@ function SummaryCol({
   return (
     <View style={[styles.summaryCol, { alignItems: align }]}>
       <View style={styles.summaryInline}>
-        <Text style={[styles.summaryLabel, { color: colors.sub }]}>{label}</Text>
-        <Text style={[styles.summaryValue, { color: colors.txt }]}>{value.toLocaleString()}</Text>
+        <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>{label}</Text>
+        <Text style={[styles.summaryValue, { color: colors.textPrimary }]}>{value.toLocaleString()}</Text>
       </View>
     </View>
   );

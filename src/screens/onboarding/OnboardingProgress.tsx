@@ -26,7 +26,7 @@ export default function OnboardingProgress({ progress, stepNumber, stepTotal }: 
         <ProgressBar progress={progress} height={5} radius={3} gradientColors={accentGradient} />
       </View>
       {/* 숫자가 없는 화면에서도 자리는 남겨둬야 바 길이가 안 흔들린다. */}
-      <Text style={[styles.count, { color: colors.sub }]}>
+      <Text style={[styles.count, { color: colors.textSecondary }]}>
         {stepNumber ? `${stepNumber} / ${stepTotal}` : ''}
       </Text>
     </View>

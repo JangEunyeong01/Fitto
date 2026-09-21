@@ -29,27 +29,27 @@ export default function DateNavigator({ date, onChange }: DateNavigatorProps) {
       <Pressable
         onPress={() => onChange(addDays(date, -1))}
         hitSlop={8}
-        style={[styles.btn, { borderColor: colors.line }]}
+        style={[styles.btn, { borderColor: colors.borderDivider }]}
         accessibilityRole="button"
         accessibilityLabel="이전 날"
       >
-        <Icon name="chevronLeft" size={16} color={colors.txt} />
+        <Icon name="chevronLeft" size={16} color={colors.textPrimary} />
       </Pressable>
 
       <Pressable onPress={() => onChange(today)} disabled={isToday} style={styles.center}>
-        <Text style={[styles.label, { color: colors.txt }]}>{label}</Text>
-        <Text style={[styles.sub, { color: colors.sub }]}>{isToday ? '오늘' : '오늘로 돌아가기'}</Text>
+        <Text style={[styles.label, { color: colors.textPrimary }]}>{label}</Text>
+        <Text style={[styles.sub, { color: colors.textSecondary }]}>{isToday ? '오늘' : '오늘로 돌아가기'}</Text>
       </Pressable>
 
       <Pressable
         onPress={() => onChange(addDays(date, 1))}
         disabled={isToday}
         hitSlop={8}
-        style={[styles.btn, { borderColor: colors.line, opacity: isToday ? 0.35 : 1 }]}
+        style={[styles.btn, { borderColor: colors.borderDivider, opacity: isToday ? 0.35 : 1 }]}
         accessibilityRole="button"
         accessibilityLabel="다음 날"
       >
-        <Icon name="chevronRight" size={16} color={colors.txt} />
+        <Icon name="chevronRight" size={16} color={colors.textPrimary} />
       </Pressable>
     </View>
   );

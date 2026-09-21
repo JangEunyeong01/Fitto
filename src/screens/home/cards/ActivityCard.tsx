@@ -36,17 +36,17 @@ export default function ActivityCard() {
   return (
     <GlassCard>
       <View style={styles.headerRow}>
-        <Text style={[styles.title, { color: colors.txt }]}>활동</Text>
+        <Text style={[styles.title, { color: colors.textPrimary }]}>활동</Text>
         <Pressable onPress={() => navigation.navigate('ActivityDetail')} hitSlop={6} style={styles.detailLink}>
-          <Text style={[styles.detailLabel, { color: colors.sub }]}>상세</Text>
-          <Icon name="chevronRight" size={13} color={colors.sub} />
+          <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>상세</Text>
+          <Icon name="chevronRight" size={13} color={colors.textSecondary} />
         </Pressable>
       </View>
 
       <View style={styles.row}>
         <View style={styles.ringWrap}>
           <Svg width={SIZE} height={SIZE}>
-            <Circle cx={SIZE / 2} cy={SIZE / 2} r={RADIUS} stroke={colors.ink} strokeWidth={STROKE} fill="none" />
+            <Circle cx={SIZE / 2} cy={SIZE / 2} r={RADIUS} stroke={colors.fillMuted} strokeWidth={STROKE} fill="none" />
             {stepsConnected && (
               <Circle
                 cx={SIZE / 2}
@@ -63,10 +63,10 @@ export default function ActivityCard() {
             )}
           </Svg>
           <View style={styles.ringCenter}>
-            <Text style={[styles.percent, { color: stepsConnected ? colors.txt : colors.sub }]}>
+            <Text style={[styles.percent, { color: stepsConnected ? colors.textPrimary : colors.textSecondary }]}>
               {stepsConnected ? `${percent}%` : '—'}
             </Text>
-            <Text style={[styles.percentLabel, { color: colors.sub }]}>활동</Text>
+            <Text style={[styles.percentLabel, { color: colors.textSecondary }]}>활동</Text>
           </View>
         </View>
 
@@ -89,8 +89,8 @@ function StatRow({ dot, label, value, colors }: { dot: string; label: string; va
   return (
     <View style={styles.statRow}>
       <View style={[styles.dot, { backgroundColor: dot }]} />
-      <Text style={[styles.statLabel, { color: colors.sub }]}>{label}</Text>
-      <Text style={[styles.statValue, { color: colors.txt }]}>{value}</Text>
+      <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{label}</Text>
+      <Text style={[styles.statValue, { color: colors.textPrimary }]}>{value}</Text>
     </View>
   );
 }

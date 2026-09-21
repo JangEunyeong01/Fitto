@@ -76,7 +76,7 @@ export default function BasicInfoForm({ value, onChange }: BasicInfoFormProps) {
         </Field>
       </View>
 
-      <Text style={[styles.notice, { color: colors.sub }]}>
+      <Text style={[styles.notice, { color: colors.textSecondary }]}>
         입력한 정보는 기기에만 저장되고 언제든 프로필에서 수정할 수 있어요.
       </Text>
     </View>
@@ -95,7 +95,7 @@ function Field({
   const { colors } = useTheme();
   return (
     <View style={[styles.field, style]}>
-      <Text style={[styles.fieldLabel, { color: colors.sub }]} numberOfLines={1}>
+      <Text style={[styles.fieldLabel, { color: colors.textSecondary }]} numberOfLines={1}>
         {label}
       </Text>
       {children}

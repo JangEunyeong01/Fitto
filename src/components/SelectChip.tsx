@@ -42,13 +42,19 @@ export default function SelectChip({
   return (
     <Pressable
       onPress={onPress}
+      // 보이는 높이가 30~36이라 위아래를 늘려 누르는 영역을 44 가까이 맞춘다.
+      hitSlop={{ top: 6, bottom: 6 }}
+      accessibilityRole="button"
+      accessibilityState={{ selected }}
       style={[
         styles.base,
         sizeStyles[size],
         fill && styles.fill,
         {
-          backgroundColor: selected ? selection.bg : onBackground ? colors.card : colors.card2,
-          borderColor: selected ? selection.border : onBackground ? colors.stroke : colors.line,
+          backgroundColor: selected ? selection.bg : onBackground ? colors.surface : colors.surfaceSolid,
+          // 선택 여부를 면 색만으로 알리지 않는다. 테두리 굵기와 글씨 굵기도 함께 바뀐다.
+          borderColor: selected ? colors.borderSelected : colors.borderInput,
+          borderWidth: selected ? 1.5 : 1,
         },
         style,
       ]}
@@ -56,7 +62,7 @@ export default function SelectChip({
       <Text
         style={[
           size === 'sm' ? typography.label : typography.value,
-          { color: colors.txt },
+          { color: colors.textPrimary },
           weight(selected ? 700 : 500),
         ]}
         numberOfLines={1}

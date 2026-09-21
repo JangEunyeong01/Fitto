@@ -57,7 +57,7 @@ export default function PeriodDetailScreen() {
           <View style={styles.characterRow}>
             {/* README의 hue-rotate 필터는 RN에서 못 쓰므로 캐릭터는 기본 상태로 두고 문구로 맥락을 준다. */}
             <FittoCharacter current={3} goal={5} size={52} variant="face" glow={false} />
-            <Text style={[styles.comment, { color: colors.txt }]}>{comment}</Text>
+            <Text style={[styles.comment, { color: colors.textPrimary }]}>{comment}</Text>
           </View>
         </GlassCard>
       </ScrollView>

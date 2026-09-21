@@ -44,16 +44,16 @@ export default function PeriodBar({
   return (
     <GlassCard style={styles.card}>
       <View style={styles.navRow}>
-        <Pressable onPress={() => onShift(-1)} style={[styles.navBtn, { borderColor: colors.line }]}>
-          <Icon name="chevronLeft" size={16} color={colors.txt} />
+        <Pressable onPress={() => onShift(-1)} style={[styles.navBtn, { borderColor: colors.borderDivider }]}>
+          <Icon name="chevronLeft" size={16} color={colors.textPrimary} />
         </Pressable>
-        <Text style={[styles.label, { color: colors.txt }]}>{ymRangeLabel(start, end)}</Text>
+        <Text style={[styles.label, { color: colors.textPrimary }]}>{ymRangeLabel(start, end)}</Text>
         <Pressable
           onPress={() => onShift(1)}
           disabled={atMax}
-          style={[styles.navBtn, { borderColor: colors.line, opacity: atMax ? 0.35 : 1 }]}
+          style={[styles.navBtn, { borderColor: colors.borderDivider, opacity: atMax ? 0.35 : 1 }]}
         >
-          <Icon name="chevronRight" size={16} color={colors.txt} />
+          <Icon name="chevronRight" size={16} color={colors.textPrimary} />
         </Pressable>
       </View>
 
@@ -71,7 +71,7 @@ export default function PeriodBar({
       </View>
 
       {preset === 'custom' && (
-        <View style={[styles.customRow, { borderTopColor: colors.line }]}>
+        <View style={[styles.customRow, { borderTopColor: colors.borderDivider }]}>
           <MonthStepper
             label="시작 월"
             value={start}
@@ -115,14 +115,14 @@ function MonthStepper({
 }) {
   return (
     <View style={styles.stepperCol}>
-      <Text style={[styles.stepperLabel, { color: colors.sub }]}>{label}</Text>
+      <Text style={[styles.stepperLabel, { color: colors.textSecondary }]}>{label}</Text>
       <View style={styles.stepperRow}>
-        <Pressable onPress={() => onChange(ymAdd(value, -1))} style={[styles.stepperBtn, { borderColor: colors.line }]}>
-          <Icon name="chevronLeft" size={16} color={colors.txt} />
+        <Pressable onPress={() => onChange(ymAdd(value, -1))} style={[styles.stepperBtn, { borderColor: colors.borderDivider }]}>
+          <Icon name="chevronLeft" size={16} color={colors.textPrimary} />
         </Pressable>
-        <Text style={[styles.stepperValue, { color: colors.txt }]}>{value.year}.{String(value.month).padStart(2, '0')}</Text>
-        <Pressable onPress={() => onChange(ymAdd(value, 1))} style={[styles.stepperBtn, { borderColor: colors.line }]}>
-          <Icon name="chevronRight" size={16} color={colors.txt} />
+        <Text style={[styles.stepperValue, { color: colors.textPrimary }]}>{value.year}.{String(value.month).padStart(2, '0')}</Text>
+        <Pressable onPress={() => onChange(ymAdd(value, 1))} style={[styles.stepperBtn, { borderColor: colors.borderDivider }]}>
+          <Icon name="chevronRight" size={16} color={colors.textPrimary} />
         </Pressable>
       </View>
     </View>

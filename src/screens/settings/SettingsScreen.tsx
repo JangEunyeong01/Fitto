@@ -143,35 +143,35 @@ export default function SettingsScreen() {
         contentContainerStyle={[styles.content, { paddingTop: insets.top + 14, paddingBottom: 108 }]}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={[styles.title, { color: colors.txt }]}>설정</Text>
+        <Text style={[styles.title, { color: colors.textPrimary }]}>설정</Text>
 
         <Pressable onPress={() => navigation.navigate('Profile')}>
           <GlassCard style={styles.card}>
             <View style={styles.profileRow}>
               <LinearGradient colors={accentGradient} style={styles.avatar} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} />
               <View style={styles.profileText}>
-                <Text style={[styles.nickname, { color: colors.txt }]}>{profile.nickname}</Text>
-                <Text style={[styles.goalSummary, { color: colors.sub }]} numberOfLines={1}>
+                <Text style={[styles.nickname, { color: colors.textPrimary }]}>{profile.nickname}</Text>
+                <Text style={[styles.goalSummary, { color: colors.textSecondary }]} numberOfLines={1}>
                   {goalSummary || '목표를 설정해 주세요'}
                 </Text>
                 {togetherDays != null && (
-                  <Text style={[styles.together, { color: colors.sub }]} numberOfLines={1}>
+                  <Text style={[styles.together, { color: colors.textSecondary }]} numberOfLines={1}>
                     피또와 함께한 지 {togetherDays.toLocaleString()}일째
                   </Text>
                 )}
               </View>
-              <Icon name="chevronRight" size={17} color={colors.sub} />
+              <Icon name="chevronRight" size={17} color={colors.textSecondary} />
             </View>
           </GlassCard>
         </Pressable>
 
         {/* 명세 3-2: 가입 유도는 여기 한 곳에서만 한다. 기능을 막고 가입을 요구하지 않는다. */}
         <GlassCard style={styles.card}>
-          <Text style={[styles.cardTitle, { color: colors.txt }]}>계정</Text>
+          <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>계정</Text>
           {authStatus === 'member' ? (
             <>
-              <Text style={[styles.previewText, { color: colors.sub }]}>{authEmail}</Text>
-              <Text style={[styles.syncText, { color: colors.sub }]}>{syncLabel}</Text>
+              <Text style={[styles.previewText, { color: colors.textSecondary }]}>{authEmail}</Text>
+              <Text style={[styles.syncText, { color: colors.textSecondary }]}>{syncLabel}</Text>
               <FailedRecords
                 items={failedItems}
                 colors={colors}
@@ -186,13 +186,13 @@ export default function SettingsScreen() {
               <Divider colors={colors} />
               {/* 되돌릴 수 없는 동작이라 다른 줄과 색으로 구분한다. 확인은 탈퇴 화면에서 받는다. */}
               <Pressable onPress={() => navigation.navigate('DeleteAccount')} style={styles.row}>
-                <Text style={[styles.rowLabel, { color: semantic.danger }]}>회원 탈퇴</Text>
-                <Icon name="chevronRight" size={17} color={semantic.danger} />
+                <Text style={[styles.rowLabel, { color: colors.textDanger }]}>회원 탈퇴</Text>
+                <Icon name="chevronRight" size={17} color={colors.textDanger} />
               </Pressable>
             </>
           ) : (
             <>
-              <Text style={[styles.previewText, { color: colors.sub }]}>
+              <Text style={[styles.previewText, { color: colors.textSecondary }]}>
                 계정을 만들면 기록을 백업하고 다른 기기에서도 이어서 볼 수 있어요.
               </Text>
               {/* 로그인이 풀린 뒤에도 못 올린 기록은 보여야 한다. 안 보이면 있는 줄도 모른다. */}
@@ -211,7 +211,7 @@ export default function SettingsScreen() {
         </GlassCard>
 
         <GlassCard style={styles.card}>
-          <Text style={[styles.cardTitle, { color: colors.txt }]}>피또 성격</Text>
+          <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>피또 성격</Text>
           <View style={styles.gap10}>
             <SegmentedControl
               options={PERSONA_OPTIONS.map((p) => ({ value: p.key, label: p.label }))}
@@ -219,20 +219,20 @@ export default function SettingsScreen() {
               onChange={setPersona}
             />
           </View>
-          <Text style={[styles.previewText, { color: colors.sub }]}>{personaDesc}</Text>
+          <Text style={[styles.previewText, { color: colors.textSecondary }]}>{personaDesc}</Text>
         </GlassCard>
 
         <GlassCard style={styles.card}>
-          <Text style={[styles.cardTitle, { color: colors.txt }]}>화면 모드</Text>
+          <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>화면 모드</Text>
           <View style={styles.gap10}>
             <SegmentedControl options={THEME_OPTIONS} value={theme} onChange={setTheme} />
           </View>
 
-          <View style={[styles.divider, { borderTopColor: colors.line }]} />
+          <View style={[styles.divider, { borderTopColor: colors.borderDivider }]} />
 
           {/* README: 글씨 크기 조절은 V2 예정 기능이라 지금은 눌러도 반응하지 않는 자리만 잡아둔다. */}
           <View style={styles.row}>
-            <Text style={[styles.rowLabel, { color: colors.txt }]}>글씨 크기 조절</Text>
+            <Text style={[styles.rowLabel, { color: colors.textPrimary }]}>글씨 크기 조절</Text>
             <Badge label="V2" />
           </View>
         </GlassCard>
@@ -274,15 +274,15 @@ export default function SettingsScreen() {
           <View style={styles.row}>
             <View style={styles.rowTextCol}>
               <View style={styles.rowTitleLine}>
-                <Text style={[styles.rowLabel, { color: colors.txt }]}>생일 축하 메시지</Text>
+                <Text style={[styles.rowLabel, { color: colors.textPrimary }]}>생일 축하 메시지</Text>
                 <Badge label="V2" />
               </View>
-              <Text style={[styles.rowDesc, { color: colors.sub }]}>생일 당일 홈에서 피또가 깜짝 축하해요</Text>
+              <Text style={[styles.rowDesc, { color: colors.textSecondary }]}>생일 당일 홈에서 피또가 깜짝 축하해요</Text>
             </View>
             <Pressable onPress={showBirthdayModal}>
-              <BlurView intensity={20} tint={mode === 'dark' ? 'dark' : 'light'} style={[styles.previewBtn, { borderColor: colors.stroke }]}>
-                <View style={[styles.previewBtnInner, { backgroundColor: colors.card }]}>
-                  <Text style={[styles.previewBtnLabel, { color: colors.txt }]}>미리보기</Text>
+              <BlurView intensity={20} tint={mode === 'dark' ? 'dark' : 'light'} style={[styles.previewBtn, { borderColor: colors.borderGlass }]}>
+                <View style={[styles.previewBtnInner, { backgroundColor: colors.surface }]}>
+                  <Text style={[styles.previewBtnLabel, { color: colors.textPrimary }]}>미리보기</Text>
                 </View>
               </BlurView>
             </Pressable>
@@ -291,27 +291,27 @@ export default function SettingsScreen() {
 
         <GlassCard style={styles.card}>
           <View style={styles.row}>
-            <Text style={[styles.rowLabel, { color: colors.txt }]}>앱 버전</Text>
-            <Text style={[styles.rowAction, { color: colors.sub }]}>{appConfig.expo.version}</Text>
+            <Text style={[styles.rowLabel, { color: colors.textPrimary }]}>앱 버전</Text>
+            <Text style={[styles.rowAction, { color: colors.textSecondary }]}>{appConfig.expo.version}</Text>
           </View>
           <Divider colors={colors} />
           {resetStep === 0 ? (
             <Pressable onPress={() => setResetStep(1)} style={styles.row}>
-              <Text style={[styles.rowLabel, { color: semantic.danger }]}>데이터 초기화</Text>
+              <Text style={[styles.rowLabel, { color: colors.textDanger }]}>데이터 초기화</Text>
             </Pressable>
           ) : (
             <View style={styles.resetBox}>
-              <Text style={[styles.rowLabel, { color: colors.txt }]}>
+              <Text style={[styles.rowLabel, { color: colors.textPrimary }]}>
                 {resetStep === 1 ? '모든 기록을 지울까요?' : '정말 초기화할까요?'}
               </Text>
-              <Text style={[styles.rowDesc, { color: colors.sub }]}>
+              <Text style={[styles.rowDesc, { color: colors.textSecondary }]}>
                 {resetStep === 1
                   ? '식단·운동·체중 기록과 프로필, 설정이 모두 지워지고 온보딩부터 다시 시작해요.'
                   : '지운 데이터는 되돌릴 수 없어요.'}
               </Text>
               <View style={styles.resetBtns}>
-                <Pressable onPress={() => setResetStep(0)} style={[styles.resetBtn, { borderColor: colors.line }]}>
-                  <Text style={[styles.previewBtnLabel, { color: colors.txt }]}>취소</Text>
+                <Pressable onPress={() => setResetStep(0)} style={[styles.resetBtn, { borderColor: colors.borderDivider }]}>
+                  <Text style={[styles.previewBtnLabel, { color: colors.textPrimary }]}>취소</Text>
                 </Pressable>
                 <Pressable
                   onPress={confirmReset}
@@ -320,7 +320,7 @@ export default function SettingsScreen() {
                     { borderColor: semantic.danger, backgroundColor: alpha(semantic.danger, 0.12) },
                   ]}
                 >
-                  <Text style={[styles.previewBtnLabel, { color: semantic.danger }]}>
+                  <Text style={[styles.previewBtnLabel, { color: colors.textDanger }]}>
                     {resetStep === 1 ? '초기화' : '모두 지우기'}
                   </Text>
                 </Pressable>
@@ -352,19 +352,19 @@ function FailedRecords({
 
   return (
     <View style={[styles.failedBox, { borderColor: semantic.danger }]}>
-      <Text style={[styles.failedTitle, { color: semantic.danger }]}>올리지 못한 기록 {items.length}건</Text>
+      <Text style={[styles.failedTitle, { color: colors.textDanger }]}>올리지 못한 기록 {items.length}건</Text>
       {items.slice(0, 3).map((item) => (
-        <Text key={item.id} style={[styles.failedRow, { color: colors.sub }]} numberOfLines={1}>
+        <Text key={item.id} style={[styles.failedRow, { color: colors.textSecondary }]} numberOfLines={1}>
           · {describeOp(item.op)} — {item.reason}
         </Text>
       ))}
-      {items.length > 3 && <Text style={[styles.failedRow, { color: colors.sub }]}>· 외 {items.length - 3}건</Text>}
+      {items.length > 3 && <Text style={[styles.failedRow, { color: colors.textSecondary }]}>· 외 {items.length - 3}건</Text>}
       <View style={styles.failedButtons}>
-        <Pressable onPress={onRetry} style={[styles.failedBtn, { borderColor: colors.line }]}>
-          <Text style={[styles.previewBtnLabel, { color: colors.txt }]}>다시 시도</Text>
+        <Pressable onPress={onRetry} style={[styles.failedBtn, { borderColor: colors.borderDivider }]}>
+          <Text style={[styles.previewBtnLabel, { color: colors.textPrimary }]}>다시 시도</Text>
         </Pressable>
-        <Pressable onPress={onClear} style={[styles.failedBtn, { borderColor: colors.line }]}>
-          <Text style={[styles.previewBtnLabel, { color: colors.sub }]}>목록 비우기</Text>
+        <Pressable onPress={onClear} style={[styles.failedBtn, { borderColor: colors.borderDivider }]}>
+          <Text style={[styles.previewBtnLabel, { color: colors.textSecondary }]}>목록 비우기</Text>
         </Pressable>
       </View>
     </View>
@@ -384,7 +384,7 @@ function ToggleRow({
 }) {
   return (
     <View style={styles.row}>
-      <Text style={[styles.rowLabel, { color: colors.txt }]}>{label}</Text>
+      <Text style={[styles.rowLabel, { color: colors.textPrimary }]}>{label}</Text>
       <ToggleSwitch value={value} onChange={onChange} />
     </View>
   );
@@ -403,18 +403,18 @@ function NavRow({
 }) {
   return (
     <Pressable onPress={onPress} style={styles.row}>
-      <Text style={[styles.rowLabel, { color: colors.txt }]}>{label}</Text>
+      <Text style={[styles.rowLabel, { color: colors.textPrimary }]}>{label}</Text>
       {actionLabel ? (
-        <Text style={[styles.rowAction, { color: colors.sub }]}>{actionLabel}</Text>
+        <Text style={[styles.rowAction, { color: colors.textSecondary }]}>{actionLabel}</Text>
       ) : (
-        <Icon name="chevronRight" size={17} color={colors.sub} />
+        <Icon name="chevronRight" size={17} color={colors.textSecondary} />
       )}
     </Pressable>
   );
 }
 
 function Divider({ colors }: { colors: any }) {
-  return <View style={[styles.divider, { borderTopColor: colors.line }]} />;
+  return <View style={[styles.divider, { borderTopColor: colors.borderDivider }]} />;
 }
 
 const styles = StyleSheet.create({

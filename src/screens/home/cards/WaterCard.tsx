@@ -46,33 +46,33 @@ export default function WaterCard() {
     <GestureDetector gesture={pan}>
       <GlassCard fill>
         <View style={styles.topRow}>
-          <Text style={[styles.label, { color: colors.sub }]}>물 섭취</Text>
+          <Text style={[styles.label, { color: colors.textSecondary }]}>물 섭취</Text>
           <View style={styles.topRight}>
-            <Text style={[styles.stageName, { color: brand.blue }]}>{stage.name}</Text>
+            <Text style={[styles.stageName, { color: colors.textAccent }]}>{stage.name}</Text>
             <Pressable onPress={() => navigation.navigate('WaterDetail')} hitSlop={6} style={styles.detailLink}>
-              <Text style={[styles.detailLabel, { color: colors.sub }]}>상세</Text>
-              <Icon name="chevronRight" size={13} color={colors.sub} />
+              <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>상세</Text>
+              <Icon name="chevronRight" size={13} color={colors.textSecondary} />
             </Pressable>
           </View>
         </View>
         <View style={styles.numRow}>
-          <Text style={[styles.bigNum, { color: colors.txt }]}>{water.toLocaleString()}</Text>
-          <Text style={[styles.goalNum, { color: colors.sub }]}> / {goal.toLocaleString()} ml</Text>
+          <Text style={[styles.bigNum, { color: colors.textPrimary }]}>{water.toLocaleString()}</Text>
+          <Text style={[styles.goalNum, { color: colors.textSecondary }]}> / {goal.toLocaleString()} ml</Text>
         </View>
         {/* 반폭 카드라 원본의 가로(컵+컨트롤) 배치는 컨트롤이 45px로 찌그러진다.
             컵을 가운데 두고 버튼을 아래에 카드 폭으로 까는 세로 배치로 바꿨다. */}
         <View style={styles.cupWrap}>
           <WaterCup progress={water / goal} percent={percent} onPress={() => applyDelta(cup)} />
         </View>
-        <Text style={[styles.cupHint, { color: colors.sub }]}>컵을 탭하면 {cup}ml씩 채워져요.</Text>
+        <Text style={[styles.cupHint, { color: colors.textSecondary }]}>컵을 탭하면 {cup}ml씩 채워져요.</Text>
 
         <View style={styles.buttonCol}>
           <PrimaryButton small label={`+${cup} ml`} onPress={() => applyDelta(cup)} />
           <Pressable
             onPress={() => applyDelta(-cup)}
-            style={[styles.undoBtn, { borderColor: colors.line }]}
+            style={[styles.undoBtn, { borderColor: colors.borderDivider }]}
           >
-            <Text style={[styles.undoLabel, { color: colors.sub }]}>되돌리기</Text>
+            <Text style={[styles.undoLabel, { color: colors.textSecondary }]}>되돌리기</Text>
           </Pressable>
         </View>
       </GlassCard>

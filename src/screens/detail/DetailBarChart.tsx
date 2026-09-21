@@ -25,7 +25,7 @@ export default function DetailBarChart({ labels, values, highlightIndex, emptyMe
   if (emptyMessage && values.every((v) => v === 0)) {
     return (
       <GlassCard style={styles.card}>
-        <Text style={[styles.empty, { color: colors.sub }]}>{emptyMessage}</Text>
+        <Text style={[styles.empty, { color: colors.textSecondary }]}>{emptyMessage}</Text>
       </GlassCard>
     );
   }
@@ -38,17 +38,17 @@ export default function DetailBarChart({ labels, values, highlightIndex, emptyMe
           const highlight = i === highlightIndex;
           return (
             <View key={i} style={styles.col}>
-              <Text style={[styles.value, { color: colors.sub }]} numberOfLines={1}>
+              <Text style={[styles.value, { color: colors.textSecondary }]} numberOfLines={1}>
                 {v >= 1000 ? `${(v / 1000).toFixed(1)}천` : v.toLocaleString()}
               </Text>
               <View style={[styles.track, { height: BAR_MAX_HEIGHT }]}>
                 {highlight ? (
                   <LinearGradient colors={[brand.blue, brand.blueDeep]} style={[styles.bar, { height: h }]} />
                 ) : (
-                  <View style={[styles.bar, { height: h, backgroundColor: colors.ink }]} />
+                  <View style={[styles.bar, { height: h, backgroundColor: colors.fillMuted }]} />
                 )}
               </View>
-              <Text style={[styles.label, { color: colors.sub }]} numberOfLines={1}>
+              <Text style={[styles.label, { color: colors.textSecondary }]} numberOfLines={1}>
                 {labels[i]}
               </Text>
             </View>

@@ -45,8 +45,8 @@ export default function ConditionCard({ dateKey, label }: ConditionCardProps) {
 
   return (
     <GlassCard style={styles.card}>
-      <Text style={[styles.title, { color: colors.txt }]}>{label} 컨디션</Text>
-      <Text style={[styles.desc, { color: colors.sub }]}>그날의 몸 상태를 남겨두면 다음 주기를 예측할 때 참고해요.</Text>
+      <Text style={[styles.title, { color: colors.textPrimary }]}>{label} 컨디션</Text>
+      <Text style={[styles.desc, { color: colors.textSecondary }]}>그날의 몸 상태를 남겨두면 다음 주기를 예측할 때 참고해요.</Text>
 
       <View style={styles.conditionRow}>
         {CONDITIONS.map((c) => {
@@ -64,7 +64,7 @@ export default function ConditionCard({ dateKey, label }: ConditionCardProps) {
         })}
       </View>
 
-      <Text style={[styles.sectionLabel, { color: colors.sub }]}>증상</Text>
+      <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>증상</Text>
       <View style={styles.symptomWrap}>
         {SYMPTOM_TAGS.map((s) => (
           <SelectChip
@@ -77,7 +77,7 @@ export default function ConditionCard({ dateKey, label }: ConditionCardProps) {
       </View>
 
       {/* 명세 F-036: 복용약과 메모. 입력칸을 벗어날 때 저장한다. */}
-      <Text style={[styles.sectionLabel, { color: colors.sub }]}>복용약</Text>
+      <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>복용약</Text>
       <TextField
         size="sm"
         clearable
@@ -89,7 +89,7 @@ export default function ConditionCard({ dateKey, label }: ConditionCardProps) {
         maxLength={50}
       />
 
-      <Text style={[styles.sectionLabel, { color: colors.sub }]}>메모</Text>
+      <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>메모</Text>
       <TextField
         size="sm"
         clearable

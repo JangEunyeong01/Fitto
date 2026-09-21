@@ -148,8 +148,8 @@ export default function RecipeScreen() {
 
         {/* 실제 앱에서는 카메라/갤러리 선택으로 연결한다. */}
         <Pressable onPress={() => showToast('사진 첨부는 실기기에서 카메라·갤러리로 연결돼요')}>
-          <View style={[styles.photoSlot, { borderColor: colors.stroke, backgroundColor: colors.card2 }]}>
-            <Text style={[styles.photoText, { color: colors.sub }]}>+ 사진 첨부</Text>
+          <View style={[styles.photoSlot, { borderColor: colors.borderGlass, backgroundColor: colors.surfaceSubtle }]}>
+            <Text style={[styles.photoText, { color: colors.textSecondary }]}>+ 사진 첨부</Text>
           </View>
         </Pressable>
 
@@ -163,7 +163,7 @@ export default function RecipeScreen() {
         />
 
         <GlassCard style={styles.card}>
-          <Text style={[styles.cardTitle, { color: colors.txt }]}>재료 선택</Text>
+          <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>재료 선택</Text>
           <View style={styles.chipWrap}>
             {allIngredients.map((ing) => (
               <SelectChip
@@ -188,8 +188,8 @@ export default function RecipeScreen() {
             <PrimaryButton small label="재료 추가 (g)" onPress={addLine} style={styles.addBtn} />
           </View>
 
-          <Pressable onPress={() => setCustomOpen((v) => !v)} style={[styles.customToggle, { borderColor: colors.line }]}>
-            <Text style={[styles.customToggleLabel, { color: colors.sub }]}>목록에 없는 재료 직접 입력</Text>
+          <Pressable onPress={() => setCustomOpen((v) => !v)} style={[styles.customToggle, { borderColor: colors.borderDivider }]}>
+            <Text style={[styles.customToggleLabel, { color: colors.textSecondary }]}>목록에 없는 재료 직접 입력</Text>
           </Pressable>
 
           {customOpen && (
@@ -238,15 +238,15 @@ export default function RecipeScreen() {
 
         {lines.length > 0 && (
           <GlassCard style={styles.card}>
-            <Text style={[styles.cardTitle, { color: colors.txt }]}>재료 목록</Text>
+            <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>재료 목록</Text>
             <View style={styles.lineList}>
               {lines.map((l, i) => (
                 <View key={`${l.name}-${i}`} style={styles.lineRow}>
-                  <Text style={[styles.lineName, { color: colors.txt }]}>{l.name}</Text>
-                  <Text style={[styles.lineGram, { color: colors.sub }]}>{l.grams}g</Text>
-                  <Text style={[styles.lineKcal, { color: colors.txt }]}>{Math.round((l.kcal100 * l.grams) / 100)}</Text>
+                  <Text style={[styles.lineName, { color: colors.textPrimary }]}>{l.name}</Text>
+                  <Text style={[styles.lineGram, { color: colors.textSecondary }]}>{l.grams}g</Text>
+                  <Text style={[styles.lineKcal, { color: colors.textPrimary }]}>{Math.round((l.kcal100 * l.grams) / 100)}</Text>
                   <Pressable onPress={() => setLines((prev) => prev.filter((_, idx) => idx !== i))} hitSlop={8}>
-                    <Icon name="close" size={15} color={colors.sub} />
+                    <Icon name="close" size={15} color={colors.textSecondary} />
                   </Pressable>
                 </View>
               ))}
@@ -260,13 +260,13 @@ export default function RecipeScreen() {
 
         {recipes.length > 0 && (
           <GlassCard style={styles.card}>
-            <Text style={[styles.cardTitle, { color: colors.txt }]}>저장한 레시피</Text>
+            <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>저장한 레시피</Text>
             <View style={styles.savedList}>
               {recipes.map((r) => (
                 <View key={r.id} style={styles.savedRow}>
                   <View style={styles.savedTextCol}>
-                    <Text style={[styles.savedName, { color: colors.txt }]}>{r.name}</Text>
-                    <Text style={[styles.savedMeta, { color: colors.sub }]}>
+                    <Text style={[styles.savedName, { color: colors.textPrimary }]}>{r.name}</Text>
+                    <Text style={[styles.savedMeta, { color: colors.textSecondary }]}>
                       {r.ingredients.length}개 재료 · {r.totalKcal.toLocaleString()}kcal
                     </Text>
                   </View>
@@ -283,7 +283,7 @@ export default function RecipeScreen() {
                     }}
                     style={[styles.savedBtn, { borderColor: selection.border, backgroundColor: selection.bg }]}
                   >
-                    <Text style={[styles.savedBtnLabel, { color: colors.txt }]}>식단에 추가</Text>
+                    <Text style={[styles.savedBtnLabel, { color: colors.textPrimary }]}>식단에 추가</Text>
                   </Pressable>
                 </View>
               ))}

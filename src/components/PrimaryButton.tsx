@@ -2,7 +2,7 @@ import React from 'react';
 import { Pressable, Text, StyleSheet, StyleProp, ViewStyle, ActivityIndicator } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../theme/useTheme';
-import { typography, white } from '../theme/tokens';
+import { typography } from '../theme/tokens';
 
 interface PrimaryButtonProps {
   label: string;
@@ -41,15 +41,21 @@ export default function PrimaryButton({ label, onPress, style, disabled, small, 
       ]}
     >
       <LinearGradient
-        colors={inactive ? [colors.ink, colors.ink] : primaryGradient}
+        colors={inactive ? [colors.surfaceMuted, colors.surfaceMuted] : primaryGradient}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={[styles.gradient, { borderRadius: radius.button }]}
       >
+        {/* 파스텔 면 위 흰 글씨는 1.9:1이라 읽기 어렵다. 면은 두고 글씨를 짙게 바꾼다(UI 기준서 2-3). */}
         {loading ? (
-          <ActivityIndicator color={inactive ? colors.sub : white} />
+          <ActivityIndicator color={inactive ? colors.textDisabled : colors.textOnPrimary} />
         ) : (
-          <Text style={[small ? typography.buttonLabelSm : typography.buttonLabel, { color: inactive ? colors.sub : white }]}>
+          <Text
+            style={[
+              small ? typography.buttonLabelSm : typography.buttonLabel,
+              { color: inactive ? colors.textDisabled : colors.textOnPrimary },
+            ]}
+          >
             {label}
           </Text>
         )}

@@ -19,13 +19,13 @@ export default function DetailSummaryCard({ value, unit, goal, periodDesc }: Det
 
   return (
     <GlassCard style={styles.card}>
-      <Text style={[styles.desc, { color: colors.sub }]}>{periodDesc}</Text>
+      <Text style={[styles.desc, { color: colors.textSecondary }]}>{periodDesc}</Text>
       <View style={styles.numRow}>
-        <Text style={[styles.bigNum, { color: colors.txt }]}>
+        <Text style={[styles.bigNum, { color: colors.textPrimary }]}>
           {value.toLocaleString()}
           {unit}
         </Text>
-        <Text style={[styles.unit, { color: colors.sub }]}>
+        <Text style={[styles.unit, { color: colors.textSecondary }]}>
           {' '}
           / {goal.toLocaleString()}
           {unit}

@@ -38,11 +38,11 @@ export default function RecommendCard() {
   return (
     <GlassCard style={styles.card}>
       <View style={styles.headerRow}>
-        <Text style={[styles.title, { color: colors.txt }]}>퍼스널 추천 식단</Text>
+        <Text style={[styles.title, { color: colors.textPrimary }]}>퍼스널 추천 식단</Text>
         <Badge
           label={badge}
           color={alpha(brand.lavender, 0.28)}
-          textColor={colors.txt}
+          textColor={colors.textPrimary}
           style={styles.badge}
         />
       </View>
@@ -51,21 +51,21 @@ export default function RecommendCard() {
         {meals.map(({ meal: m, caution }) => (
           <View key={m.id} style={styles.row}>
             {/* 실제 음식 사진이 준비되면 이 자리를 Image로 바꾼다. */}
-            <View style={[styles.thumb, { backgroundColor: colors.ink, borderColor: colors.line }]}>
-              <Icon name="diet" size={20} color={colors.sub} />
+            <View style={[styles.thumb, { backgroundColor: colors.fillMuted, borderColor: colors.borderDivider }]}>
+              <Icon name="diet" size={20} color={colors.textSecondary} />
             </View>
             <View style={styles.rowText}>
-              <Text style={[styles.name, { color: colors.txt }]}>{m.name}</Text>
-              <Text style={[styles.amount, { color: colors.sub }]}>
+              <Text style={[styles.name, { color: colors.textPrimary }]}>{m.name}</Text>
+              <Text style={[styles.amount, { color: colors.textSecondary }]}>
                 {m.amount}
                 {caution ? ` · ${labelOf(DISEASE_TAGS, caution)} 주의(${cautionReason(caution)})` : ''}
               </Text>
             </View>
-            <Text style={[styles.kcal, { color: colors.txt }]}>{m.kcal}</Text>
+            <Text style={[styles.kcal, { color: colors.textPrimary }]}>{m.kcal}</Text>
           </View>
         ))}
         {meals.length === 0 && (
-          <Text style={[styles.empty, { color: colors.sub }]}>제외 조건에 맞는 추천이 아직 없어요.</Text>
+          <Text style={[styles.empty, { color: colors.textSecondary }]}>제외 조건에 맞는 추천이 아직 없어요.</Text>
         )}
       </View>
     </GlassCard>

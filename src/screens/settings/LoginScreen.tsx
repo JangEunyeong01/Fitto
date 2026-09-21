@@ -109,7 +109,7 @@ export default function LoginScreen() {
         <DetailHeader title="로그인" />
 
         <GlassCard style={styles.card}>
-          <Text style={[styles.label, { color: colors.sub }]}>이메일</Text>
+          <Text style={[styles.label, { color: colors.textSecondary }]}>이메일</Text>
           <TextField
             value={email}
             onChangeText={setEmail}
@@ -119,7 +119,7 @@ export default function LoginScreen() {
             maxLength={254}
           />
 
-          <Text style={[styles.label, { color: colors.sub }]}>비밀번호</Text>
+          <Text style={[styles.label, { color: colors.textSecondary }]}>비밀번호</Text>
           <TextField
             value={password}
             onChangeText={setPassword}
@@ -134,19 +134,19 @@ export default function LoginScreen() {
           </View>
 
           {/* 무료 서버가 잠들어 있으면 1분 넘게 걸린다. 스피너만 돌면 고장으로 보인다. */}
-          {wakeNotice && <Text style={[styles.wakeNotice, { color: colors.sub }]}>{wakeNotice}</Text>}
+          {wakeNotice && <Text style={[styles.wakeNotice, { color: colors.textSecondary }]}>{wakeNotice}</Text>}
 
           {/* 로그인 화면에서 막히지 않게 가입으로 가는 길을 둔다. 비밀번호 찾기는 메일 발송을 붙인 뒤에 넣는다. */}
           <Pressable onPress={() => navigation.navigate('Signup')} style={styles.linkRow}>
-            <Text style={[styles.link, { color: colors.txt }]}>계정이 없으신가요? 계정 만들기</Text>
+            <Text style={[styles.link, { color: colors.textPrimary }]}>계정이 없으신가요? 계정 만들기</Text>
           </Pressable>
         </GlassCard>
 
         {/* 기기에 기록이 있을 때만 묻는다. 둘 중 하나를 고르기 전에는 로그인하지 않는다. */}
         {askMerge && (
           <GlassCard style={styles.card}>
-            <Text style={[styles.mergeTitle, { color: colors.txt }]}>이 기기의 기록을 어떻게 할까요?</Text>
-            <Text style={[styles.desc, { color: colors.sub }]}>
+            <Text style={[styles.mergeTitle, { color: colors.textPrimary }]}>이 기기의 기록을 어떻게 할까요?</Text>
+            <Text style={[styles.desc, { color: colors.textSecondary }]}>
               계정에 이미 있는 날짜는 계정 기록을 그대로 두고, 없는 날짜만 채워요.
             </Text>
 

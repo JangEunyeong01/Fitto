@@ -20,7 +20,7 @@ export default function BirthdayBanner({ name, onPress }: BirthdayBannerProps) {
       <BlurView
         intensity={30}
         tint={mode === 'dark' ? 'dark' : 'light'}
-        style={[styles.blur, { borderColor: colors.stroke }]}
+        style={[styles.blur, { borderColor: colors.borderGlass }]}
       >
         <LinearGradient
           colors={birthday.bannerGradient}
@@ -35,14 +35,14 @@ export default function BirthdayBanner({ name, onPress }: BirthdayBannerProps) {
             style={styles.avatar}
           />
           <View style={styles.textCol}>
-            <Text style={[styles.title, { color: colors.txt }]} numberOfLines={1}>
+            <Text style={[styles.title, { color: colors.textPrimary }]} numberOfLines={1}>
               오늘은 {name}님의 생일이에요
             </Text>
-            <Text style={[styles.sub, { color: colors.sub }]} numberOfLines={1}>
+            <Text style={[styles.sub, { color: colors.textSecondary }]} numberOfLines={1}>
               피또의 축하 메시지 열어보기
             </Text>
           </View>
-          <Icon name="chevronRight" size={17} color={colors.sub} />
+          <Icon name="chevronRight" size={17} color={colors.textSecondary} />
         </LinearGradient>
       </BlurView>
     </Pressable>

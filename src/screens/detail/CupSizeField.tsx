@@ -28,7 +28,7 @@ export default function CupSizeField({ value, onChange }: CupSizeFieldProps) {
 
   return (
     <GlassCard style={styles.card}>
-      <Text style={[styles.title, { color: colors.txt }]}>1회 컵 용량</Text>
+      <Text style={[styles.title, { color: colors.textPrimary }]}>1회 컵 용량</Text>
       <View style={styles.chipRow}>
         {PRESETS.map((size) => (
           <SelectChip

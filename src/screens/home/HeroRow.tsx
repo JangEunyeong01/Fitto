@@ -33,10 +33,10 @@ export default function HeroRow() {
     <View style={styles.row}>
       <FittoCharacter current={water} goal={goals.water} size={78} glowSize={92} />
       <View style={styles.textCol}>
-        <Text style={[styles.meta, { color: colors.sub }]}>
+        <Text style={[styles.meta, { color: colors.textSecondary }]}>
           {timeSlots[slot].greeting} · {personaLabel[persona]}
         </Text>
-        <Text style={[styles.greeting, { color: colors.txt }]}>{greeting}</Text>
+        <Text style={[styles.greeting, { color: colors.textPrimary }]}>{greeting}</Text>
       </View>
     </View>
   );
@@ -57,7 +57,7 @@ const styles = StyleSheet.create({
   },
   meta: typography.label,
   greeting: {
-    fontSize: 16.5,
+    fontSize: 17,
     ...weight(700),
     lineHeight: 16.5 * 1.42,
   },

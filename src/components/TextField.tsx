@@ -33,15 +33,17 @@ export default function TextField({ size = 'md', center, onBackground, clearable
   const input = (
     <TextInput
       ref={inputRef}
-      placeholderTextColor={colors.sub}
+      placeholderTextColor={colors.textPlaceholder}
       style={[
         styles.base,
         sizeStyles[size],
         center && styles.center,
         {
-          backgroundColor: onBackground ? colors.card : colors.ink,
-          borderColor: onBackground ? colors.stroke : colors.line,
-          color: colors.txt,
+          // 테두리는 어디서든 borderInput(3:1 이상). 예전엔 유리 테두리·구분선 색을 써서
+          // 흰 바탕 위에서 대비가 1:1에 가까웠고, 칸이 어디 있는지 보이지 않았다.
+          backgroundColor: onBackground ? colors.surface : colors.surfaceSolid,
+          borderColor: colors.borderInput,
+          color: colors.textPrimary,
         },
         clearable && styles.clearablePad,
         style,
@@ -67,7 +69,7 @@ export default function TextField({ size = 'md', center, onBackground, clearable
           accessibilityRole="button"
           accessibilityLabel="입력 지우기"
         >
-          <Icon name="close" size={14} color={colors.sub} />
+          <Icon name="close" size={14} color={colors.textSecondary} />
         </Pressable>
       )}
     </View>

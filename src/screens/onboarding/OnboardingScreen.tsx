@@ -225,10 +225,10 @@ export default function OnboardingScreen() {
                 남는 자리는 아래가 아니라 위에 두어(flex-end) 제목이 본문에서 떨어지지 않게 한다.
               */}
               <View style={styles.header}>
-                <Text style={[styles.stepLabel, { color: colors.txt }]}>{STEP_LABELS[step]}</Text>
-                <Text style={[typography.onboardingTitle, styles.title, { color: colors.txt }]}>{TITLES[step]}</Text>
+                <Text style={[styles.stepLabel, { color: colors.textPrimary }]}>{STEP_LABELS[step]}</Text>
+                <Text style={[typography.onboardingTitle, styles.title, { color: colors.textPrimary }]}>{TITLES[step]}</Text>
                 {!!DESCRIPTIONS[step] && (
-                  <Text style={[styles.desc, { color: colors.sub }]}>{DESCRIPTIONS[step]}</Text>
+                  <Text style={[styles.desc, { color: colors.textSecondary }]}>{DESCRIPTIONS[step]}</Text>
                 )}
               </View>
 
@@ -321,15 +321,15 @@ export default function OnboardingScreen() {
             {showComment && (
               <View style={[styles.centerFill, { height: room }]}>
                 <FittoCharacter current={3} goal={5} size={COMMENT_FACE_SIZE} variant="face" glowSize={68} />
-                <Text style={[styles.commentText, { color: colors.sub }]}>{comment}</Text>
+                <Text style={[styles.commentText, { color: colors.textSecondary }]}>{comment}</Text>
               </View>
             )}
           </ScrollView>
 
           <View style={styles.buttonRow}>
             {step > 0 && (
-              <Pressable onPress={() => setStep(step - 1)} style={[styles.prevButton, { borderColor: colors.line }]}>
-                <Text style={[styles.prevLabel, { color: colors.txt }]}>이전</Text>
+              <Pressable onPress={() => setStep(step - 1)} style={[styles.prevButton, { borderColor: colors.borderDivider }]}>
+                <Text style={[styles.prevLabel, { color: colors.textPrimary }]}>이전</Text>
               </Pressable>
             )}
             <PrimaryButton label={ctaLabel} onPress={handleNext} inactive={!canProceed()} style={styles.nextButton} />

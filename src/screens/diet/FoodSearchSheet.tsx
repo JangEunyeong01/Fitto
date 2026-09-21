@@ -131,7 +131,7 @@ function FoodSearchForm() {
         style={[
           styles.sheet,
           {
-            backgroundColor: colors.solid,
+            backgroundColor: colors.surfaceSolid,
             paddingHorizontal: spacing.screenX,
             paddingBottom: insets.bottom + 16,
             borderTopLeftRadius: r.sheetTop,
@@ -139,21 +139,21 @@ function FoodSearchForm() {
           },
         ]}
       >
-        <View style={[styles.grabber, { backgroundColor: colors.line }]} />
+        <View style={[styles.grabber, { backgroundColor: colors.borderDivider }]} />
         <View style={styles.headerRow}>
-          <Text style={[styles.title, { color: colors.txt }]}>{picked ? picked.name : '음식 추가'}</Text>
+          <Text style={[styles.title, { color: colors.textPrimary }]}>{picked ? picked.name : '음식 추가'}</Text>
           <Pressable onPress={hide} hitSlop={8} accessibilityRole="button" accessibilityLabel="닫기">
-            <Icon name="close" size={18} color={colors.sub} />
+            <Icon name="close" size={18} color={colors.textSecondary} />
           </Pressable>
         </View>
 
         {picked ? (
           <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-            <Text style={[styles.meta, { color: colors.sub }]}>
+            <Text style={[styles.meta, { color: colors.textSecondary }]}>
               {picked.amount} 기준 {picked.kcal}kcal{picked.note ? ` · ${picked.note}` : ''}
             </Text>
 
-            <Text style={[styles.label, { color: colors.sub }]}>끼니</Text>
+            <Text style={[styles.label, { color: colors.textSecondary }]}>끼니</Text>
             <View style={styles.chipRow}>
               {MEAL_SLOTS.map((s) => (
                 <SelectChip
@@ -167,7 +167,7 @@ function FoodSearchForm() {
               ))}
             </View>
 
-            <Text style={[styles.label, { color: colors.sub }]}>양</Text>
+            <Text style={[styles.label, { color: colors.textSecondary }]}>양</Text>
             <View style={styles.amountRow}>
               <TextField
                 size="sm"
@@ -182,28 +182,28 @@ function FoodSearchForm() {
               {grams != null && (
                 <SelectChip label="g" selected={unit === 'g'} onPress={() => switchUnit('g')} size="sm" />
               )}
-              <Text style={[styles.kcalPreview, { color: colors.txt }]}>{kcal > 0 ? `${kcal}kcal` : ''}</Text>
+              <Text style={[styles.kcalPreview, { color: colors.textPrimary }]}>{kcal > 0 ? `${kcal}kcal` : ''}</Text>
             </View>
 
             <PrimaryButton label="기록하기" onPress={save} inactive={!validQty} style={styles.saveBtn} />
             <Pressable onPress={() => setPicked(null)} style={styles.backLink} hitSlop={8}>
-              <Text style={[styles.backLabel, { color: colors.sub }]}>다른 음식 고르기</Text>
+              <Text style={[styles.backLabel, { color: colors.textSecondary }]}>다른 음식 고르기</Text>
             </Pressable>
           </ScrollView>
         ) : (
           <>
-            <View style={[styles.searchRow, { borderColor: colors.stroke, backgroundColor: colors.card }]}>
-              <Icon name="search" size={17} color={colors.sub} />
+            <View style={[styles.searchRow, { borderColor: colors.borderGlass, backgroundColor: colors.surface }]}>
+              <Icon name="search" size={17} color={colors.textSecondary} />
               <TextInput
                 value={query}
                 onChangeText={setQuery}
                 placeholder="음식 이름을 검색하세요"
-                placeholderTextColor={colors.sub}
-                style={[styles.searchInput, { color: colors.txt }]}
+                placeholderTextColor={colors.textSecondary}
+                style={[styles.searchInput, { color: colors.textPrimary }]}
               />
               {query.length > 0 && (
-                <Pressable onPress={() => setQuery('')} style={[styles.clearBtn, { backgroundColor: colors.ink }]}>
-                  <Icon name="close" size={13} color={colors.sub} />
+                <Pressable onPress={() => setQuery('')} style={[styles.clearBtn, { backgroundColor: colors.fillMuted }]}>
+                  <Icon name="close" size={13} color={colors.textSecondary} />
                 </Pressable>
               )}
             </View>
@@ -219,9 +219,9 @@ function FoodSearchForm() {
                   <Pressable
                     key={k}
                     onPress={() => pickRecent(k)}
-                    style={[styles.recentChip, { borderColor: colors.line, backgroundColor: colors.card2 }]}
+                    style={[styles.recentChip, { borderColor: colors.borderDivider, backgroundColor: colors.surfaceSubtle }]}
                   >
-                    <Text style={[styles.recentText, { color: colors.sub }]}>{k}</Text>
+                    <Text style={[styles.recentText, { color: colors.textSecondary }]}>{k}</Text>
                   </Pressable>
                 ))}
               </ScrollView>
@@ -229,7 +229,7 @@ function FoodSearchForm() {
 
             <ScrollView style={styles.results} keyboardShouldPersistTaps="handled">
               {results.length === 0 && (
-                <Text style={[styles.empty, { color: colors.sub }]}>검색 결과가 없어요.</Text>
+                <Text style={[styles.empty, { color: colors.textSecondary }]}>검색 결과가 없어요.</Text>
               )}
               {results.map((food) => {
                 const hit = findAllergyHit(food, avoid);
@@ -239,13 +239,13 @@ function FoodSearchForm() {
                     key={food.id}
                     style={[
                       styles.row,
-                      { borderColor: colors.line },
+                      { borderColor: colors.borderDivider },
                       hit && { backgroundColor: alpha(brand.peach, 0.14), opacity: 0.75 },
                     ]}
                   >
                     <View style={styles.rowText}>
                       <View style={styles.nameRow}>
-                        <Text style={[styles.name, { color: colors.txt }]}>{food.name}</Text>
+                        <Text style={[styles.name, { color: colors.textPrimary }]}>{food.name}</Text>
                         <Badge
                           label={
                             hit
@@ -261,25 +261,25 @@ function FoodSearchForm() {
                                 ? alpha(brand.yellow, 0.4)
                                 : alpha(brand.mint, 0.28)
                           }
-                          textColor={colors.txt}
+                          textColor={colors.textPrimary}
                         />
                       </View>
-                      <Text style={[styles.meta, { color: colors.sub }]}>
+                      <Text style={[styles.meta, { color: colors.textSecondary }]}>
                         {food.amount}
                         {caution ? ` · ${cautionReason(caution)}` : food.note ? ` · ${food.note}` : ''}
                       </Text>
                     </View>
-                    <Text style={[styles.kcal, { color: colors.txt }]}>{food.kcal}</Text>
+                    <Text style={[styles.kcal, { color: colors.textPrimary }]}>{food.kcal}</Text>
                     <Pressable
                       onPress={() => pick(food)}
                       style={[
                         styles.addBtn,
                         hit
-                          ? { backgroundColor: colors.ink }
+                          ? { backgroundColor: colors.fillMuted }
                           : { backgroundColor: selection.bg, borderColor: selection.border, borderWidth: 1 },
                       ]}
                     >
-                      <Text style={[styles.addLabel, { color: hit ? colors.sub : colors.txt }]}>
+                      <Text style={[styles.addLabel, { color: hit ? colors.textSecondary : colors.textPrimary }]}>
                         {hit ? '제외' : '추가'}
                       </Text>
                     </Pressable>
