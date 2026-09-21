@@ -44,12 +44,13 @@ export default function MealSlotCard({ date, slot, items, memo, onAdd }: MealSlo
           <Text style={[styles.total, { color: colors.textSecondary }]}>{total.toLocaleString()} kcal</Text>
           <Pressable
             onPress={() => onAdd(slot)}
-            hitSlop={8}
+            // 보이는 크기 26에 사방 9씩 더해 누르는 영역 44를 맞춘다.
+            hitSlop={9}
             style={[styles.plusBtn, { borderColor: colors.borderDivider }]}
             accessibilityRole="button"
             accessibilityLabel={`${label}에 음식 추가`}
           >
-            <Icon name="plus" size={14} color={colors.textPrimary} />
+            <Icon name="plus" size={16} color={colors.textPrimary} />
           </Pressable>
         </View>
       </View>
@@ -69,11 +70,12 @@ export default function MealSlotCard({ date, slot, items, memo, onAdd }: MealSlo
               <Text style={[styles.itemKcal, { color: colors.textPrimary }]}>{item.kcal}</Text>
               <Pressable
                 onPress={() => removeMealItem(date, slot, item.id)}
-                hitSlop={8}
+                // 아이콘 15px에 예전 여유 8을 더하면 31이었다. 44가 되게 넓힌다.
+                hitSlop={15}
                 accessibilityRole="button"
                 accessibilityLabel={`${item.name} 삭제`}
               >
-                <Icon name="close" size={15} color={colors.textSecondary} />
+                <Icon name="close" size={16} color={colors.textSecondary} />
               </Pressable>
             </View>
           ))}
@@ -114,7 +116,7 @@ const styles = StyleSheet.create({
   plusBtn: {
     width: 26,
     height: 26,
-    borderRadius: 9,
+    borderRadius: 10,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',

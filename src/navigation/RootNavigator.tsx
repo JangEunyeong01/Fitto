@@ -6,6 +6,7 @@ import OnboardingScreen from '../screens/onboarding/OnboardingScreen';
 import AccountChoiceScreen from '../screens/onboarding/AccountChoiceScreen';
 import SignupScreen from '../screens/settings/SignupScreen';
 import LoginScreen from '../screens/settings/LoginScreen';
+import { ROOT_OPTIONS } from './transitions';
 import MainTabs from './MainTabs';
 
 export type RootStackParamList = {
@@ -27,7 +28,7 @@ export default function RootNavigator() {
   const askAccount = onboardingDone && !accountPromptSeen && !isMember;
 
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator screenOptions={ROOT_OPTIONS}>
       {!onboardingDone ? (
         <Stack.Screen name="Onboarding" component={OnboardingScreen} />
       ) : askAccount ? (

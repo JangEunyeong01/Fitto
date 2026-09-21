@@ -42,7 +42,7 @@ export default function BirthdayBanner({ name, onPress }: BirthdayBannerProps) {
               피또의 축하 메시지 열어보기
             </Text>
           </View>
-          <Icon name="chevronRight" size={17} color={colors.textSecondary} />
+          <Icon name="chevronRight" size={16} color={colors.textSecondary} />
         </LinearGradient>
       </BlurView>
     </Pressable>
@@ -70,7 +70,7 @@ const styles = StyleSheet.create({
   avatar: {
     width: 34,
     height: 34,
-    borderRadius: 12,
+    borderRadius: 10,
   },
   textCol: {
     flex: 1,

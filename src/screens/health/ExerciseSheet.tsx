@@ -92,7 +92,7 @@ function ExerciseForm({ date, onClose }: { date: string; onClose: () => void }) 
           <View style={styles.headerRow}>
             <Text style={[styles.title, { color: colors.textPrimary }]}>운동 추가</Text>
             <Pressable onPress={onClose} hitSlop={8} accessibilityRole="button" accessibilityLabel="닫기">
-              <Icon name="close" size={18} color={colors.textSecondary} />
+              <Icon name="close" size={20} color={colors.textSecondary} />
             </Pressable>
           </View>
 

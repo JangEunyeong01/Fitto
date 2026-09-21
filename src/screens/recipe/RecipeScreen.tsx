@@ -246,7 +246,7 @@ export default function RecipeScreen() {
                   <Text style={[styles.lineGram, { color: colors.textSecondary }]}>{l.grams}g</Text>
                   <Text style={[styles.lineKcal, { color: colors.textPrimary }]}>{Math.round((l.kcal100 * l.grams) / 100)}</Text>
                   <Pressable onPress={() => setLines((prev) => prev.filter((_, idx) => idx !== i))} hitSlop={8}>
-                    <Icon name="close" size={15} color={colors.textSecondary} />
+                    <Icon name="close" size={16} color={colors.textSecondary} />
                   </Pressable>
                 </View>
               ))}
@@ -339,7 +339,7 @@ const styles = StyleSheet.create({
   customToggle: {
     marginTop: 12,
     height: 42,
-    borderRadius: 13,
+    borderRadius: 14,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
@@ -400,7 +400,7 @@ const styles = StyleSheet.create({
   savedBtn: {
     height: 32,
     paddingHorizontal: 12,
-    borderRadius: 11,
+    borderRadius: 10,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',

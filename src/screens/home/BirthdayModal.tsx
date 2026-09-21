@@ -178,7 +178,7 @@ const styles = StyleSheet.create({
   },
   confirm: {
     height: 46,
-    borderRadius: 15,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
   },

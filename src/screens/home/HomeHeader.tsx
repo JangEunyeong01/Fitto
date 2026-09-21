@@ -23,14 +23,20 @@ export default function HomeHeader() {
         <View style={[styles.chip, { backgroundColor: colors.surfaceSubtle, borderColor: colors.borderGlass }]}>
           <Text style={[styles.chipText, { color: colors.textSecondary }]}>{timeSlots[slot].name}</Text>
         </View>
-        <Pressable onPress={() => navigation.navigate('Settings')}>
+        <Pressable
+          onPress={() => navigation.navigate('Settings')}
+          // 보이는 크기 34. 사방 5씩 넓혀 누르는 영역 44를 맞춘다.
+          hitSlop={5}
+          accessibilityRole="button"
+          accessibilityLabel="설정"
+        >
           <BlurView
             intensity={25}
             tint={mode === 'dark' ? 'dark' : 'light'}
             style={[styles.settingsBtn, { borderColor: colors.borderGlass }]}
           >
             <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.surfaceSubtle }]} />
-            <Icon name="settings" size={18} color={colors.textPrimary} />
+            <Icon name="settings" size={20} color={colors.textPrimary} />
           </BlurView>
         </Pressable>
       </View>
@@ -52,7 +58,7 @@ const styles = StyleSheet.create({
   logo: {
     width: 26,
     height: 26,
-    borderRadius: 9,
+    borderRadius: 10,
   },
   title: {
     fontSize: 17,
@@ -66,14 +72,14 @@ const styles = StyleSheet.create({
   chip: {
     paddingHorizontal: 10,
     paddingVertical: 6,
-    borderRadius: 12,
+    borderRadius: 10,
     borderWidth: 1,
   },
   chipText: typography.label,
   settingsBtn: {
     width: 34,
     height: 34,
-    borderRadius: 12,
+    borderRadius: 10,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',

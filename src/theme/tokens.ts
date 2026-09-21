@@ -238,8 +238,8 @@ export const motion = {
   pulse: 2200,
   /** fwave — 컵 수면 물결 (2.6s). */
   wave: 2600,
-  /** 토스트 자동 소멸까지 유지 시간. */
-  toastVisible: 1900,
+  /** 토스트 자동 소멸까지 유지 시간. 1.9초는 두 줄 문구를 다 읽기 전에 사라졌다(UI 기준서 5-7). */
+  toastVisible: 3000,
 } as const;
 
 export type TimeSlot = 'dawn' | 'morning' | 'day' | 'after' | 'evening' | 'night';
@@ -357,19 +357,30 @@ export const spacing = {
   cardPadding: 16,
 };
 
+/**
+ * 모서리 4단계 (UI 기준서 4장). 예전에는 23·26·22·18·16·14·12 일곱 가지가 섞여 있어서
+ * 비슷한 카드인데 모서리가 1~3px씩 달랐다. 원형(지름의 절반)은 이 단계와 상관없이 크기에서 정한다.
+ */
+const RADIUS_SCALE = { xl: 24, lg: 16, md: 14, sm: 10 } as const;
+
 export const radius = {
-  cardBig: 23,
-  blockMid: 16,
-  button: 14,
-  chip: 12,
-  sheetTop: 26,
-  /** 하단 플로팅 탭바 (README: radius 22px). */
-  tabBar: 22,
-  /** 탭바 안 선택 항목·FAB. */
-  tabItem: 16,
-  fab: 18,
-  /** 온보딩 옵션 행. */
-  optionRow: 18,
+  /** 카드 */
+  cardBig: RADIUS_SCALE.xl,
+  /** 카드 안 블록 */
+  blockMid: RADIUS_SCALE.lg,
+  /** 버튼·입력칸 */
+  button: RADIUS_SCALE.md,
+  /** 칩·배지·작은 아이콘 버튼 */
+  chip: RADIUS_SCALE.sm,
+  /** 시트 위쪽 */
+  sheetTop: RADIUS_SCALE.xl,
+  /** 하단 플로팅 탭바 */
+  tabBar: RADIUS_SCALE.xl,
+  /** 탭바 안 선택 항목·FAB */
+  tabItem: RADIUS_SCALE.lg,
+  fab: RADIUS_SCALE.lg,
+  /** 온보딩 옵션 행 */
+  optionRow: RADIUS_SCALE.lg,
 };
 
 export const gauge = {

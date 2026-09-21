@@ -39,9 +39,23 @@ export default function SignupScreen() {
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const wakeNotice = useWakeNotice(busy);
+  /** 칸별 오류. 서버가 돌려준 errors[].field를 해당 칸 아래에 붙인다(명세 0-6). */
+  const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string }>({});
+
+  /** 누를 때 한 번 검사한다. 조건이 덜 찬 버튼(inactive)을 누르면 무엇이 빠졌는지 칸 아래에 알려준다. */
+  const validate = (): boolean => {
+    const next: { email?: string; password?: string } = {};
+    if (!email.trim()) next.email = '이메일을 입력해 주세요';
+    else if (!/^\S+@\S+\.\S+$/.test(email.trim())) next.email = '이메일 형식을 확인해 주세요';
+    if (password.length < 8) next.password = '8자 이상으로 입력해 주세요';
+    else if (!/[A-Za-z]/.test(password) || !/\d/.test(password)) next.password = '영문과 숫자를 모두 포함해 주세요';
+    setFieldErrors(next);
+    return !next.email && !next.password;
+  };
 
   const handleSignup = async () => {
     if (busy) return;
+    if (!validate()) return;
     setBusy(true);
 
     try {
@@ -97,8 +111,17 @@ export default function SignupScreen() {
       // 그때는 돌아갈 화면이 없으므로 확인하고 부른다.
       if (navigation.canGoBack()) navigation.goBack();
     } catch (e) {
-      // 서버가 준 문장을 그대로 보여준다(명세 0-6). 앱이 코드별 문구를 따로 들고 있지 않아도 된다.
-      if (e instanceof ApiError || e instanceof NetworkError) {
+      // 서버가 준 문장을 그대로 보여준다(명세 0-6). 칸에 속한 오류는 그 칸 아래로, 나머지는 토스트로.
+      if (e instanceof ApiError && e.code === 'EMAIL_DUPLICATED') {
+        setFieldErrors({ email: e.message });
+      } else if (e instanceof ApiError && e.fields.length > 0) {
+        const next: { email?: string; password?: string } = {};
+        e.fields.forEach((f) => {
+          if (f.field === 'email' || f.field === 'password') next[f.field] = f.reason;
+        });
+        setFieldErrors(next);
+        if (!next.email && !next.password) showToast(e.message);
+      } else if (e instanceof ApiError || e instanceof NetworkError) {
         showToast(e.message);
       } else {
         showToast('가입에 실패했어요. 잠시 후 다시 시도해 주세요');
@@ -125,21 +148,31 @@ export default function SignupScreen() {
           <Text style={[styles.label, { color: colors.textSecondary }]}>이메일</Text>
           <TextField
             value={email}
-            onChangeText={setEmail}
+            onChangeText={(v) => {
+              setEmail(v);
+              // 다시 입력을 시작하면 오류를 걷는다. 치는 동안 빨간 칸이 계속 떠 있으면 압박이 된다.
+              if (fieldErrors.email) setFieldErrors((prev) => ({ ...prev, email: undefined }));
+            }}
             placeholder="fitto@example.com"
             autoCapitalize="none"
             keyboardType="email-address"
             maxLength={254}
+            error={fieldErrors.email}
           />
 
           <Text style={[styles.label, { color: colors.textSecondary }]}>비밀번호</Text>
           <TextField
             value={password}
-            onChangeText={setPassword}
+            onChangeText={(v) => {
+              setPassword(v);
+              if (fieldErrors.password) setFieldErrors((prev) => ({ ...prev, password: undefined }));
+            }}
             placeholder="영문과 숫자를 섞어 8자 이상"
             autoCapitalize="none"
             secureTextEntry
             maxLength={64}
+            error={fieldErrors.password}
+            helper="영문과 숫자를 모두 포함해 8자 이상"
           />
 
           <View style={styles.buttonWrap}>
@@ -196,8 +229,10 @@ const styles = StyleSheet.create({
   },
   linkRow: {
     height: 44,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 6,
   },
   link: typography.label,
   note: {

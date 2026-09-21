@@ -87,7 +87,7 @@ export default function RoutineCard({ date }: RoutineCardProps) {
                   accessibilityRole="button"
                   accessibilityLabel={`${r.name} 삭제`}
                 >
-                  <Icon name="close" size={15} color={colors.textSecondary} />
+                  <Icon name="close" size={16} color={colors.textSecondary} />
                 </Pressable>
               </View>
             ))}
@@ -181,7 +181,7 @@ function RoutineForm({ onClose }: { onClose: () => void }) {
           <View style={styles.headerRow}>
             <Text style={[styles.sheetTitle, { color: colors.textPrimary }]}>루틴 만들기</Text>
             <Pressable onPress={onClose} hitSlop={8} accessibilityRole="button" accessibilityLabel="닫기">
-              <Icon name="close" size={18} color={colors.textSecondary} />
+              <Icon name="close" size={20} color={colors.textSecondary} />
             </Pressable>
           </View>
 
@@ -263,7 +263,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 10,
     padding: 12,
-    borderRadius: 15,
+    borderRadius: 14,
   },
   rowText: {
     flex: 1,
@@ -274,7 +274,7 @@ const styles = StyleSheet.create({
   useBtn: {
     height: 32,
     paddingHorizontal: 14,
-    borderRadius: 11,
+    borderRadius: 10,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',

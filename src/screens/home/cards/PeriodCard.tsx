@@ -36,7 +36,7 @@ export default function PeriodCard() {
             <Text style={[styles.title, { color: colors.textPrimary }]}>생리 주기</Text>
             <Text style={[styles.sub, { color: colors.textSecondary }]}>{subtitle}</Text>
           </View>
-          <Icon name="chevronRight" size={17} color={colors.textSecondary} />
+          <Icon name="chevronRight" size={16} color={colors.textSecondary} />
         </View>
       </GlassCard>
     </Pressable>
@@ -52,7 +52,7 @@ const styles = StyleSheet.create({
   badge: {
     width: 44,
     height: 44,
-    borderRadius: 15,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
   },

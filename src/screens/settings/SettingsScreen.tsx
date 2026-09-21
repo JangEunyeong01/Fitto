@@ -160,7 +160,7 @@ export default function SettingsScreen() {
                   </Text>
                 )}
               </View>
-              <Icon name="chevronRight" size={17} color={colors.textSecondary} />
+              <Icon name="chevronRight" size={16} color={colors.textSecondary} />
             </View>
           </GlassCard>
         </Pressable>
@@ -187,7 +187,7 @@ export default function SettingsScreen() {
               {/* 되돌릴 수 없는 동작이라 다른 줄과 색으로 구분한다. 확인은 탈퇴 화면에서 받는다. */}
               <Pressable onPress={() => navigation.navigate('DeleteAccount')} style={styles.row}>
                 <Text style={[styles.rowLabel, { color: colors.textDanger }]}>회원 탈퇴</Text>
-                <Icon name="chevronRight" size={17} color={colors.textDanger} />
+                <Icon name="chevronRight" size={16} color={colors.textDanger} />
               </Pressable>
             </>
           ) : (
@@ -398,7 +398,7 @@ function NavRow({
       {actionLabel ? (
         <Text style={[styles.rowAction, { color: colors.textSecondary }]}>{actionLabel}</Text>
       ) : (
-        <Icon name="chevronRight" size={17} color={colors.textSecondary} />
+        <Icon name="chevronRight" size={16} color={colors.textSecondary} />
       )}
     </Pressable>
   );
@@ -454,7 +454,7 @@ const styles = StyleSheet.create({
   failedBox: {
     marginTop: 12,
     borderWidth: 1,
-    borderRadius: 12,
+    borderRadius: 10,
     padding: 12,
     gap: 4,
   },

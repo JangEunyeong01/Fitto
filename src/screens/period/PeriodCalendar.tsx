@@ -118,7 +118,7 @@ const styles = StyleSheet.create({
   navBtn: {
     width: 28,
     height: 28,
-    borderRadius: 9,
+    borderRadius: 10,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
@@ -171,7 +171,7 @@ const styles = StyleSheet.create({
     height: 38,
     maxWidth: '100%',
     maxHeight: '100%',
-    borderRadius: 12,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -182,7 +182,7 @@ const styles = StyleSheet.create({
   selectedFill: {
     width: '100%',
     height: '100%',
-    borderRadius: 12,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
   },

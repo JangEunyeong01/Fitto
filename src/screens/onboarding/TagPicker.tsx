@@ -66,12 +66,20 @@ export default function TagPicker({
         {tags.map((tag) => {
           const on = value.codes.includes(tag.code);
           return (
-            <Pressable key={tag.code} onPress={() => onToggle(tag.code)} style={styles.gridSlot}>
+            <Pressable
+              key={tag.code}
+              onPress={() => onToggle(tag.code)}
+              style={styles.gridSlot}
+              // 여러 개를 고를 수 있는 태그라 checkbox로 알린다.
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: on }}
+              accessibilityLabel={tag.label}
+            >
               <View style={[on && styles.tagShadow]}>
                 <BlurView
                   intensity={20}
                   tint={mode === 'dark' ? 'dark' : 'light'}
-                  style={[styles.tag, { borderColor: on ? selection.border : colors.borderGlass }]}
+                  style={[styles.tag, { borderColor: on ? colors.borderSelected : colors.borderInput }]}
                 >
                   <View style={[styles.tagInner, { backgroundColor: on ? selection.bg : colors.surface }]}>
                     <Text style={[styles.tagText, { color: colors.textPrimary }, weight(on ? 700 : 500)]} numberOfLines={1}>
@@ -99,7 +107,11 @@ export default function TagPicker({
           style={styles.input}
         />
         {/* 화면의 주요 액션은 하단 "다음"이다. 여기까지 그라데이션을 쓰면 CTA가 둘로 보여서 아웃라인으로 낮췄다. */}
-        <Pressable onPress={addCustom} style={[styles.addBtn, { borderColor: colors.borderGlass, backgroundColor: colors.surface }]}>
+        <Pressable
+          onPress={addCustom}
+          style={[styles.addBtn, { borderColor: colors.borderInput, backgroundColor: colors.surfaceSolid }]}
+          accessibilityRole="button"
+        >
           <Text style={[styles.addLabel, { color: colors.textPrimary }]}>추가</Text>
         </Pressable>
       </View>
@@ -113,10 +125,13 @@ export default function TagPicker({
               <Pressable
                 key={item}
                 onPress={() => onToggleCustom(item)}
-                style={[styles.chip, { backgroundColor: selection.bg, borderColor: alpha(brand.blue, 0.7) }]}
+                style={[styles.chip, { backgroundColor: selection.bg, borderColor: colors.borderSelected }]}
+                accessibilityRole="button"
+                accessibilityLabel={`${item} 지우기`}
+                hitSlop={{ top: 6, bottom: 6 }}
               >
                 <Text style={[styles.chipText, { color: colors.textPrimary }]}>{item}</Text>
-                <Icon name="close" size={13} color={colors.textSecondary} />
+                <Icon name="close" size={16} color={colors.textSecondary} />
               </Pressable>
             ))}
           </View>
@@ -149,11 +164,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 1,
     shadowRadius: 14,
     elevation: 3,
-    borderRadius: 15,
+    borderRadius: 14,
   },
   tag: {
-    height: 46,
-    borderRadius: 15,
+    height: 48,
+    borderRadius: 14,
     borderWidth: 1,
     overflow: 'hidden',
   },
@@ -178,8 +193,8 @@ const styles = StyleSheet.create({
   },
   addBtn: {
     width: 66,
-    height: 46,
-    borderRadius: 15,
+    height: 48,
+    borderRadius: 14,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',

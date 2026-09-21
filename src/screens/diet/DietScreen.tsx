@@ -184,7 +184,7 @@ const styles = StyleSheet.create({
   bottomBtn: {
     flex: 1,
     height: 48,
-    borderRadius: 15,
+    borderRadius: 14,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',

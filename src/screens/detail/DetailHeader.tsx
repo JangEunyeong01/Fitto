@@ -23,7 +23,7 @@ export default function DetailHeader({ title }: DetailHeaderProps) {
           style={[styles.backBtn, { borderColor: colors.borderGlass }]}
         >
           <View style={[styles.backInner, { backgroundColor: colors.surface }]}>
-            <Icon name="chevronLeft" size={18} color={colors.textPrimary} />
+            <Icon name="chevronLeft" size={20} color={colors.textPrimary} />
           </View>
         </BlurView>
       </Pressable>
@@ -42,7 +42,7 @@ const styles = StyleSheet.create({
   backBtn: {
     width: 34,
     height: 34,
-    borderRadius: 12,
+    borderRadius: 10,
     borderWidth: 1,
     overflow: 'hidden',
   },

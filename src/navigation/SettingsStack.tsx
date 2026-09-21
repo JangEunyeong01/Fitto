@@ -1,4 +1,5 @@
 import React from 'react';
+import { STACK_OPTIONS } from './transitions';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import SettingsScreen from '../screens/settings/SettingsScreen';
 import ProfileScreen from '../screens/settings/ProfileScreen';
@@ -25,7 +26,7 @@ const Stack = createNativeStackNavigator<SettingsStackParamList>();
 // 프로필·알림·생리 주기 설정은 설정 탭 안에서 밀고 들어가는 서브 화면이다(HomeStack과 같은 구조).
 export default function SettingsStack() {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator screenOptions={STACK_OPTIONS}>
       <Stack.Screen name="SettingsMain" component={SettingsScreen} />
       <Stack.Screen name="Profile" component={ProfileScreen} />
       <Stack.Screen name="Notifications" component={NotificationsScreen} />

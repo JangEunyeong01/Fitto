@@ -40,8 +40,7 @@ export default function TextLink({ label, onPress, chevron = true, disabled, sty
   );
 }
 
+// 정렬은 놓이는 줄이 정한다. 여기서 alignSelf를 주면 가로줄 안에서 글씨가 위로 붙는다.
 const styles = StyleSheet.create({
-  wrap: {
-    alignSelf: 'flex-start',
-  },
+  wrap: {},
 });

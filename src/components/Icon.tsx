@@ -17,9 +17,15 @@ export type IconName =
   | 'arrowUp'
   | 'arrowDown';
 
+/**
+ * 아이콘 크기는 세 단계만 쓴다(UI 기준서 8장). 예전에는 13~20까지 8종이 섞여 있었다.
+ * 숫자를 아무거나 넣을 수 없게 타입으로 막는다 — 16: 줄 안·행 끝, 20: 버튼·탭, 24: 강조.
+ */
+export type IconSize = 16 | 20 | 24;
+
 interface IconProps {
   name: IconName;
-  size?: number;
+  size?: IconSize;
   color: string;
   /** 크게 쓸 땐 선을 조금 얇게, 작게 쓸 땐 두껍게 잡아야 굵기가 같아 보인다. */
   strokeWidth?: number;

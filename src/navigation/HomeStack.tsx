@@ -1,4 +1,5 @@
 import React from 'react';
+import { STACK_OPTIONS } from './transitions';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import HomeScreen from '../screens/home/HomeScreen';
 import WaterDetailScreen from '../screens/detail/WaterDetailScreen';
@@ -21,7 +22,7 @@ const Stack = createNativeStackNavigator<HomeStackParamList>();
 // 화면 안의 ‹ 뒤로가기 버튼으로 홈으로 돌아간다.
 export default function HomeStack() {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator screenOptions={STACK_OPTIONS}>
       <Stack.Screen name="HomeMain" component={HomeScreen} />
       <Stack.Screen name="WaterDetail" component={WaterDetailScreen} />
       <Stack.Screen name="StepsDetail" component={StepsDetailScreen} />

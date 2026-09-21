@@ -178,7 +178,7 @@ const styles = StyleSheet.create({
   stepperBtn: {
     width: 26,
     height: 26,
-    borderRadius: 9,
+    borderRadius: 10,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',

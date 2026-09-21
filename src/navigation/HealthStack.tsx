@@ -1,4 +1,5 @@
 import React from 'react';
+import { STACK_OPTIONS } from './transitions';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import HealthScreen from '../screens/health/HealthScreen';
 import PeriodDetailScreen from '../screens/period/PeriodDetailScreen';
@@ -16,7 +17,7 @@ const Stack = createNativeStackNavigator<HealthStackParamList>();
 // 두 탭 스택에 각각 등록해 둔다. 각 탭이 자기 히스토리를 갖는 게 자연스럽다.
 export default function HealthStack() {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator screenOptions={STACK_OPTIONS}>
       <Stack.Screen name="HealthMain" component={HealthScreen} />
       <Stack.Screen name="PeriodDetail" component={PeriodDetailScreen} />
       <Stack.Screen name="Weight" component={WeightScreen} />

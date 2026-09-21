@@ -175,7 +175,7 @@ const styles = StyleSheet.create({
   summaryValue: typography.itemTitle,
   commentBox: {
     marginTop: 12,
-    borderRadius: 15,
+    borderRadius: 14,
     paddingVertical: 11,
     paddingHorizontal: 13,
   },
@@ -183,7 +183,7 @@ const styles = StyleSheet.create({
   quickBtn: {
     marginTop: 10,
     height: 36,
-    borderRadius: 12,
+    borderRadius: 10,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',

@@ -98,7 +98,7 @@ const styles = StyleSheet.create({
   thumb: {
     width: 46,
     height: 46,
-    borderRadius: 12,
+    borderRadius: 14,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
