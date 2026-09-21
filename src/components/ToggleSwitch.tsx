@@ -25,9 +25,11 @@ export default function ToggleSwitch({ value, onChange }: ToggleSwitchProps) {
     }).start();
   }, [value]);
 
+  // 꺼진 트랙은 예전엔 6% 투명이라 카드 위에서 거의 안 보였다. 3:1 이상인 입력 테두리 색을 쓴다.
+  // 켜진 트랙(파스텔)은 1.9:1로 미달이지만 엄지 위치가 상태를 함께 알려서 색만으로 전달하지 않는다.
   const trackColor = anim.interpolate({
     inputRange: [0, 1],
-    outputRange: [colors.ink, brand.blue],
+    outputRange: [colors.borderInput, brand.blue],
   });
   const thumbX = anim.interpolate({
     inputRange: [0, 1],
@@ -35,7 +37,13 @@ export default function ToggleSwitch({ value, onChange }: ToggleSwitchProps) {
   });
 
   return (
-    <Pressable onPress={() => onChange(!value)} hitSlop={6}>
+    <Pressable
+      onPress={() => onChange(!value)}
+      // 높이 30에 위아래 7씩 더해 누르는 영역 44를 맞춘다.
+      hitSlop={{ top: 7, bottom: 7, left: 6, right: 6 }}
+      accessibilityRole="switch"
+      accessibilityState={{ checked: value }}
+    >
       <Animated.View style={[styles.track, { backgroundColor: trackColor }]}>
         <Animated.View style={[styles.thumb, { transform: [{ translateX: thumbX }] }]} />
       </Animated.View>

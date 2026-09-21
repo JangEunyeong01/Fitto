@@ -87,22 +87,22 @@ export default function DeleteAccountScreen() {
         <DetailHeader title="회원 탈퇴" />
 
         <GlassCard style={styles.card}>
-          <Text style={[styles.cardTitle, { color: colors.txt }]}>지워지는 것</Text>
-          <Text style={[styles.desc, { color: colors.sub }]}>{authEmail} 계정과 아래 기록이 모두 지워져요.</Text>
+          <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>지워지는 것</Text>
+          <Text style={[styles.desc, { color: colors.textSecondary }]}>{authEmail} 계정과 아래 기록이 모두 지워져요.</Text>
           <View style={styles.list}>
             {ERASED.map((item) => (
-              <Text key={item} style={[styles.listItem, { color: colors.txt }]}>
+              <Text key={item} style={[styles.listItem, { color: colors.textPrimary }]}>
                 · {item}
               </Text>
             ))}
           </View>
-          <Text style={[styles.warn, { color: semantic.danger }]}>
+          <Text style={[styles.warn, { color: colors.textDanger }]}>
             지운 기록은 되돌릴 수 없어요. 이 기기에 있는 기록도 함께 지워지고 온보딩부터 다시 시작해요.
           </Text>
         </GlassCard>
 
         <GlassCard style={styles.card}>
-          <Text style={[styles.label, { color: colors.sub }]}>비밀번호</Text>
+          <Text style={[styles.label, { color: colors.textSecondary }]}>비밀번호</Text>
           <TextField
             value={password}
             onChangeText={setPassword}
@@ -112,8 +112,8 @@ export default function DeleteAccountScreen() {
             maxLength={64}
           />
 
-          {error && <Text style={[styles.error, { color: semantic.danger }]}>{error}</Text>}
-          {wakeNotice && <Text style={[styles.error, { color: colors.sub }]}>{wakeNotice}</Text>}
+          {error && <Text style={[styles.error, { color: colors.textDanger }]}>{error}</Text>}
+          {wakeNotice && <Text style={[styles.error, { color: colors.textSecondary }]}>{wakeNotice}</Text>}
 
           {!confirming ? (
             <Pressable
@@ -125,17 +125,17 @@ export default function DeleteAccountScreen() {
                 !password && styles.disabled,
               ]}
             >
-              <Text style={[styles.dangerLabel, { color: semantic.danger }]}>탈퇴하기</Text>
+              <Text style={[styles.dangerLabel, { color: colors.textDanger }]}>탈퇴하기</Text>
             </Pressable>
           ) : (
             <View style={styles.confirmBox}>
-              <Text style={[styles.confirmTitle, { color: colors.txt }]}>정말 탈퇴할까요?</Text>
+              <Text style={[styles.confirmTitle, { color: colors.textPrimary }]}>정말 탈퇴할까요?</Text>
               <View style={styles.confirmButtons}>
                 <Pressable
                   onPress={() => setConfirming(false)}
-                  style={[styles.dangerBtn, styles.flex, { borderColor: colors.line }]}
+                  style={[styles.dangerBtn, styles.flex, { borderColor: colors.borderDivider }]}
                 >
-                  <Text style={[styles.dangerLabel, { color: colors.txt }]}>취소</Text>
+                  <Text style={[styles.dangerLabel, { color: colors.textPrimary }]}>취소</Text>
                 </Pressable>
                 <Pressable
                   onPress={submit}
@@ -146,7 +146,7 @@ export default function DeleteAccountScreen() {
                     busy && styles.disabled,
                   ]}
                 >
-                  <Text style={[styles.dangerLabel, { color: semantic.danger }]}>
+                  <Text style={[styles.dangerLabel, { color: colors.textDanger }]}>
                     {busy ? '지우는 중' : '계정 삭제'}
                   </Text>
                 </Pressable>

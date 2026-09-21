@@ -101,7 +101,7 @@ export default function HealthScreen() {
         contentContainerStyle={[styles.content, { paddingTop: insets.top + 14, paddingBottom: 108 }]}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={[typography.screenTitle, { color: colors.txt, marginBottom: 16 }]}>헬스</Text>
+        <Text style={[typography.screenTitle, { color: colors.textPrimary, marginBottom: 16 }]}>헬스</Text>
 
         <DateNavigator date={date} onChange={setDate} />
 
@@ -109,7 +109,7 @@ export default function HealthScreen() {
         {isToday && (
           <>
             <GlassCard style={styles.card}>
-              <Text style={[styles.cardTitle, { color: colors.txt }]}>움직임 현황</Text>
+              <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>움직임 현황</Text>
               <View style={styles.statRow}>
                 <Stat label="운동한 날" value={`${workoutDays}일`} colors={colors} />
                 <Stat label="운동 시간" value={`${weekMinutes}분`} colors={colors} />
@@ -120,35 +120,35 @@ export default function HealthScreen() {
                   colors={colors}
                 />
               </View>
-              <Text style={[styles.statCaption, { color: colors.sub }]}>최근 7일 기록 기준</Text>
+              <Text style={[styles.statCaption, { color: colors.textSecondary }]}>최근 7일 기록 기준</Text>
             </GlassCard>
 
             <WorkoutSettingCard />
 
             <GlassCard style={styles.card}>
               <View style={styles.headerRow}>
-                <Text style={[styles.cardTitle, { color: colors.txt }]}>오늘의 퍼스널 트레이닝</Text>
+                <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>오늘의 퍼스널 트레이닝</Text>
                 <Badge label="룰 기반" />
               </View>
-              <Text style={[styles.comment, { color: colors.txt }]}>{trainingComment}</Text>
+              <Text style={[styles.comment, { color: colors.textPrimary }]}>{trainingComment}</Text>
 
               <View style={styles.suggestList}>
                 {suggestions.map((w) => (
-                  <View key={w.code} style={[styles.suggestRow, { backgroundColor: colors.card2 }]}>
+                  <View key={w.code} style={[styles.suggestRow, { backgroundColor: colors.surfaceSubtle }]}>
                     <View style={styles.suggestText}>
-                      <Text style={[styles.suggestName, { color: colors.txt }]}>
+                      <Text style={[styles.suggestName, { color: colors.textPrimary }]}>
                         {w.name}{' '}
-                        <Text style={[styles.suggestDetail, { color: colors.sub }]}>
+                        <Text style={[styles.suggestDetail, { color: colors.textSecondary }]}>
                           {w.minutes}분 · {w.kcal}kcal
                         </Text>
                       </Text>
-                      <Text style={[styles.suggestReason, { color: colors.sub }]}>{w.reason}</Text>
+                      <Text style={[styles.suggestReason, { color: colors.textSecondary }]}>{w.reason}</Text>
                     </View>
                     <Pressable
                       onPress={() => handleAdd(w.name, w.minutes, w.kcal, w.code)}
-                      style={[styles.addBtn, { borderColor: colors.stroke, backgroundColor: colors.card }]}
+                      style={[styles.addBtn, { borderColor: colors.borderGlass, backgroundColor: colors.surface }]}
                     >
-                      <Text style={[styles.addLabel, { color: colors.txt }]}>기록에 추가</Text>
+                      <Text style={[styles.addLabel, { color: colors.textPrimary }]}>기록에 추가</Text>
                     </Pressable>
                   </View>
                 ))}
@@ -159,10 +159,10 @@ export default function HealthScreen() {
 
         <GlassCard style={styles.card}>
           <View style={styles.headerRow}>
-            <Text style={[styles.cardTitle, { color: colors.txt }]}>운동 기록</Text>
+            <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>운동 기록</Text>
             {/* 명세 F-033: 그날 총 운동 시간·소모 칼로리 */}
             {exercises.length > 0 && (
-              <Text style={[styles.totalText, { color: colors.sub }]}>
+              <Text style={[styles.totalText, { color: colors.textSecondary }]}>
                 총 {totalMinutes}분 · {totalKcal.toLocaleString()}kcal
               </Text>
             )}
@@ -170,11 +170,11 @@ export default function HealthScreen() {
           {exercises.length === 0 ? (
             // 명세 F-051: 빈 상태에서 무엇을 하면 되는지까지 알려준다. 지난 날짜엔 권유가 어색해서 문구만 둔다.
             <View style={styles.emptyBox}>
-              <Text style={[styles.empty, { color: colors.txt }]}>
+              <Text style={[styles.empty, { color: colors.textPrimary }]}>
                 {isToday ? '오늘 운동 기록이 없어요.' : '이날은 운동 기록이 없어요.'}
               </Text>
               {isToday && (
-                <Text style={[styles.emptyHint, { color: colors.sub }]}>
+                <Text style={[styles.emptyHint, { color: colors.textSecondary }]}>
                   아래 퀵 기록을 누르면 15분으로 바로 남길 수 있어요.
                 </Text>
               )}
@@ -185,40 +185,40 @@ export default function HealthScreen() {
                 <View key={e.id} style={styles.recordRow}>
                   <View style={[styles.dot, { backgroundColor: brand.mint }]} />
                   <View style={styles.recordText}>
-                    <Text style={[styles.recordName, { color: colors.txt }]}>{e.name}</Text>
+                    <Text style={[styles.recordName, { color: colors.textPrimary }]}>{e.name}</Text>
                     {!!e.memo && (
-                      <Text style={[styles.recordMemo, { color: colors.sub }]} numberOfLines={1}>
+                      <Text style={[styles.recordMemo, { color: colors.textSecondary }]} numberOfLines={1}>
                         {e.memo}
                       </Text>
                     )}
                   </View>
-                  <Text style={[styles.recordDetail, { color: colors.sub }]}>
+                  <Text style={[styles.recordDetail, { color: colors.textSecondary }]}>
                     {e.minutes}분 · {e.kcal}kcal
                   </Text>
                   <Pressable onPress={() => removeExercise(date, e.id)} hitSlop={8}>
-                    <Icon name="close" size={15} color={colors.sub} />
+                    <Icon name="close" size={15} color={colors.textSecondary} />
                   </Pressable>
                 </View>
               ))}
             </View>
           )}
 
-          <View style={[styles.chipRow, { borderTopColor: colors.line }]}>
+          <View style={[styles.chipRow, { borderTopColor: colors.borderDivider }]}>
             {/* 퀵칩은 한 탭 기록용(15분 고정), 직접 추가는 운동·시간·메모를 받는 시트(명세 F-034). */}
             <Pressable
               // onPress에 show를 그대로 넘기면 이벤트 객체가 날짜 자리로 들어가서 감싼다.
               onPress={() => openExerciseSheet(date)}
               style={[styles.chip, styles.chipPrimary, { borderColor: selection.border, backgroundColor: selection.bg }]}
             >
-              <Text style={[styles.chipText, { color: colors.txt }]}>+ 직접 추가</Text>
+              <Text style={[styles.chipText, { color: colors.textPrimary }]}>+ 직접 추가</Text>
             </Pressable>
             {QUICK_WORKOUTS.map((code) => (
               <Pressable
                 key={code}
                 onPress={() => handleQuickAdd(code)}
-                style={[styles.chip, { borderColor: colors.line }]}
+                style={[styles.chip, { borderColor: colors.borderDivider }]}
               >
-                <Text style={[styles.chipText, { color: colors.txt }]}>+ {findExercise(code)?.name}</Text>
+                <Text style={[styles.chipText, { color: colors.textPrimary }]}>+ {findExercise(code)?.name}</Text>
               </Pressable>
             ))}
           </View>
@@ -230,15 +230,15 @@ export default function HealthScreen() {
           <GlassCard style={styles.card}>
             <View style={styles.periodRow}>
               <View style={[styles.periodBadge, { backgroundColor: alpha(brand.mint, 0.28) }]}>
-                <Icon name="weight" size={20} color={colors.txt} />
+                <Icon name="weight" size={20} color={colors.textPrimary} />
               </View>
               <View style={styles.periodText}>
-                <Text style={[styles.cardTitle, { color: colors.txt }]}>체중 기록</Text>
-                <Text style={[styles.periodSub, { color: colors.sub }]}>
+                <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>체중 기록</Text>
+                <Text style={[styles.periodSub, { color: colors.textSecondary }]}>
                   {latestWeight != null ? `최근 ${latestWeight}kg · 추이 보기` : '기록하고 추이 보기'}
                 </Text>
               </View>
-              <Icon name="chevronRight" size={17} color={colors.sub} />
+              <Icon name="chevronRight" size={17} color={colors.textSecondary} />
             </View>
           </GlassCard>
         </Pressable>
@@ -255,15 +255,15 @@ export default function HealthScreen() {
             <GlassCard style={styles.card}>
               <View style={styles.periodRow}>
                 <View style={[styles.periodBadge, { backgroundColor: alpha(brand.lavender, 0.28) }]}>
-                  <Icon name="moon" size={20} color={colors.txt} />
+                  <Icon name="moon" size={20} color={colors.textPrimary} />
                 </View>
                 <View style={styles.periodText}>
-                  <Text style={[styles.cardTitle, { color: colors.txt }]}>생리 주기 상세</Text>
-                  <Text style={[styles.periodSub, { color: colors.sub }]}>
+                  <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>생리 주기 상세</Text>
+                  <Text style={[styles.periodSub, { color: colors.textSecondary }]}>
                     {periodSetupDone ? '캘린더와 컨디션 기록 보기' : '마지막 시작일을 입력하면 주기를 계산해요'}
                   </Text>
                 </View>
-                <Icon name="chevronRight" size={17} color={colors.sub} />
+                <Icon name="chevronRight" size={17} color={colors.textSecondary} />
               </View>
             </GlassCard>
           </Pressable>
@@ -277,8 +277,8 @@ export default function HealthScreen() {
 function Stat({ label, value, colors }: { label: string; value: string; colors: any }) {
   return (
     <View style={styles.statCol}>
-      <Text style={[styles.statLabel, { color: colors.sub }]}>{label}</Text>
-      <Text style={[styles.statValue, { color: colors.txt }]}>{value}</Text>
+      <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{label}</Text>
+      <Text style={[styles.statValue, { color: colors.textPrimary }]}>{value}</Text>
     </View>
   );
 }

@@ -17,20 +17,20 @@ export default function HomeHeader() {
     <View style={styles.row}>
       <View style={styles.left}>
         <LinearGradient colors={accentGradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.logo} />
-        <Text style={[styles.title, { color: colors.txt }]}>Fitto</Text>
+        <Text style={[styles.title, { color: colors.textPrimary }]}>Fitto</Text>
       </View>
       <View style={styles.right}>
-        <View style={[styles.chip, { backgroundColor: colors.card2, borderColor: colors.stroke }]}>
-          <Text style={[styles.chipText, { color: colors.sub }]}>{timeSlots[slot].name}</Text>
+        <View style={[styles.chip, { backgroundColor: colors.surfaceSubtle, borderColor: colors.borderGlass }]}>
+          <Text style={[styles.chipText, { color: colors.textSecondary }]}>{timeSlots[slot].name}</Text>
         </View>
         <Pressable onPress={() => navigation.navigate('Settings')}>
           <BlurView
             intensity={25}
             tint={mode === 'dark' ? 'dark' : 'light'}
-            style={[styles.settingsBtn, { borderColor: colors.stroke }]}
+            style={[styles.settingsBtn, { borderColor: colors.borderGlass }]}
           >
-            <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.card2 }]} />
-            <Icon name="settings" size={18} color={colors.txt} />
+            <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.surfaceSubtle }]} />
+            <Icon name="settings" size={18} color={colors.textPrimary} />
           </BlurView>
         </Pressable>
       </View>

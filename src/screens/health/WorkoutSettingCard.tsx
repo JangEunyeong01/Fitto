@@ -34,11 +34,11 @@ export default function WorkoutSettingCard() {
     <GlassCard style={styles.card}>
       <View style={styles.headerRow}>
         <View style={styles.headerText}>
-          <Text style={[styles.cardTitle, { color: colors.txt }]}>운동 설정</Text>
-          {!open && <Text style={[styles.summary, { color: colors.sub }]}>{summary}</Text>}
+          <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>운동 설정</Text>
+          {!open && <Text style={[styles.summary, { color: colors.textSecondary }]}>{summary}</Text>}
         </View>
         <Pressable onPress={() => setOpen((v) => !v)} hitSlop={8}>
-          <Text style={[styles.editLabel, { color: colors.sub }]}>{open ? '접기' : '편집'}</Text>
+          <Text style={[styles.editLabel, { color: colors.textSecondary }]}>{open ? '접기' : '편집'}</Text>
         </Pressable>
       </View>
 
@@ -65,7 +65,7 @@ export default function WorkoutSettingCard() {
             onChange={(v) => setPreference({ focus: v as WorkoutPreference['focus'] })}
             colors={colors}
           />
-          <Text style={[styles.note, { color: colors.sub }]}>
+          <Text style={[styles.note, { color: colors.textSecondary }]}>
             바꾸면 아래 추천이 바로 다시 계산돼요.
           </Text>
         </View>
@@ -85,11 +85,11 @@ function Row({
   options: readonly TagOption[];
   value: string;
   onChange: (code: string) => void;
-  colors: { sub: string };
+  colors: { textSecondary: string };
 }) {
   return (
     <View style={styles.row}>
-      <Text style={[styles.rowLabel, { color: colors.sub }]}>{label}</Text>
+      <Text style={[styles.rowLabel, { color: colors.textSecondary }]}>{label}</Text>
       <View style={styles.chipRow}>
         {options.map((o) => (
           <SelectChip

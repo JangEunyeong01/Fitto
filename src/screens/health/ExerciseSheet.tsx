@@ -80,7 +80,7 @@ function ExerciseForm({ date, onClose }: { date: string; onClose: () => void }) 
           style={[
             styles.sheet,
             {
-              backgroundColor: colors.solid,
+              backgroundColor: colors.surfaceSolid,
               paddingHorizontal: spacing.screenX,
               paddingBottom: insets.bottom + 16,
               borderTopLeftRadius: r.sheetTop,
@@ -88,11 +88,11 @@ function ExerciseForm({ date, onClose }: { date: string; onClose: () => void }) 
             },
           ]}
         >
-          <View style={[styles.grabber, { backgroundColor: colors.line }]} />
+          <View style={[styles.grabber, { backgroundColor: colors.borderDivider }]} />
           <View style={styles.headerRow}>
-            <Text style={[styles.title, { color: colors.txt }]}>운동 추가</Text>
+            <Text style={[styles.title, { color: colors.textPrimary }]}>운동 추가</Text>
             <Pressable onPress={onClose} hitSlop={8} accessibilityRole="button" accessibilityLabel="닫기">
-              <Icon name="close" size={18} color={colors.sub} />
+              <Icon name="close" size={18} color={colors.textSecondary} />
             </Pressable>
           </View>
 
@@ -109,11 +109,11 @@ function ExerciseForm({ date, onClose }: { date: string; onClose: () => void }) 
                 />
               ))}
               {results.length === 0 && (
-                <Text style={[styles.empty, { color: colors.sub }]}>검색 결과가 없어요.</Text>
+                <Text style={[styles.empty, { color: colors.textSecondary }]}>검색 결과가 없어요.</Text>
               )}
             </View>
 
-            <Text style={[styles.label, { color: colors.sub }]}>시간</Text>
+            <Text style={[styles.label, { color: colors.textSecondary }]}>시간</Text>
             <View style={styles.minutesRow}>
               <TextField
                 size="sm"
@@ -124,11 +124,11 @@ function ExerciseForm({ date, onClose }: { date: string; onClose: () => void }) 
                 center
                 style={styles.minutesInput}
               />
-              <Text style={[styles.unit, { color: colors.sub }]}>분</Text>
-              <Text style={[styles.kcal, { color: colors.txt }]}>{kcal > 0 ? `약 ${kcal}kcal` : ''}</Text>
+              <Text style={[styles.unit, { color: colors.textSecondary }]}>분</Text>
+              <Text style={[styles.kcal, { color: colors.textPrimary }]}>{kcal > 0 ? `약 ${kcal}kcal` : ''}</Text>
             </View>
 
-            <Text style={[styles.label, { color: colors.sub }]}>메모</Text>
+            <Text style={[styles.label, { color: colors.textSecondary }]}>메모</Text>
             <TextField size="sm" value={memo} onChangeText={setMemo} placeholder="선택 · 예: 무릎 조심" maxLength={60} />
           </ScrollView>
 

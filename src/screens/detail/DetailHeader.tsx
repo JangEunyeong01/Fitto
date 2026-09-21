@@ -20,14 +20,14 @@ export default function DetailHeader({ title }: DetailHeaderProps) {
         <BlurView
           intensity={25}
           tint={mode === 'dark' ? 'dark' : 'light'}
-          style={[styles.backBtn, { borderColor: colors.stroke }]}
+          style={[styles.backBtn, { borderColor: colors.borderGlass }]}
         >
-          <View style={[styles.backInner, { backgroundColor: colors.card }]}>
-            <Icon name="chevronLeft" size={18} color={colors.txt} />
+          <View style={[styles.backInner, { backgroundColor: colors.surface }]}>
+            <Icon name="chevronLeft" size={18} color={colors.textPrimary} />
           </View>
         </BlurView>
       </Pressable>
-      <Text style={[typography.subScreenTitle, { color: colors.txt }]}>{title}</Text>
+      <Text style={[typography.subScreenTitle, { color: colors.textPrimary }]}>{title}</Text>
     </View>
   );
 }

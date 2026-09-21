@@ -42,41 +42,41 @@ export default function ExerciseCard() {
   return (
     <GlassCard>
       <View style={styles.headerRow}>
-        <Text style={[styles.title, { color: colors.txt }]}>오늘 운동</Text>
+        <Text style={[styles.title, { color: colors.textPrimary }]}>오늘 운동</Text>
         <Pressable onPress={() => navigation.navigate('Health')}>
-          <Text style={[styles.link, { color: brand.blue }]}>헬스 탭 →</Text>
+          <Text style={[styles.link, { color: colors.textAccent }]}>헬스 탭 →</Text>
         </Pressable>
       </View>
 
       {exercises.length === 0 ? (
-        <Text style={[styles.empty, { color: colors.sub }]}>오늘 운동 기록이 없어요. 아래에서 바로 남겨보세요.</Text>
+        <Text style={[styles.empty, { color: colors.textSecondary }]}>오늘 운동 기록이 없어요. 아래에서 바로 남겨보세요.</Text>
       ) : (
         <View style={styles.list}>
           {shown.map((e) => (
             <View key={e.id} style={styles.row}>
               <View style={[styles.dot, { backgroundColor: brand.mint }]} />
-              <Text style={[styles.name, { color: colors.txt }]}>{e.name}</Text>
-              <Text style={[styles.detail, { color: colors.sub }]}>
+              <Text style={[styles.name, { color: colors.textPrimary }]}>{e.name}</Text>
+              <Text style={[styles.detail, { color: colors.textSecondary }]}>
                 {e.minutes}분 · {e.kcal}kcal
               </Text>
             </View>
           ))}
           {restCount > 0 && (
             <Pressable onPress={() => navigation.navigate('Health')} hitSlop={6}>
-              <Text style={[styles.more, { color: colors.sub }]}>+{restCount}개 더</Text>
+              <Text style={[styles.more, { color: colors.textSecondary }]}>+{restCount}개 더</Text>
             </Pressable>
           )}
         </View>
       )}
 
-      <View style={[styles.chipRow, { borderTopColor: colors.line }]}>
+      <View style={[styles.chipRow, { borderTopColor: colors.borderDivider }]}>
         {QUICK_WORKOUTS.map((code) => (
           <Pressable
             key={code}
             onPress={() => handleQuickAdd(code)}
-            style={[styles.chip, { borderColor: colors.line }]}
+            style={[styles.chip, { borderColor: colors.borderDivider }]}
           >
-            <Text style={[styles.chipText, { color: colors.txt }]}>+ {findExercise(code)?.name}</Text>
+            <Text style={[styles.chipText, { color: colors.textPrimary }]}>+ {findExercise(code)?.name}</Text>
           </Pressable>
         ))}
       </View>

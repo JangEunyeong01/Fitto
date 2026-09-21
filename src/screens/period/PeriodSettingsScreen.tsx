@@ -74,7 +74,7 @@ export default function PeriodSettingsScreen() {
       >
         <DetailHeader title="생리 주기 설정" />
 
-        <Text style={[styles.hint, { color: colors.sub }]}>달력에서 마지막 생리 시작일을 눌러 주세요.</Text>
+        <Text style={[styles.hint, { color: colors.textSecondary }]}>달력에서 마지막 생리 시작일을 눌러 주세요.</Text>
         <PeriodCalendar
           year={view.year}
           month={view.month}
@@ -108,7 +108,7 @@ export default function PeriodSettingsScreen() {
 
         {setupDone && (
           <GlassCard style={styles.card}>
-            <Text style={[styles.cardTitle, { color: colors.txt }]}>예상 날짜</Text>
+            <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>예상 날짜</Text>
             <PreviewRow label="다음 생리 예정일" value={formatDate(upcoming.nextStart)} colors={colors} />
             <PreviewRow
               label="가임기"
@@ -116,7 +116,7 @@ export default function PeriodSettingsScreen() {
               colors={colors}
             />
             <PreviewRow label="배란일" value={formatDate(upcoming.ovulation)} colors={colors} />
-            <Text style={[styles.notice, { color: colors.sub }]}>
+            <Text style={[styles.notice, { color: colors.textSecondary }]}>
               평균 주기로 계산한 추정치예요. 실제와 다를 수 있고 의료 진단을 대체하지 않아요.
             </Text>
           </GlassCard>
@@ -139,11 +139,11 @@ function NumField({
   value: string;
   onChangeText: (t: string) => void;
   onCommit: () => void;
-  colors: { sub: string };
+  colors: { textSecondary: string };
 }) {
   return (
     <View style={styles.numCol}>
-      <Text style={[styles.numLabel, { color: colors.sub }]}>{label}</Text>
+      <Text style={[styles.numLabel, { color: colors.textSecondary }]}>{label}</Text>
       <TextField
         value={value}
         onChangeText={onChangeText}
@@ -152,16 +152,16 @@ function NumField({
         keyboardType="numeric"
         center
       />
-      <Text style={[styles.numHint, { color: colors.sub }]}>{hint}</Text>
+      <Text style={[styles.numHint, { color: colors.textSecondary }]}>{hint}</Text>
     </View>
   );
 }
 
-function PreviewRow({ label, value, colors }: { label: string; value: string; colors: { sub: string; txt: string } }) {
+function PreviewRow({ label, value, colors }: { label: string; value: string; colors: { textSecondary: string; textPrimary: string } }) {
   return (
     <View style={styles.previewRow}>
-      <Text style={[styles.previewLabel, { color: colors.sub }]}>{label}</Text>
-      <Text style={[styles.previewValue, { color: colors.txt }]}>{value}</Text>
+      <Text style={[styles.previewLabel, { color: colors.textSecondary }]}>{label}</Text>
+      <Text style={[styles.previewValue, { color: colors.textPrimary }]}>{value}</Text>
     </View>
   );
 }

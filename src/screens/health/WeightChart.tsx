@@ -65,7 +65,7 @@ export default function WeightChart({ points, targetWeight, width }: WeightChart
             cy={p.y}
             // 마지막 기록만 크게 찍어 "지금 여기"를 보여준다.
             r={i === xy.length - 1 ? 4.5 : 2.5}
-            fill={i === xy.length - 1 ? brand.blue : colors.solid}
+            fill={i === xy.length - 1 ? brand.blue : colors.surfaceSolid}
             stroke={brand.blue}
             strokeWidth={1.5}
           />
@@ -73,11 +73,11 @@ export default function WeightChart({ points, targetWeight, width }: WeightChart
       </Svg>
 
       <View style={styles.axisRow}>
-        <Text style={[styles.axis, { color: colors.sub }]}>최저 {Math.min(...kgs)}kg</Text>
+        <Text style={[styles.axis, { color: colors.textSecondary }]}>최저 {Math.min(...kgs)}kg</Text>
         {targetWeight != null && (
-          <Text style={[styles.axis, { color: brand.mint }]}>목표 {targetWeight}kg</Text>
+          <Text style={[styles.axis, { color: colors.textAccent }]}>목표 {targetWeight}kg</Text>
         )}
-        <Text style={[styles.axis, { color: colors.sub }]}>최고 {Math.max(...kgs)}kg</Text>
+        <Text style={[styles.axis, { color: colors.textSecondary }]}>최고 {Math.max(...kgs)}kg</Text>
       </View>
     </View>
   );

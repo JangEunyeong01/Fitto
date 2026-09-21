@@ -58,7 +58,7 @@ export default function WeightScreen() {
         <DetailHeader title="체중 기록" />
 
         <GlassCard style={styles.card}>
-          <Text style={[styles.cardTitle, { color: colors.txt }]}>
+          <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>
             {alreadyToday ? '오늘 기록 수정' : '오늘 체중'}
           </Text>
           <View style={styles.inputRow}>
@@ -69,11 +69,11 @@ export default function WeightScreen() {
               keyboardType="numeric"
               style={styles.input}
             />
-            <Text style={[styles.unit, { color: colors.sub }]}>kg</Text>
+            <Text style={[styles.unit, { color: colors.textSecondary }]}>kg</Text>
             <PrimaryButton small label="기록" onPress={save} style={styles.saveBtn} />
           </View>
           {alreadyToday && (
-            <Text style={[styles.hint, { color: colors.sub }]}>
+            <Text style={[styles.hint, { color: colors.textSecondary }]}>
               오늘은 {weightLog[today]}kg으로 기록돼 있어요. 다시 기록하면 덮어써요.
             </Text>
           )}
@@ -84,16 +84,16 @@ export default function WeightScreen() {
             <GlassCard style={styles.card}>
               <View style={styles.summaryRow}>
                 <View style={styles.summaryCol}>
-                  <Text style={[styles.summaryLabel, { color: colors.sub }]}>현재</Text>
-                  <Text style={[styles.bigNum, { color: colors.txt }]}>
+                  <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>현재</Text>
+                  <Text style={[styles.bigNum, { color: colors.textPrimary }]}>
                     {summary.latest.kg}
-                    <Text style={[styles.bigUnit, { color: colors.sub }]}>kg</Text>
+                    <Text style={[styles.bigUnit, { color: colors.textSecondary }]}>kg</Text>
                   </Text>
                 </View>
 
                 <View style={styles.summaryCol}>
-                  <Text style={[styles.summaryLabel, { color: colors.sub }]}>직전 대비</Text>
-                  <Text style={[styles.midNum, { color: changeColor(summary, colors.txt, colors.sub) }]}>
+                  <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>직전 대비</Text>
+                  <Text style={[styles.midNum, { color: changeColor(summary, colors.textPrimary, colors.textSecondary) }]}>
                     {summary.change == null
                       ? '—'
                       : `${summary.change > 0 ? '+' : ''}${summary.change}kg`}
@@ -101,8 +101,8 @@ export default function WeightScreen() {
                 </View>
 
                 <View style={styles.summaryCol}>
-                  <Text style={[styles.summaryLabel, { color: colors.sub }]}>목표까지</Text>
-                  <Text style={[styles.midNum, { color: colors.txt }]}>
+                  <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>목표까지</Text>
+                  <Text style={[styles.midNum, { color: colors.textPrimary }]}>
                     {summary.toTarget == null
                       ? '—'
                       : summary.reachedTarget
@@ -113,29 +113,29 @@ export default function WeightScreen() {
               </View>
 
               {profile.targetWeight == null && (
-                <Text style={[styles.hint, { color: colors.sub }]}>
+                <Text style={[styles.hint, { color: colors.textSecondary }]}>
                   프로필에서 목표 체중을 정하면 남은 양을 알려드려요.
                 </Text>
               )}
             </GlassCard>
 
             <GlassCard style={styles.card}>
-              <Text style={[styles.cardTitle, { color: colors.txt }]}>추이</Text>
+              <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>추이</Text>
               <View style={styles.chartWrap} onLayout={(e) => setChartWidth(e.nativeEvent.layout.width)}>
                 <WeightChart points={points} targetWeight={profile.targetWeight} width={chartWidth} />
               </View>
             </GlassCard>
 
             <GlassCard style={styles.card}>
-              <Text style={[styles.cardTitle, { color: colors.txt }]}>기록 {points.length}개</Text>
+              <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>기록 {points.length}개</Text>
               <View style={styles.list}>
                 {/* 최근 기록이 위로 오게 뒤집는다. */}
                 {[...points].reverse().map((p) => (
                   <View key={p.date} style={styles.row}>
-                    <Text style={[styles.rowDate, { color: colors.sub }]}>{formatDate(p.date)}</Text>
-                    <Text style={[styles.rowKg, { color: colors.txt }]}>{p.kg}kg</Text>
+                    <Text style={[styles.rowDate, { color: colors.textSecondary }]}>{formatDate(p.date)}</Text>
+                    <Text style={[styles.rowKg, { color: colors.textPrimary }]}>{p.kg}kg</Text>
                     <Pressable onPress={() => removeWeight(p.date)} hitSlop={8}>
-                      <Icon name="close" size={15} color={colors.sub} />
+                      <Icon name="close" size={15} color={colors.textSecondary} />
                     </Pressable>
                   </View>
                 ))}
@@ -144,8 +144,8 @@ export default function WeightScreen() {
           </>
         ) : (
           <GlassCard style={styles.card}>
-            <Text style={[styles.emptyTitle, { color: colors.txt }]}>아직 기록이 없어요</Text>
-            <Text style={[styles.empty, { color: colors.sub }]}>
+            <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>아직 기록이 없어요</Text>
+            <Text style={[styles.empty, { color: colors.textSecondary }]}>
               오늘 체중을 남기면 추이와 목표까지 남은 양을 보여드려요.
             </Text>
           </GlassCard>

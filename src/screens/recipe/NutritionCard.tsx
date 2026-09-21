@@ -22,13 +22,13 @@ export default function NutritionCard({ lines }: NutritionCardProps) {
   return (
     <GlassCard style={styles.card}>
       <View style={styles.headerRow}>
-        <Text style={[styles.title, { color: colors.txt }]}>영양 분석</Text>
+        <Text style={[styles.title, { color: colors.textPrimary }]}>영양 분석</Text>
         <Badge label="룰 기반 · API 연동 예정" />
       </View>
 
-      <Text style={[styles.totalKcal, { color: colors.txt }]}>
+      <Text style={[styles.totalKcal, { color: colors.textPrimary }]}>
         {totals.kcal.toLocaleString()}
-        <Text style={[styles.totalUnit, { color: colors.sub }]}> kcal</Text>
+        <Text style={[styles.totalUnit, { color: colors.textSecondary }]}> kcal</Text>
       </Text>
 
       <View style={styles.macroRow}>
@@ -37,13 +37,13 @@ export default function NutritionCard({ lines }: NutritionCardProps) {
         <Macro label="지방" value={totals.fat} pct={totals.fatPct} colors={colors} />
       </View>
 
-      <View style={[styles.stackBar, { backgroundColor: colors.ink }]}>
+      <View style={[styles.stackBar, { backgroundColor: colors.fillMuted }]}>
         <View style={{ width: `${totals.carbsPct}%`, backgroundColor: brand.blue }} />
         <View style={{ width: `${totals.proteinPct}%`, backgroundColor: brand.mint }} />
         <View style={{ width: `${totals.fatPct}%`, backgroundColor: brand.lavender }} />
       </View>
 
-      <Text style={[styles.comment, { color: colors.sub }]}>{comment}</Text>
+      <Text style={[styles.comment, { color: colors.textSecondary }]}>{comment}</Text>
     </GlassCard>
   );
 }
@@ -51,9 +51,9 @@ export default function NutritionCard({ lines }: NutritionCardProps) {
 function Macro({ label, value, pct, colors }: { label: string; value: number; pct: number; colors: any }) {
   return (
     <View style={styles.macroCol}>
-      <Text style={[styles.macroLabel, { color: colors.sub }]}>{label}</Text>
-      <Text style={[styles.macroValue, { color: colors.txt }]}>{value}g</Text>
-      <Text style={[styles.macroPct, { color: colors.sub }]}>{pct}%</Text>
+      <Text style={[styles.macroLabel, { color: colors.textSecondary }]}>{label}</Text>
+      <Text style={[styles.macroValue, { color: colors.textPrimary }]}>{value}g</Text>
+      <Text style={[styles.macroPct, { color: colors.textSecondary }]}>{pct}%</Text>
     </View>
   );
 }

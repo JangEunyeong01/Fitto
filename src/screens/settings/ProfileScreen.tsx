@@ -86,7 +86,7 @@ export default function ProfileScreen() {
         <DetailHeader title="프로필" />
 
         <GlassCard style={styles.card}>
-          <Text style={[styles.label, { color: colors.sub }]}>닉네임</Text>
+          <Text style={[styles.label, { color: colors.textSecondary }]}>닉네임</Text>
           <TextField
             value={nickname}
             onChangeText={setNickname}
@@ -97,7 +97,7 @@ export default function ProfileScreen() {
             maxLength={20}
           />
 
-          <Text style={[styles.label, { color: colors.sub, marginTop: 14 }]}>생일</Text>
+          <Text style={[styles.label, { color: colors.textSecondary, marginTop: 14 }]}>생일</Text>
           <View style={styles.birthRow}>
             <TextField
               value={birthMonth}
@@ -121,7 +121,7 @@ export default function ProfileScreen() {
             />
           </View>
 
-          <Text style={[styles.label, { color: colors.sub, marginTop: 14 }]}>성별</Text>
+          <Text style={[styles.label, { color: colors.textSecondary, marginTop: 14 }]}>성별</Text>
           <View style={styles.gap10}>
             <SegmentedControl
               options={GENDERS.map((g) => ({ value: g.code, label: g.label }))}
@@ -149,13 +149,13 @@ export default function ProfileScreen() {
             <View style={styles.numCol} />
             <View style={styles.numCol} />
           </View>
-          <Text style={[styles.goalNote, { color: colors.sub }]}>
+          <Text style={[styles.goalNote, { color: colors.textSecondary }]}>
             목표 칼로리 {kcalGoal.toLocaleString()}kcal · 성별·나이·키·체중·활동량·목표를 바꾸면 다시 계산돼요.
           </Text>
         </GlassCard>
 
         <GlassCard style={styles.card}>
-          <Text style={[styles.cardTitle, { color: colors.txt }]}>목표</Text>
+          <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>목표</Text>
           <View style={styles.gap10}>
             {GOAL_OPTIONS.map((o) => (
               <OptionRow
@@ -170,7 +170,7 @@ export default function ProfileScreen() {
         </GlassCard>
 
         <GlassCard style={styles.card}>
-          <Text style={[styles.cardTitle, { color: colors.txt }]}>활동량</Text>
+          <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>활동량</Text>
           <View style={styles.gap10}>
             {ACTIVITY_OPTIONS.map((o) => (
               <OptionRow
@@ -185,7 +185,7 @@ export default function ProfileScreen() {
         </GlassCard>
 
         <GlassCard style={styles.card}>
-          <Text style={[styles.cardTitle, { color: colors.txt }]}>건강 상태</Text>
+          <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>건강 상태</Text>
           <View style={styles.gap10}>
             <TagPicker
               tags={DISEASE_TAGS}
@@ -200,7 +200,7 @@ export default function ProfileScreen() {
         </GlassCard>
 
         <GlassCard style={styles.card}>
-          <Text style={[styles.cardTitle, { color: colors.txt }]}>알레르기</Text>
+          <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>알레르기</Text>
           <View style={styles.gap10}>
             <TagPicker
               tags={AVOID_TAGS}
@@ -233,7 +233,7 @@ function NumField({
 }) {
   return (
     <View style={styles.numCol}>
-      <Text style={[styles.numLabel, { color: colors.sub }]}>{label}</Text>
+      <Text style={[styles.numLabel, { color: colors.textSecondary }]}>{label}</Text>
       <TextField
         value={value}
         onChangeText={(t) => onChangeText(t.replace(/[^0-9]/g, ''))}

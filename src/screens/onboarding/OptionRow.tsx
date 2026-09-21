@@ -24,18 +24,18 @@ export default function OptionRow({ title, desc, selected, onPress }: OptionRowP
           selected && { shadowColor: selection.shadow, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 1, shadowRadius: 18, elevation: 4 },
         ]}
       >
-        <BlurView intensity={25} tint={mode === 'dark' ? 'dark' : 'light'} style={[styles.blur, { borderColor: selected ? selection.border : colors.stroke }]}>
+        <BlurView intensity={25} tint={mode === 'dark' ? 'dark' : 'light'} style={[styles.blur, { borderColor: selected ? selection.border : colors.borderGlass }]}>
           <View
             style={[
               styles.inner,
-              { backgroundColor: selected ? selection.bg : colors.card },
+              { backgroundColor: selected ? selection.bg : colors.surface },
             ]}
           >
             <View style={styles.textCol}>
-              <Text style={[styles.title, { color: colors.txt }]}>{title}</Text>
-              {!!desc && <Text style={[styles.desc, { color: colors.sub }]}>{desc}</Text>}
+              <Text style={[styles.title, { color: colors.textPrimary }]}>{title}</Text>
+              {!!desc && <Text style={[styles.desc, { color: colors.textSecondary }]}>{desc}</Text>}
             </View>
-            <View style={[styles.marker, { borderColor: selected ? brand.blue : colors.line }]}>
+            <View style={[styles.marker, { borderColor: selected ? brand.blue : colors.borderDivider }]}>
               {selected && <View style={styles.markerFill} />}
             </View>
           </View>

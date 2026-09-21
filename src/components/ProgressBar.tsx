@@ -34,12 +34,12 @@ export default function ProgressBar({ progress, height = 9, radius = 6, gradient
   });
 
   return (
-    <View style={[styles.track, { height, borderRadius: radius, backgroundColor: colors.ink }]}>
+    <View style={[styles.track, { height, borderRadius: radius, backgroundColor: colors.fillMuted }]}>
       <Animated.View style={[styles.fill, { borderRadius: radius, width }]}>
         {gradientColors ? (
           <LinearGradient colors={gradientColors} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={StyleSheet.absoluteFill} />
         ) : (
-          <View style={[StyleSheet.absoluteFill, { backgroundColor: color ?? colors.txt }]} />
+          <View style={[StyleSheet.absoluteFill, { backgroundColor: color ?? colors.textPrimary }]} />
         )}
       </Animated.View>
     </View>

@@ -64,15 +64,15 @@ export default function QuickLogSheet() {
       <Pressable style={styles.backdrop} onPress={hide} />
       <View style={[styles.sheetWrap, { paddingBottom: insets.bottom + 16 }]}>
         <BlurView intensity={40} tint={mode === 'dark' ? 'dark' : 'light'} style={[styles.sheet, { borderTopLeftRadius: radius.sheetTop, borderTopRightRadius: radius.sheetTop }]}>
-          <View style={[styles.sheetInner, { backgroundColor: colors.solid, paddingHorizontal: spacing.screenX }]}>
-            <View style={[styles.grabber, { backgroundColor: colors.line }]} />
-            <Text style={[styles.title, { color: colors.txt }]}>빠른 기록</Text>
+          <View style={[styles.sheetInner, { backgroundColor: colors.surfaceSolid, paddingHorizontal: spacing.screenX }]}>
+            <View style={[styles.grabber, { backgroundColor: colors.borderDivider }]} />
+            <Text style={[styles.title, { color: colors.textPrimary }]}>빠른 기록</Text>
             {ACTIONS.map((a) => (
-              <Pressable key={a.key} onPress={() => handlePress(a.key)} style={({ pressed }) => [styles.row, { borderColor: colors.line, opacity: pressed ? 0.7 : 1 }]}>
-                <View style={[styles.iconSlot, { backgroundColor: colors.ink }]}>
-                  <Icon name={a.icon} size={18} color={colors.txt} />
+              <Pressable key={a.key} onPress={() => handlePress(a.key)} style={({ pressed }) => [styles.row, { borderColor: colors.borderDivider, opacity: pressed ? 0.7 : 1 }]}>
+                <View style={[styles.iconSlot, { backgroundColor: colors.fillMuted }]}>
+                  <Icon name={a.icon} size={18} color={colors.textPrimary} />
                 </View>
-                <Text style={[styles.rowLabel, { color: colors.txt }]}>{a.label}</Text>
+                <Text style={[styles.rowLabel, { color: colors.textPrimary }]}>{a.label}</Text>
               </Pressable>
             ))}
           </View>

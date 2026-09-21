@@ -8,7 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/useTheme';
 import Icon, { type IconName } from '../components/Icon';
 import { useQuickLogSheetStore } from '../store/useQuickLogSheetStore';
-import { primaryButtonShadow, radius, tabBarShadowColor, weight, white } from '../theme/tokens';
+import { primaryButtonShadow, radius, tabBarShadowColor, weight } from '../theme/tokens';
 
 const TAB_LABELS: Record<string, string> = {
   Home: '홈',
@@ -58,13 +58,13 @@ export default function TabBar({ state, navigation }: BottomTabBarProps) {
       <Pressable key={route.key} onPress={onPress} style={styles.tabItem}>
         {focused ? (
           <LinearGradient colors={primaryGradient} style={styles.tabActiveBg} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
-            <Icon name={icon} size={19} color={white} strokeWidth={2} />
-            <Text style={[styles.label, { color: white }, weight(700)]}>{label}</Text>
+            <Icon name={icon} size={19} color={colors.textOnPrimary} strokeWidth={2} />
+            <Text style={[styles.label, { color: colors.textOnPrimary }, weight(700)]}>{label}</Text>
           </LinearGradient>
         ) : (
           <View style={styles.tabInactiveBg}>
-            <Icon name={icon} size={19} color={colors.sub} />
-            <Text style={[styles.label, { color: colors.sub }, weight(500)]}>{label}</Text>
+            <Icon name={icon} size={19} color={colors.textSecondary} />
+            <Text style={[styles.label, { color: colors.textSecondary }, weight(500)]}>{label}</Text>
           </View>
         )}
       </Pressable>
@@ -77,9 +77,9 @@ export default function TabBar({ state, navigation }: BottomTabBarProps) {
         <BlurView
           intensity={40}
           tint={mode === 'dark' ? 'dark' : 'light'}
-          style={[styles.bar, { borderColor: colors.stroke }]}
+          style={[styles.bar, { borderColor: colors.borderGlass }]}
         >
-          <View style={[styles.barInner, { backgroundColor: colors.card }]}>
+          <View style={[styles.barInner, { backgroundColor: colors.surface }]}>
             {leftRoutes.map(renderTab)}
             <View style={styles.fabSpacer} />
             {rightRoutes.map(renderTab)}
@@ -88,7 +88,7 @@ export default function TabBar({ state, navigation }: BottomTabBarProps) {
       </View>
       <Pressable onPress={showSheet} style={styles.fabWrap} hitSlop={8}>
         <LinearGradient colors={primaryGradient} style={styles.fab} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
-          <Icon name="plus" size={24} color={white} strokeWidth={2.2} />
+          <Icon name="plus" size={24} color={colors.textOnPrimary} strokeWidth={2.2} />
         </LinearGradient>
       </Pressable>
     </View>

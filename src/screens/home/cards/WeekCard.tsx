@@ -22,8 +22,8 @@ export default function WeekCard() {
   if (daysWithRecord < MIN_DAYS) {
     return (
       <GlassCard>
-        <Text style={[styles.title, { color: colors.txt }]}>주간 요약</Text>
-        <Text style={[styles.empty, { color: colors.sub }]}>
+        <Text style={[styles.title, { color: colors.textPrimary }]}>주간 요약</Text>
+        <Text style={[styles.empty, { color: colors.textSecondary }]}>
           3일 이상 기록하면 한 주의 섭취·소모 흐름을 보여드려요. 지금은 {daysWithRecord}일 기록했어요.
         </Text>
       </GlassCard>
@@ -33,10 +33,10 @@ export default function WeekCard() {
   return (
     <GlassCard>
       <View style={styles.headerRow}>
-        <Text style={[styles.title, { color: colors.txt }]}>주간 요약</Text>
+        <Text style={[styles.title, { color: colors.textPrimary }]}>주간 요약</Text>
         <View style={styles.legend}>
-          <LegendDot color={brand.blue} label="섭취" textColor={colors.sub} />
-          <LegendDot color={brand.mint} label="소모" textColor={colors.sub} />
+          <LegendDot color={brand.blue} label="섭취" textColor={colors.textSecondary} />
+          <LegendDot color={brand.mint} label="소모" textColor={colors.textSecondary} />
         </View>
       </View>
 
@@ -51,7 +51,7 @@ export default function WeekCard() {
                 <View style={[styles.bar, { height: intakeH, backgroundColor: brand.blue }]} />
                 <View style={[styles.bar, { height: burnH, backgroundColor: brand.mint }]} />
               </View>
-              <Text style={[styles.dayLabel, { color: isToday ? colors.txt : colors.sub }, weight(isToday ? 700 : 500)]}>{label}</Text>
+              <Text style={[styles.dayLabel, { color: isToday ? colors.textPrimary : colors.textSecondary }, weight(isToday ? 700 : 500)]}>{label}</Text>
             </View>
           );
         })}

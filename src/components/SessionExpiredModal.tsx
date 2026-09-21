@@ -3,7 +3,7 @@ import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../theme/useTheme';
-import { radius, typography, weight, white } from '../theme/tokens';
+import { radius, typography, weight } from '../theme/tokens';
 import { useAuthStore } from '../store/useAuthStore';
 import { useOutboxStore } from '../store/useOutboxStore';
 
@@ -36,20 +36,20 @@ export default function SessionExpiredModal() {
     <View style={styles.overlay}>
       <Pressable style={[styles.backdrop, { backgroundColor: DIM }]} onPress={dismiss} />
       <View style={styles.center} pointerEvents="box-none">
-        <View style={[styles.card, { backgroundColor: colors.solid, borderColor: colors.stroke, shadowColor: CARD_SHADOW }]}>
-          <Text style={[styles.title, { color: colors.txt }]}>로그인이 풀렸어요</Text>
-          <Text style={[styles.body, { color: colors.sub }]}>
+        <View style={[styles.card, { backgroundColor: colors.surfaceSolid, borderColor: colors.borderGlass, shadowColor: CARD_SHADOW }]}>
+          <Text style={[styles.title, { color: colors.textPrimary }]}>로그인이 풀렸어요</Text>
+          <Text style={[styles.body, { color: colors.textSecondary }]}>
             기록은 이 기기에 그대로 있어요.
             {pendingCount > 0 ? ` 아직 올리지 못한 기록 ${pendingCount}건은 다시 로그인하면 이어서 올라가요.` : ''}
           </Text>
 
           <View style={styles.buttonRow}>
-            <Pressable onPress={dismiss} style={[styles.laterBtn, { borderColor: colors.line }]}>
-              <Text style={[styles.laterLabel, { color: colors.sub }]}>나중에</Text>
+            <Pressable onPress={dismiss} style={[styles.laterBtn, { borderColor: colors.borderDivider }]}>
+              <Text style={[styles.laterLabel, { color: colors.textSecondary }]}>나중에</Text>
             </Pressable>
             <Pressable onPress={goLogin} style={styles.loginWrap}>
               <LinearGradient colors={primaryGradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.loginBtn}>
-                <Text style={styles.loginLabel}>다시 로그인</Text>
+                <Text style={[styles.loginLabel, { color: colors.textOnPrimary }]}>다시 로그인</Text>
               </LinearGradient>
             </Pressable>
           </View>
@@ -125,6 +125,5 @@ const styles = StyleSheet.create({
   },
   loginLabel: {
     ...typography.sectionTitle,
-    color: white,
   },
 });

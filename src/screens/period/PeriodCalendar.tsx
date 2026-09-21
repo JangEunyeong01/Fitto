@@ -25,14 +25,14 @@ export default function PeriodCalendar({ year, month, onShiftMonth, selected, on
   return (
     <GlassCard style={styles.card}>
       <View style={styles.navRow}>
-        <Pressable onPress={() => onShiftMonth(-1)} style={[styles.navBtn, { borderColor: colors.line }]}>
-          <Icon name="chevronLeft" size={16} color={colors.txt} />
+        <Pressable onPress={() => onShiftMonth(-1)} style={[styles.navBtn, { borderColor: colors.borderDivider }]}>
+          <Icon name="chevronLeft" size={16} color={colors.textPrimary} />
         </Pressable>
-        <Text style={[styles.monthLabel, { color: colors.txt }]}>
+        <Text style={[styles.monthLabel, { color: colors.textPrimary }]}>
           {year}년 {month}월
         </Text>
-        <Pressable onPress={() => onShiftMonth(1)} style={[styles.navBtn, { borderColor: colors.line }]}>
-          <Icon name="chevronRight" size={16} color={colors.txt} />
+        <Pressable onPress={() => onShiftMonth(1)} style={[styles.navBtn, { borderColor: colors.borderDivider }]}>
+          <Icon name="chevronRight" size={16} color={colors.textPrimary} />
         </Pressable>
       </View>
 
@@ -44,7 +44,7 @@ export default function PeriodCalendar({ year, month, onShiftMonth, selected, on
 
       <View style={styles.weekHeader}>
         {WEEKDAY_LABELS.map((w) => (
-          <Text key={w} style={[styles.weekLabel, { color: colors.sub }]}>
+          <Text key={w} style={[styles.weekLabel, { color: colors.textSecondary }]}>
             {w}
           </Text>
         ))}
@@ -73,7 +73,7 @@ export default function PeriodCalendar({ year, month, onShiftMonth, selected, on
                     <Text style={styles.selectedText}>{day}</Text>
                   </View>
                 ) : (
-                  <Text style={[styles.dayText, { color: colors.txt }]}>{day}</Text>
+                  <Text style={[styles.dayText, { color: colors.textPrimary }]}>{day}</Text>
                 )}
               </View>
             </Pressable>
@@ -98,7 +98,7 @@ function Legend({
   return (
     <View style={styles.legendItem}>
       <View style={[styles.legendDot, { backgroundColor: color, borderColor: borderColor ?? 'transparent', borderWidth: borderColor ? 1 : 0 }]} />
-      <Text style={[styles.legendLabel, { color: colors.sub }]}>{label}</Text>
+      <Text style={[styles.legendLabel, { color: colors.textSecondary }]}>{label}</Text>
     </View>
   );
 }

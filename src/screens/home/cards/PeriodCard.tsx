@@ -5,7 +5,7 @@ import { useNavigation } from '@react-navigation/native';
 import GlassCard from '../../../components/GlassCard';
 import Icon from '../../../components/Icon';
 import { useTheme } from '../../../theme/useTheme';
-import { periodBadgeGradient, typography, white } from '../../../theme/tokens';
+import { periodBadgeGradient, typography } from '../../../theme/tokens';
 import { useAppStore } from '../../../store/useAppStore';
 import { dateKey } from '../../../utils/timeOfDay';
 import { getCycleDayNumber, getDaysUntilFertile } from '../../../utils/periodCycle';
@@ -30,13 +30,13 @@ export default function PeriodCard() {
             end={{ x: 1, y: 1 }}
             style={styles.badge}
           >
-            <Text style={styles.badgeText}>D+{cycleDay - 1}</Text>
+            <Text style={[styles.badgeText, { color: colors.textOnPrimary }]}>D+{cycleDay - 1}</Text>
           </LinearGradient>
           <View style={styles.textCol}>
-            <Text style={[styles.title, { color: colors.txt }]}>생리 주기</Text>
-            <Text style={[styles.sub, { color: colors.sub }]}>{subtitle}</Text>
+            <Text style={[styles.title, { color: colors.textPrimary }]}>생리 주기</Text>
+            <Text style={[styles.sub, { color: colors.textSecondary }]}>{subtitle}</Text>
           </View>
-          <Icon name="chevronRight" size={17} color={colors.sub} />
+          <Icon name="chevronRight" size={17} color={colors.textSecondary} />
         </View>
       </GlassCard>
     </Pressable>
@@ -58,7 +58,6 @@ const styles = StyleSheet.create({
   },
   badgeText: {
     ...typography.value,
-    color: white,
   },
   textCol: {
     flex: 1,

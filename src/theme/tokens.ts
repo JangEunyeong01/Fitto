@@ -5,31 +5,113 @@
 import type { TextStyle } from 'react-native';
 import { FONT_FAMILY, type FontWeightKey } from './fonts';
 
-export const lightColors = {
-  bg: '#F4F8FA',
-  card: 'rgba(255,255,255,.62)',
-  card2: 'rgba(255,255,255,.42)',
-  solid: '#FFFFFF',
-  stroke: 'rgba(255,255,255,.75)',
-  txt: '#2C3E50',
-  sub: '#8FA3B1',
-  line: 'rgba(44,62,80,.09)',
-  ink: 'rgba(44,62,80,.06)',
-  shadowColor: 'rgba(44,62,80,.10)',
-} as const;
+/**
+ * 색은 두 층으로 나눈다(UI 기준서 2장).
+ *
+ * - 팔레트(brand): 원본 색. 면·차트·캐릭터·그라데이션에 쓴다
+ * - 역할(ThemeColors): 화면이 쓰는 이름. 글씨와 누르는 요소는 반드시 여기서 고른다
+ *
+ * 예전에는 팔레트만 있어서 brand.blue 하나가 버튼 면·링크 글씨·선택 테두리·차트에 동시에 쓰였다.
+ * 파스텔은 면으로는 괜찮지만 흰 바탕 위 글씨로 쓰면 대비가 1.9:1이라 읽기 어렵다.
+ * 역할을 나눠두면 팔레트를 새로 잡아도 값만 바꾸면 되고, 화면 코드는 그대로다.
+ *
+ * 대비는 라이트 #F4F8FA / 다크 #0E151B 배경 기준으로 잰 값이다. 본문 4.5:1, 테두리 등은 3:1 이상.
+ */
+export interface ThemeColors {
+  bg: string;
+  /** 유리 카드 면. */
+  surface: string;
+  /** 카드 안의 한 겹 더 옅은 면(코멘트 상자 등). */
+  surfaceSubtle: string;
+  /** 시트·안내창·입력칸처럼 투명하면 안 되는 면. */
+  surfaceSolid: string;
+  /** 비활성 버튼 면. */
+  surfaceMuted: string;
+  /** 게이지·막대의 빈 칸, 장식 원. 정보를 담지 않는다. */
+  fillMuted: string;
 
-export const darkColors = {
+  /** 제목·본문·수치. */
+  textPrimary: string;
+  /** 라벨·설명·단위. 4.5:1 이상. */
+  textSecondary: string;
+  /** 입력칸 힌트만. 라벨이 항상 따로 있어 보조 정보로 보고 4.5:1에 못 미치는 걸 기록해 둔다. */
+  textPlaceholder: string;
+  /** 비활성 글씨. 대비 기준 예외. */
+  textDisabled: string;
+  /** 파스텔 주 버튼 위 글씨. 흰 글씨는 1.9:1이라 짙은 남색을 쓴다. */
+  textOnPrimary: string;
+  /** 링크·상태 라벨·강조 수치. 파스텔을 글씨로 쓰지 않으려고 둔다. */
+  textAccent: string;
+  textGood: string;
+  textWarn: string;
+  textDanger: string;
+
+  /** 유리 카드 가장자리만. 입력칸에 쓰면 칸이 안 보인다. */
+  borderGlass: string;
+  /** 구분선. 장식이라 대비 기준이 없다. */
+  borderDivider: string;
+  /** 입력칸·보조 버튼·꺼진 스위치. 3:1 이상. */
+  borderInput: string;
+  /** 선택된 칩·선택지. */
+  borderSelected: string;
+  focusRing: string;
+
+  shadowColor: string;
+}
+
+export const lightColors: ThemeColors = {
+  bg: '#F4F8FA',
+  surface: 'rgba(255,255,255,.62)',
+  surfaceSubtle: 'rgba(255,255,255,.42)',
+  surfaceSolid: '#FFFFFF',
+  surfaceMuted: '#EEF3F6',
+  fillMuted: 'rgba(44,62,80,.06)',
+
+  textPrimary: '#2C3E50', // 10.3:1
+  textSecondary: '#5C7282', // 4.7:1 (예전 #8FA3B1은 2.4:1)
+  textPlaceholder: '#6F8594', // 3.9:1 — 미달, 기록
+  textDisabled: '#8FA3B1',
+  textOnPrimary: '#1B3445', // 파스텔 버튼 위 6.8:1
+  textAccent: '#2B77A6', // 4.9:1
+  textGood: '#3E7D5A', // 4.9:1
+  textWarn: '#8F6A12', // 5.0:1
+  textDanger: '#A84B32', // 5.7:1
+
+  borderGlass: 'rgba(255,255,255,.75)',
+  borderDivider: 'rgba(44,62,80,.09)',
+  borderInput: '#7F94A3', // 3.2:1
+  borderSelected: '#2B77A6',
+  focusRing: '#2B77A6',
+
+  shadowColor: 'rgba(44,62,80,.10)',
+};
+
+export const darkColors: ThemeColors = {
   bg: '#0E151B',
-  card: 'rgba(255,255,255,.075)',
-  card2: 'rgba(255,255,255,.05)',
-  solid: '#16202A',
-  stroke: 'rgba(255,255,255,.14)',
-  txt: '#E7F1F6',
-  sub: '#8098A8',
-  line: 'rgba(255,255,255,.10)',
-  ink: 'rgba(255,255,255,.07)',
+  surface: 'rgba(255,255,255,.075)',
+  surfaceSubtle: 'rgba(255,255,255,.05)',
+  surfaceSolid: '#16202A',
+  surfaceMuted: 'rgba(255,255,255,.05)',
+  fillMuted: 'rgba(255,255,255,.07)',
+
+  textPrimary: '#E7F1F6', // 16.0:1
+  textSecondary: '#8098A8', // 6.1:1
+  textPlaceholder: '#6A7F92', // 4.0:1 — 미달, 기록
+  textDisabled: '#56687A',
+  textOnPrimary: '#0E151B', // 파스텔 버튼 위 9.7:1
+  textAccent: '#89C4E1', // 어두운 바탕에서는 파스텔이 그대로 읽힌다
+  textGood: '#7CC39A',
+  textWarn: '#E0B656',
+  textDanger: '#E08B70',
+
+  borderGlass: 'rgba(255,255,255,.14)',
+  borderDivider: 'rgba(255,255,255,.10)',
+  borderInput: '#62778A', // 3.6:1
+  borderSelected: '#89C4E1',
+  focusRing: '#89C4E1',
+
   shadowColor: 'rgba(0,0,0,.35)',
-} as const;
+};
 
 export const brand = {
   blue: '#89C4E1',
@@ -41,9 +123,13 @@ export const brand = {
   gray: '#B0BEC5',
 } as const;
 
+/**
+ * 상태 색 — 막대·점처럼 **면으로** 쓰는 값. 글씨에는 ThemeColors의 textGood/textWarn/textDanger를 쓴다.
+ * warn은 예전 #C79A2E가 막대로 써도 2.6:1이라 한 단계 내렸다(3.6:1).
+ */
 export const semantic = {
   good: '#5B9E78',
-  warn: '#C79A2E',
+  warn: '#AD8024',
   danger: '#C1674A',
 } as const;
 
@@ -90,7 +176,7 @@ export const overlay = {
 } as const;
 
 /** 탭바 그림자 (README: 0 12px 30px rgba(44,62,80,.16)). */
-export const tabBarShadowColor = alpha(lightColors.txt, 0.16);
+export const tabBarShadowColor = alpha(lightColors.textPrimary, 0.16);
 
 /**
  * 생일 배너·모달.
@@ -294,19 +380,6 @@ export const glassShadow = {
     elevation: 6,
   },
 };
-
-export interface ThemeColors {
-  bg: string;
-  card: string;
-  card2: string;
-  solid: string;
-  stroke: string;
-  txt: string;
-  sub: string;
-  line: string;
-  ink: string;
-  shadowColor: string;
-}
 
 export function resolveColors(mode: 'light' | 'dark'): ThemeColors {
   return mode === 'dark' ? darkColors : lightColors;

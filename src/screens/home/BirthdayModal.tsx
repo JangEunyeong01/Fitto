@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { View, Text, Pressable, StyleSheet, Image, Animated, Easing } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../../theme/useTheme';
-import { birthday, brand, motion, radius, typography, white } from '../../theme/tokens';
+import { birthday, brand, motion, radius, typography } from '../../theme/tokens';
 import { personaCopy } from '../../copy/persona';
 import { useAppStore } from '../../store/useAppStore';
 import { useBirthdayModalStore } from '../../store/useBirthdayModalStore';
@@ -64,8 +64,8 @@ export default function BirthdayModal() {
           style={[
             styles.card,
             {
-              backgroundColor: colors.solid,
-              borderColor: colors.stroke,
+              backgroundColor: colors.surfaceSolid,
+              borderColor: colors.borderGlass,
               shadowColor: birthday.modalShadow,
               opacity: enter,
               transform: [{ translateY }],
@@ -76,13 +76,13 @@ export default function BirthdayModal() {
           <View style={[styles.glowLeft, { backgroundColor: birthday.glowLavender }]} />
           <View style={[styles.glowRight, { backgroundColor: birthday.glowPeach }]} />
 
-          <Text style={[styles.label, { color: brand.lavender }]}>HAPPY BIRTHDAY</Text>
+          <Text style={[styles.label, { color: colors.textAccent }]}>HAPPY BIRTHDAY</Text>
 
           <Animated.View style={[styles.charWrap, { transform: [{ translateY: floatY }] }]}>
             <Image source={FITTO_HELLO} style={styles.char} resizeMode="contain" accessibilityLabel="축하하는 피또" />
           </Animated.View>
 
-          <Text style={[styles.message, { color: colors.txt }]}>{message}</Text>
+          <Text style={[styles.message, { color: colors.textPrimary }]}>{message}</Text>
 
           <Pressable onPress={onClose} style={styles.confirmWrap}>
             <LinearGradient
@@ -91,7 +91,7 @@ export default function BirthdayModal() {
               end={{ x: 1, y: 1 }}
               style={styles.confirm}
             >
-              <Text style={styles.confirmLabel}>고마워, 피또</Text>
+              <Text style={[styles.confirmLabel, { color: colors.textOnPrimary }]}>고마워, 피또</Text>
             </LinearGradient>
           </Pressable>
         </Animated.View>
@@ -184,6 +184,5 @@ const styles = StyleSheet.create({
   },
   confirmLabel: {
     ...typography.buttonLabelSm,
-    color: white,
   },
 });

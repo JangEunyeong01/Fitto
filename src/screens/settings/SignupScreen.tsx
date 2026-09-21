@@ -117,11 +117,11 @@ export default function SignupScreen() {
         <DetailHeader title="계정 만들기" />
 
         <GlassCard style={styles.card}>
-          <Text style={[styles.desc, { color: colors.sub }]}>
+          <Text style={[styles.desc, { color: colors.textSecondary }]}>
             지금까지 기록한 내용은 계정으로 함께 옮겨져요. 다른 기기에서도 이어서 볼 수 있어요.
           </Text>
 
-          <Text style={[styles.label, { color: colors.sub }]}>이메일</Text>
+          <Text style={[styles.label, { color: colors.textSecondary }]}>이메일</Text>
           <TextField
             value={email}
             onChangeText={setEmail}
@@ -131,7 +131,7 @@ export default function SignupScreen() {
             maxLength={254}
           />
 
-          <Text style={[styles.label, { color: colors.sub }]}>비밀번호</Text>
+          <Text style={[styles.label, { color: colors.textSecondary }]}>비밀번호</Text>
           <TextField
             value={password}
             onChangeText={setPassword}
@@ -150,14 +150,14 @@ export default function SignupScreen() {
             />
           </View>
 
-          {wakeNotice && <Text style={[styles.wakeNotice, { color: colors.sub }]}>{wakeNotice}</Text>}
+          {wakeNotice && <Text style={[styles.wakeNotice, { color: colors.textSecondary }]}>{wakeNotice}</Text>}
 
           <Pressable onPress={() => navigation.navigate('Login')} style={styles.linkRow}>
-            <Text style={[styles.link, { color: colors.txt }]}>이미 계정이 있나요? 로그인</Text>
+            <Text style={[styles.link, { color: colors.textPrimary }]}>이미 계정이 있나요? 로그인</Text>
           </Pressable>
         </GlassCard>
 
-        <Text style={[styles.note, { color: colors.sub }]}>
+        <Text style={[styles.note, { color: colors.textSecondary }]}>
           계정이 없어도 앱의 모든 기능을 쓸 수 있어요. 계정은 기록을 백업하고 기기를 옮길 때 필요해요.
         </Text>
       </ScrollView>

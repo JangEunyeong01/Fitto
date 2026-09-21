@@ -20,8 +20,8 @@ export default function Badge({ label, color, textColor, style }: BadgeProps) {
   const { colors } = useTheme();
 
   return (
-    <View style={[styles.wrap, { backgroundColor: color ?? colors.ink }, style]}>
-      <Text style={[typography.badge, { color: textColor ?? colors.sub }]} numberOfLines={1}>
+    <View style={[styles.wrap, { backgroundColor: color ?? colors.fillMuted }, style]}>
+      <Text style={[typography.badge, { color: textColor ?? colors.textSecondary }]} numberOfLines={1}>
         {label}
       </Text>
     </View>

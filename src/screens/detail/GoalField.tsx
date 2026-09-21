@@ -33,7 +33,7 @@ export default function GoalField({ title, value, min, max, unit, onCommit }: Go
 
   return (
     <GlassCard style={styles.card}>
-      <Text style={[styles.title, { color: colors.txt }]}>{title}</Text>
+      <Text style={[styles.title, { color: colors.textPrimary }]}>{title}</Text>
       <View style={styles.row}>
         <TextField
           value={text}
@@ -43,9 +43,9 @@ export default function GoalField({ title, value, min, max, unit, onCommit }: Go
           keyboardType="numeric"
           style={styles.input}
         />
-        <Text style={[styles.unit, { color: colors.sub }]}>{unit}</Text>
+        <Text style={[styles.unit, { color: colors.textSecondary }]}>{unit}</Text>
       </View>
-      <Text style={[styles.range, { color: colors.sub }]}>
+      <Text style={[styles.range, { color: colors.textSecondary }]}>
         {min.toLocaleString()} ~ {max.toLocaleString()}
         {unit} 사이로 설정할 수 있어요.
       </Text>
