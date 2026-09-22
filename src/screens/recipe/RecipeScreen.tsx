@@ -188,7 +188,7 @@ export default function RecipeScreen() {
             <PrimaryButton small label="재료 추가 (g)" onPress={addLine} style={styles.addBtn} />
           </View>
 
-          <Pressable onPress={() => setCustomOpen((v) => !v)} style={[styles.customToggle, { borderColor: colors.borderDivider }]}>
+          <Pressable onPress={() => setCustomOpen((v) => !v)} style={[styles.customToggle, { borderColor: colors.borderInput }]}>
             <Text style={[styles.customToggleLabel, { color: colors.textSecondary }]}>목록에 없는 재료 직접 입력</Text>
           </Pressable>
 
@@ -246,7 +246,7 @@ export default function RecipeScreen() {
                   <Text style={[styles.lineGram, { color: colors.textSecondary }]}>{l.grams}g</Text>
                   <Text style={[styles.lineKcal, { color: colors.textPrimary }]}>{Math.round((l.kcal100 * l.grams) / 100)}</Text>
                   <Pressable onPress={() => setLines((prev) => prev.filter((_, idx) => idx !== i))} hitSlop={8}>
-                    <Icon name="close" size={15} color={colors.textSecondary} />
+                    <Icon name="close" size={16} color={colors.textSecondary} />
                   </Pressable>
                 </View>
               ))}
@@ -310,7 +310,6 @@ const styles = StyleSheet.create({
     height: 150,
     borderRadius: radius.optionRow,
     borderWidth: 1,
-    borderStyle: 'dashed',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
@@ -340,9 +339,8 @@ const styles = StyleSheet.create({
   customToggle: {
     marginTop: 12,
     height: 42,
-    borderRadius: 13,
+    borderRadius: 14,
     borderWidth: 1,
-    borderStyle: 'dashed',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -402,7 +400,7 @@ const styles = StyleSheet.create({
   savedBtn: {
     height: 32,
     paddingHorizontal: 12,
-    borderRadius: 11,
+    borderRadius: 10,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',

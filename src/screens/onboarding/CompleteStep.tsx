@@ -123,7 +123,7 @@ const styles = StyleSheet.create({
   },
   card: {
     flex: 1,
-    borderRadius: 18,
+    borderRadius: 16,
     borderWidth: 1,
     padding: 16,
     gap: 4,
@@ -132,7 +132,7 @@ const styles = StyleSheet.create({
   cardValue: typography.bigNumber,
   cardCaption: typography.captionSm,
   summary: {
-    borderRadius: 18,
+    borderRadius: 16,
     padding: 16,
     marginTop: 14,
     gap: 10,

@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import TextLink from '../../../components/TextLink';
 import GlassCard from '../../../components/GlassCard';
 import { useTheme } from '../../../theme/useTheme';
 import { useAppStore } from '../../../store/useAppStore';
@@ -43,9 +44,8 @@ export default function ExerciseCard() {
     <GlassCard>
       <View style={styles.headerRow}>
         <Text style={[styles.title, { color: colors.textPrimary }]}>오늘 운동</Text>
-        <Pressable onPress={() => navigation.navigate('Health')}>
-          <Text style={[styles.link, { color: colors.textAccent }]}>헬스 탭 →</Text>
-        </Pressable>
+        {/* "헬스 탭"은 앱 내부 이름이다. 누르면 얻는 것으로 적는다. */}
+        <TextLink label="운동 보기" onPress={() => navigation.navigate('Health')} />
       </View>
 
       {exercises.length === 0 ? (
@@ -74,7 +74,7 @@ export default function ExerciseCard() {
           <Pressable
             key={code}
             onPress={() => handleQuickAdd(code)}
-            style={[styles.chip, { borderColor: colors.borderDivider }]}
+            style={[styles.chip, { borderColor: colors.borderInput }]}
           >
             <Text style={[styles.chipText, { color: colors.textPrimary }]}>+ {findExercise(code)?.name}</Text>
           </Pressable>
@@ -121,14 +121,12 @@ const styles = StyleSheet.create({
     marginTop: 14,
     paddingTop: 12,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderStyle: 'dashed',
   },
   chip: {
     paddingVertical: 6,
     paddingHorizontal: 10,
     borderRadius: 10,
     borderWidth: 1,
-    borderStyle: 'dashed',
   },
   chipText: typography.label,
   more: {

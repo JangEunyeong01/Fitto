@@ -134,7 +134,7 @@ const styles = StyleSheet.create({
   laterBtn: {
     flex: 1,
     height: 46,
-    borderRadius: 15,
+    borderRadius: 14,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
@@ -145,7 +145,7 @@ const styles = StyleSheet.create({
   },
   walkBtn: {
     height: 46,
-    borderRadius: 15,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
   },

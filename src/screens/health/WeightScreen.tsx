@@ -135,7 +135,7 @@ export default function WeightScreen() {
                     <Text style={[styles.rowDate, { color: colors.textSecondary }]}>{formatDate(p.date)}</Text>
                     <Text style={[styles.rowKg, { color: colors.textPrimary }]}>{p.kg}kg</Text>
                     <Pressable onPress={() => removeWeight(p.date)} hitSlop={8}>
-                      <Icon name="close" size={15} color={colors.textSecondary} />
+                      <Icon name="close" size={16} color={colors.textSecondary} />
                     </Pressable>
                   </View>
                 ))}

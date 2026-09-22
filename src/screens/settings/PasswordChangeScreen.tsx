@@ -8,12 +8,14 @@ import TextField from '../../components/TextField';
 import PrimaryButton from '../../components/PrimaryButton';
 import DetailHeader from '../detail/DetailHeader';
 import { useTheme } from '../../theme/useTheme';
-import { semantic, typography } from '../../theme/tokens';
+import { typography } from '../../theme/tokens';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useToastStore } from '../../store/useToastStore';
 import { changePassword } from '../../api/auth';
 import { ApiError, NetworkError } from '../../api/client';
 import { useWakeNotice } from '../../hooks/useWakeNotice';
+
+type Field = 'current' | 'next' | 'confirm';
 
 /** 가입과 같은 규칙(명세 4장). 변경으로 더 약한 비밀번호를 넣을 수 있으면 규칙이 있으나 마나다. */
 function passwordError(value: string): string | null {
@@ -39,7 +41,12 @@ export default function PasswordChangeScreen() {
   const [current, setCurrent] = useState('');
   const [next, setNext] = useState('');
   const [confirm, setConfirm] = useState('');
-  const [error, setError] = useState<string | null>(null);
+  /**
+   * 오류와 그 오류가 속한 칸. 칸에 속한 오류는 그 칸 아래에, 연결 실패처럼 칸과 무관한 오류는
+   * 버튼 위 한 줄에 띄운다(UI 기준서 6-3).
+   */
+  const [error, setError] = useState<{ message: string; field: Field | null } | null>(null);
+  const fieldError = (field: Field) => (error?.field === field ? error.message : null);
   const [busy, setBusy] = useState(false);
   const wakeNotice = useWakeNotice(busy);
 
@@ -47,17 +54,21 @@ export default function PasswordChangeScreen() {
     if (busy) return;
 
     // 입력하는 중에는 오류를 띄우지 않는다. 누를 때 한 번만 본다.
+    if (!current) {
+      setError({ message: '현재 비밀번호를 입력해 주세요', field: 'current' });
+      return;
+    }
     const invalid = passwordError(next);
     if (invalid) {
-      setError(invalid);
+      setError({ message: invalid, field: 'next' });
       return;
     }
     if (next !== confirm) {
-      setError('새 비밀번호가 서로 달라요');
+      setError({ message: '새 비밀번호가 서로 달라요', field: 'confirm' });
       return;
     }
     if (next === current) {
-      setError('지금 쓰는 비밀번호와 달라야 해요');
+      setError({ message: '지금 쓰는 비밀번호와 달라야 해요', field: 'next' });
       return;
     }
 
@@ -71,10 +82,12 @@ export default function PasswordChangeScreen() {
       showToast('비밀번호를 바꿨어요. 다른 기기는 로그아웃됐어요');
       navigation.goBack();
     } catch (e) {
-      if (e instanceof ApiError || e instanceof NetworkError) {
-        setError(e.message);
+      if (e instanceof ApiError && e.code === 'INVALID_CREDENTIALS') {
+        setError({ message: '현재 비밀번호가 맞지 않아요', field: 'current' });
+      } else if (e instanceof ApiError || e instanceof NetworkError) {
+        setError({ message: e.message, field: null });
       } else {
-        setError('비밀번호를 바꾸지 못했어요. 잠시 후 다시 시도해 주세요');
+        setError({ message: '비밀번호를 바꾸지 못했어요. 잠시 후 다시 시도해 주세요', field: null });
       }
     } finally {
       setBusy(false);
@@ -94,34 +107,48 @@ export default function PasswordChangeScreen() {
           <Text style={[styles.label, { color: colors.textSecondary }]}>현재 비밀번호</Text>
           <TextField
             value={current}
-            onChangeText={setCurrent}
+            onChangeText={(v) => {
+              setCurrent(v);
+              // 다시 입력을 시작하면 그 칸의 오류를 걷는다.
+              if (error?.field === 'current') setError(null);
+            }}
             placeholder="지금 쓰는 비밀번호"
             autoCapitalize="none"
             secureTextEntry
             maxLength={64}
+            error={fieldError('current')}
           />
 
           <Text style={[styles.label, { color: colors.textSecondary }]}>새 비밀번호</Text>
           <TextField
             value={next}
-            onChangeText={setNext}
+            onChangeText={(v) => {
+              setNext(v);
+              if (error?.field === 'next') setError(null);
+            }}
             placeholder="영문과 숫자를 포함해 8자 이상"
             autoCapitalize="none"
             secureTextEntry
             maxLength={64}
+            error={fieldError('next')}
           />
 
           <Text style={[styles.label, { color: colors.textSecondary }]}>새 비밀번호 확인</Text>
           <TextField
             value={confirm}
-            onChangeText={setConfirm}
+            onChangeText={(v) => {
+              setConfirm(v);
+              if (error?.field === 'confirm') setError(null);
+            }}
             placeholder="한 번 더 입력해 주세요"
             autoCapitalize="none"
             secureTextEntry
             maxLength={64}
+            error={fieldError('confirm')}
           />
 
-          {error && <Text style={[styles.error, { color: colors.textDanger }]}>{error}</Text>}
+          {/* 칸에 속하지 않는 오류(연결 실패 등)만 여기에. */}
+          {error && !error.field && <Text style={[styles.error, { color: colors.textDanger }]}>{error.message}</Text>}
           {wakeNotice && <Text style={[styles.desc, { color: colors.textSecondary }]}>{wakeNotice}</Text>}
 
           <Text style={[styles.desc, { color: colors.textSecondary }]}>

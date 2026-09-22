@@ -3,9 +3,9 @@ import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { runOnJS } from 'react-native-reanimated';
 import { useNavigation } from '@react-navigation/native';
+import TextLink from '../../../components/TextLink';
 import GlassCard from '../../../components/GlassCard';
 import PrimaryButton from '../../../components/PrimaryButton';
-import Icon from '../../../components/Icon';
 import WaterCup from './WaterCup';
 import { useTheme } from '../../../theme/useTheme';
 import { useAppStore } from '../../../store/useAppStore';
@@ -49,10 +49,7 @@ export default function WaterCard() {
           <Text style={[styles.label, { color: colors.textSecondary }]}>물 섭취</Text>
           <View style={styles.topRight}>
             <Text style={[styles.stageName, { color: colors.textAccent }]}>{stage.name}</Text>
-            <Pressable onPress={() => navigation.navigate('WaterDetail')} hitSlop={6} style={styles.detailLink}>
-              <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>상세</Text>
-              <Icon name="chevronRight" size={13} color={colors.textSecondary} />
-            </Pressable>
+            <TextLink label="상세" onPress={() => navigation.navigate('WaterDetail')} />
           </View>
         </View>
         <View style={styles.numRow}>
@@ -131,7 +128,7 @@ const styles = StyleSheet.create({
   },
   undoBtn: {
     height: 32,
-    borderRadius: 11,
+    borderRadius: 10,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',

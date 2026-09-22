@@ -143,7 +143,7 @@ function FoodSearchForm() {
         <View style={styles.headerRow}>
           <Text style={[styles.title, { color: colors.textPrimary }]}>{picked ? picked.name : '음식 추가'}</Text>
           <Pressable onPress={hide} hitSlop={8} accessibilityRole="button" accessibilityLabel="닫기">
-            <Icon name="close" size={18} color={colors.textSecondary} />
+            <Icon name="close" size={20} color={colors.textSecondary} />
           </Pressable>
         </View>
 
@@ -193,7 +193,7 @@ function FoodSearchForm() {
         ) : (
           <>
             <View style={[styles.searchRow, { borderColor: colors.borderGlass, backgroundColor: colors.surface }]}>
-              <Icon name="search" size={17} color={colors.textSecondary} />
+              <Icon name="search" size={16} color={colors.textSecondary} />
               <TextInput
                 value={query}
                 onChangeText={setQuery}
@@ -203,7 +203,7 @@ function FoodSearchForm() {
               />
               {query.length > 0 && (
                 <Pressable onPress={() => setQuery('')} style={[styles.clearBtn, { backgroundColor: colors.fillMuted }]}>
-                  <Icon name="close" size={13} color={colors.textSecondary} />
+                  <Icon name="close" size={16} color={colors.textSecondary} />
                 </Pressable>
               )}
             </View>
@@ -254,14 +254,7 @@ function FoodSearchForm() {
                                 ? `${labelOf(DISEASE_TAGS, caution)} 주의`
                                 : '가능'
                           }
-                          color={
-                            hit
-                              ? alpha(brand.peach, 0.28)
-                              : caution
-                                ? alpha(brand.yellow, 0.4)
-                                : alpha(brand.mint, 0.28)
-                          }
-                          textColor={colors.textPrimary}
+                          tone={hit ? 'danger' : caution ? 'warn' : 'good'}
                         />
                       </View>
                       <Text style={[styles.meta, { color: colors.textSecondary }]}>
@@ -336,7 +329,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     height: 46,
-    borderRadius: 15,
+    borderRadius: 14,
     borderWidth: 1,
     paddingHorizontal: 12,
     gap: 8,
@@ -399,7 +392,7 @@ const styles = StyleSheet.create({
   addBtn: {
     height: 32,
     paddingHorizontal: 14,
-    borderRadius: 11,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
   },

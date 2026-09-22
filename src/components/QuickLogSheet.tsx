@@ -70,7 +70,7 @@ export default function QuickLogSheet() {
             {ACTIONS.map((a) => (
               <Pressable key={a.key} onPress={() => handlePress(a.key)} style={({ pressed }) => [styles.row, { borderColor: colors.borderDivider, opacity: pressed ? 0.7 : 1 }]}>
                 <View style={[styles.iconSlot, { backgroundColor: colors.fillMuted }]}>
-                  <Icon name={a.icon} size={18} color={colors.textPrimary} />
+                  <Icon name={a.icon} size={20} color={colors.textPrimary} />
                 </View>
                 <Text style={[styles.rowLabel, { color: colors.textPrimary }]}>{a.label}</Text>
               </Pressable>
@@ -133,7 +133,7 @@ const styles = StyleSheet.create({
   iconSlot: {
     width: 34,
     height: 34,
-    borderRadius: 11,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
   },

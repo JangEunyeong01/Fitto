@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import ScreenBackground from '../../components/ScreenBackground';
 import GlassCard from '../../components/GlassCard';
+import TextLink from '../../components/TextLink';
 import TextField from '../../components/TextField';
 import PrimaryButton from '../../components/PrimaryButton';
 import DetailHeader from '../detail/DetailHeader';
@@ -37,6 +38,7 @@ export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
   const wakeNotice = useWakeNotice(busy);
 
   /** 기기에 옮길 만한 기록이 있는지. 없으면 합치기를 묻지 않는다. */
@@ -80,7 +82,11 @@ export default function LoginScreen() {
       // 온보딩 직후에 들어온 경우에는 로그인과 동시에 화면 구성이 홈으로 바뀐다(RootNavigator).
       if (navigation.canGoBack()) navigation.goBack();
     } catch (e) {
-      if (e instanceof ApiError || e instanceof NetworkError) {
+      // 이메일·비밀번호 중 무엇이 틀렸는지는 서버가 알려주지 않는다(가입 여부가 새지 않게).
+      // 그래서 특정 칸이 아니라 비밀번호 칸 아래에 한 줄로 둔다. 토스트는 3초 뒤 사라져서 놓친다.
+      if (e instanceof ApiError && e.code === 'INVALID_CREDENTIALS') {
+        setLoginError(e.message);
+      } else if (e instanceof ApiError || e instanceof NetworkError) {
         showToast(e.message);
       } else {
         showToast('로그인에 실패했어요. 잠시 후 다시 시도해 주세요');
@@ -122,11 +128,15 @@ export default function LoginScreen() {
           <Text style={[styles.label, { color: colors.textSecondary }]}>비밀번호</Text>
           <TextField
             value={password}
-            onChangeText={setPassword}
+            onChangeText={(v) => {
+              setPassword(v);
+              if (loginError) setLoginError(null);
+            }}
             placeholder="비밀번호"
             autoCapitalize="none"
             secureTextEntry
             maxLength={64}
+            error={loginError}
           />
 
           <View style={styles.buttonWrap}>
@@ -137,9 +147,10 @@ export default function LoginScreen() {
           {wakeNotice && <Text style={[styles.wakeNotice, { color: colors.textSecondary }]}>{wakeNotice}</Text>}
 
           {/* 로그인 화면에서 막히지 않게 가입으로 가는 길을 둔다. 비밀번호 찾기는 메일 발송을 붙인 뒤에 넣는다. */}
-          <Pressable onPress={() => navigation.navigate('Signup')} style={styles.linkRow}>
-            <Text style={[styles.link, { color: colors.textPrimary }]}>계정이 없으신가요? 계정 만들기</Text>
-          </Pressable>
+          <View style={styles.linkRow}>
+            <Text style={[styles.link, { color: colors.textSecondary }]}>계정이 없으신가요?</Text>
+            <TextLink label="계정 만들기" onPress={() => navigation.navigate('Signup')} />
+          </View>
         </GlassCard>
 
         {/* 기기에 기록이 있을 때만 묻는다. 둘 중 하나를 고르기 전에는 로그인하지 않는다. */}
@@ -152,7 +163,8 @@ export default function LoginScreen() {
 
             <View style={styles.mergeButtons}>
               <PrimaryButton label="계정에 합치기" onPress={() => handleLogin(true)} loading={busy} />
-              <PrimaryButton label="합치지 않고 로그인" onPress={() => handleLogin(false)} small />
+              {/* 주 버튼은 하나. 합치지 않는 쪽은 보조 버튼으로 둔다. */}
+              <PrimaryButton label="합치지 않고 로그인" variant="secondary" onPress={() => handleLogin(false)} />
             </View>
           </GlassCard>
         )}
@@ -186,8 +198,10 @@ const styles = StyleSheet.create({
   },
   linkRow: {
     height: 44,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 6,
   },
   link: typography.label,
   mergeTitle: typography.sectionTitle,

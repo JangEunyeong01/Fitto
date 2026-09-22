@@ -58,12 +58,12 @@ export default function TabBar({ state, navigation }: BottomTabBarProps) {
       <Pressable key={route.key} onPress={onPress} style={styles.tabItem}>
         {focused ? (
           <LinearGradient colors={primaryGradient} style={styles.tabActiveBg} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
-            <Icon name={icon} size={19} color={colors.textOnPrimary} strokeWidth={2} />
+            <Icon name={icon} size={20} color={colors.textOnPrimary} strokeWidth={2} />
             <Text style={[styles.label, { color: colors.textOnPrimary }, weight(700)]}>{label}</Text>
           </LinearGradient>
         ) : (
           <View style={styles.tabInactiveBg}>
-            <Icon name={icon} size={19} color={colors.textSecondary} />
+            <Icon name={icon} size={20} color={colors.textSecondary} />
             <Text style={[styles.label, { color: colors.textSecondary }, weight(500)]}>{label}</Text>
           </View>
         )}

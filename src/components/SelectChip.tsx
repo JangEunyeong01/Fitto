@@ -100,8 +100,8 @@ const sizeStyles = StyleSheet.create({
   },
   // TextField md와 같은 높이·라운드. 나란히 놓았을 때 어긋나지 않게 한다.
   field: {
-    height: 46,
-    borderRadius: 15,
+    height: 48,
+    borderRadius: 14,
     paddingHorizontal: 12,
   },
 });

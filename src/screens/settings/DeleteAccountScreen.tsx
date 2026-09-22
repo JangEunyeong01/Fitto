@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
-import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import ScreenBackground from '../../components/ScreenBackground';
 import GlassCard from '../../components/GlassCard';
 import TextField from '../../components/TextField';
+import PrimaryButton from '../../components/PrimaryButton';
 import DetailHeader from '../detail/DetailHeader';
 import { useTheme } from '../../theme/useTheme';
-import { alpha, semantic, typography } from '../../theme/tokens';
+import { typography } from '../../theme/tokens';
 import { useAppStore } from '../../store/useAppStore';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useOutboxStore } from '../../store/useOutboxStore';
@@ -115,41 +116,41 @@ export default function DeleteAccountScreen() {
           {error && <Text style={[styles.error, { color: colors.textDanger }]}>{error}</Text>}
           {wakeNotice && <Text style={[styles.error, { color: colors.textSecondary }]}>{wakeNotice}</Text>}
 
+          {/* 빨간 버튼은 되돌릴 수 없는 동작의 **마지막 확인에만** 쓴다(UI 기준서 5-1). 첫 단계는 보조 버튼. */}
           {!confirming ? (
-            <Pressable
-              onPress={() => setConfirming(true)}
-              disabled={!password}
-              style={[
-                styles.dangerBtn,
-                { borderColor: semantic.danger, backgroundColor: alpha(semantic.danger, 0.12) },
-                !password && styles.disabled,
-              ]}
-            >
-              <Text style={[styles.dangerLabel, { color: colors.textDanger }]}>탈퇴하기</Text>
-            </Pressable>
+            <PrimaryButton
+              label="탈퇴하기"
+              variant="secondary"
+              size="md"
+              style={styles.firstBtn}
+              onPress={() => {
+                if (!password) {
+                  setError('비밀번호를 입력해 주세요');
+                  return;
+                }
+                setConfirming(true);
+              }}
+              inactive={!password}
+            />
           ) : (
             <View style={styles.confirmBox}>
               <Text style={[styles.confirmTitle, { color: colors.textPrimary }]}>정말 탈퇴할까요?</Text>
               <View style={styles.confirmButtons}>
-                <Pressable
+                <PrimaryButton
+                  label="취소"
+                  variant="secondary"
+                  size="md"
+                  style={styles.flex}
                   onPress={() => setConfirming(false)}
-                  style={[styles.dangerBtn, styles.flex, { borderColor: colors.borderDivider }]}
-                >
-                  <Text style={[styles.dangerLabel, { color: colors.textPrimary }]}>취소</Text>
-                </Pressable>
-                <Pressable
+                />
+                <PrimaryButton
+                  label="계정 삭제"
+                  variant="danger"
+                  size="md"
+                  style={styles.flex}
                   onPress={submit}
-                  style={[
-                    styles.dangerBtn,
-                    styles.flex,
-                    { borderColor: semantic.danger, backgroundColor: alpha(semantic.danger, 0.12) },
-                    busy && styles.disabled,
-                  ]}
-                >
-                  <Text style={[styles.dangerLabel, { color: colors.textDanger }]}>
-                    {busy ? '지우는 중' : '계정 삭제'}
-                  </Text>
-                </Pressable>
+                  loading={busy}
+                />
               </View>
             </View>
           )}
@@ -191,17 +192,8 @@ const styles = StyleSheet.create({
     ...typography.caption,
     marginTop: 10,
   },
-  dangerBtn: {
+  firstBtn: {
     marginTop: 16,
-    height: 48,
-    borderRadius: 14,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  dangerLabel: typography.buttonLabelSm,
-  disabled: {
-    opacity: 0.5,
   },
   confirmBox: {
     marginTop: 4,
@@ -213,6 +205,7 @@ const styles = StyleSheet.create({
   confirmButtons: {
     flexDirection: 'row',
     gap: 8,
+    marginTop: 12,
   },
   flex: {
     flex: 1,

@@ -137,7 +137,7 @@ const styles = StyleSheet.create({
     right: 16,
   },
   tooltip: {
-    borderRadius: 20,
+    borderRadius: 16,
     overflow: 'hidden',
   },
   tooltipInner: {
@@ -168,7 +168,7 @@ const styles = StyleSheet.create({
   skipBtn: {
     height: 38,
     paddingHorizontal: 14,
-    borderRadius: 12,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -179,7 +179,7 @@ const styles = StyleSheet.create({
   nextBtn: {
     height: 38,
     paddingHorizontal: 20,
-    borderRadius: 12,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
   },

@@ -3,7 +3,7 @@ import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
+import PrimaryButton from '../../components/PrimaryButton';
 import ScreenBackground from '../../components/ScreenBackground';
 import GlassCard from '../../components/GlassCard';
 import ToggleSwitch from '../../components/ToggleSwitch';
@@ -24,7 +24,7 @@ import { describeOp } from '../../sync/types';
 import { PERSONA_OPTIONS } from '../onboarding/onboardingData';
 import { GOAL_OPTIONS, labelOf } from '../../constants/codes';
 import { daysBetween, toDateKey } from '../../utils/periodCycle';
-import { alpha, semantic, typography } from '../../theme/tokens';
+import { semantic, typography } from '../../theme/tokens';
 // 버전은 app.json 한 곳에서만 올린다. 화면에 따로 적어두면 배포 때 둘 중 하나를 꼭 까먹는다.
 import appConfig from '../../../app.json';
 
@@ -160,7 +160,7 @@ export default function SettingsScreen() {
                   </Text>
                 )}
               </View>
-              <Icon name="chevronRight" size={17} color={colors.textSecondary} />
+              <Icon name="chevronRight" size={16} color={colors.textSecondary} />
             </View>
           </GlassCard>
         </Pressable>
@@ -187,7 +187,7 @@ export default function SettingsScreen() {
               {/* 되돌릴 수 없는 동작이라 다른 줄과 색으로 구분한다. 확인은 탈퇴 화면에서 받는다. */}
               <Pressable onPress={() => navigation.navigate('DeleteAccount')} style={styles.row}>
                 <Text style={[styles.rowLabel, { color: colors.textDanger }]}>회원 탈퇴</Text>
-                <Icon name="chevronRight" size={17} color={colors.textDanger} />
+                <Icon name="chevronRight" size={16} color={colors.textDanger} />
               </Pressable>
             </>
           ) : (
@@ -233,7 +233,7 @@ export default function SettingsScreen() {
           {/* README: 글씨 크기 조절은 V2 예정 기능이라 지금은 눌러도 반응하지 않는 자리만 잡아둔다. */}
           <View style={styles.row}>
             <Text style={[styles.rowLabel, { color: colors.textPrimary }]}>글씨 크기 조절</Text>
-            <Badge label="V2" />
+            <Badge label="준비 중" />
           </View>
         </GlassCard>
 
@@ -275,17 +275,11 @@ export default function SettingsScreen() {
             <View style={styles.rowTextCol}>
               <View style={styles.rowTitleLine}>
                 <Text style={[styles.rowLabel, { color: colors.textPrimary }]}>생일 축하 메시지</Text>
-                <Badge label="V2" />
+                <Badge label="준비 중" />
               </View>
               <Text style={[styles.rowDesc, { color: colors.textSecondary }]}>생일 당일 홈에서 피또가 깜짝 축하해요</Text>
             </View>
-            <Pressable onPress={showBirthdayModal}>
-              <BlurView intensity={20} tint={mode === 'dark' ? 'dark' : 'light'} style={[styles.previewBtn, { borderColor: colors.borderGlass }]}>
-                <View style={[styles.previewBtnInner, { backgroundColor: colors.surface }]}>
-                  <Text style={[styles.previewBtnLabel, { color: colors.textPrimary }]}>미리보기</Text>
-                </View>
-              </BlurView>
-            </Pressable>
+            <PrimaryButton label="미리보기" variant="secondary" size="sm" onPress={showBirthdayModal} />
           </View>
         </GlassCard>
 
@@ -310,20 +304,21 @@ export default function SettingsScreen() {
                   : '지운 데이터는 되돌릴 수 없어요.'}
               </Text>
               <View style={styles.resetBtns}>
-                <Pressable onPress={() => setResetStep(0)} style={[styles.resetBtn, { borderColor: colors.borderDivider }]}>
-                  <Text style={[styles.previewBtnLabel, { color: colors.textPrimary }]}>취소</Text>
-                </Pressable>
-                <Pressable
+                <PrimaryButton
+                  label="취소"
+                  variant="secondary"
+                  size="md"
+                  style={styles.flex}
+                  onPress={() => setResetStep(0)}
+                />
+                {/* 빨간 버튼은 마지막 확인에만. 첫 단계는 보조 버튼으로 한 번 더 묻는다. */}
+                <PrimaryButton
+                  label={resetStep === 1 ? '초기화' : '모두 지우기'}
+                  variant={resetStep === 1 ? 'secondary' : 'danger'}
+                  size="md"
+                  style={styles.flex}
                   onPress={confirmReset}
-                  style={[
-                    styles.resetBtn,
-                    { borderColor: semantic.danger, backgroundColor: alpha(semantic.danger, 0.12) },
-                  ]}
-                >
-                  <Text style={[styles.previewBtnLabel, { color: colors.textDanger }]}>
-                    {resetStep === 1 ? '초기화' : '모두 지우기'}
-                  </Text>
-                </Pressable>
+                />
               </View>
             </View>
           )}
@@ -360,12 +355,8 @@ function FailedRecords({
       ))}
       {items.length > 3 && <Text style={[styles.failedRow, { color: colors.textSecondary }]}>· 외 {items.length - 3}건</Text>}
       <View style={styles.failedButtons}>
-        <Pressable onPress={onRetry} style={[styles.failedBtn, { borderColor: colors.borderDivider }]}>
-          <Text style={[styles.previewBtnLabel, { color: colors.textPrimary }]}>다시 시도</Text>
-        </Pressable>
-        <Pressable onPress={onClear} style={[styles.failedBtn, { borderColor: colors.borderDivider }]}>
-          <Text style={[styles.previewBtnLabel, { color: colors.textSecondary }]}>목록 비우기</Text>
-        </Pressable>
+        <PrimaryButton label="다시 시도" variant="secondary" size="md" style={styles.flex} onPress={onRetry} />
+        <PrimaryButton label="목록 비우기" variant="text" size="md" style={styles.flex} onPress={onClear} />
       </View>
     </View>
   );
@@ -407,7 +398,7 @@ function NavRow({
       {actionLabel ? (
         <Text style={[styles.rowAction, { color: colors.textSecondary }]}>{actionLabel}</Text>
       ) : (
-        <Icon name="chevronRight" size={17} color={colors.textSecondary} />
+        <Icon name="chevronRight" size={16} color={colors.textSecondary} />
       )}
     </Pressable>
   );
@@ -463,7 +454,7 @@ const styles = StyleSheet.create({
   failedBox: {
     marginTop: 12,
     borderWidth: 1,
-    borderRadius: 12,
+    borderRadius: 10,
     padding: 12,
     gap: 4,
   },
@@ -474,13 +465,8 @@ const styles = StyleSheet.create({
     gap: 8,
     marginTop: 8,
   },
-  failedBtn: {
+  flex: {
     flex: 1,
-    height: 40,
-    borderRadius: 12,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   divider: {
     borderTopWidth: StyleSheet.hairlineWidth,
@@ -504,19 +490,6 @@ const styles = StyleSheet.create({
     gap: 7,
   },
   rowDesc: typography.caption,
-  previewBtn: {
-    height: 34,
-    borderRadius: 12,
-    borderWidth: 1,
-    overflow: 'hidden',
-  },
-  previewBtnInner: {
-    flex: 1,
-    paddingHorizontal: 13,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  previewBtnLabel: typography.label,
   resetBox: {
     gap: 6,
   },
@@ -524,13 +497,5 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 8,
     marginTop: 8,
-  },
-  resetBtn: {
-    flex: 1,
-    height: 40,
-    borderRadius: 12,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 });

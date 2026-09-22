@@ -128,7 +128,7 @@ export default function HealthScreen() {
             <GlassCard style={styles.card}>
               <View style={styles.headerRow}>
                 <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>오늘의 퍼스널 트레이닝</Text>
-                <Badge label="룰 기반" />
+                <Badge label="룰 기반" tone="info" />
               </View>
               <Text style={[styles.comment, { color: colors.textPrimary }]}>{trainingComment}</Text>
 
@@ -196,7 +196,7 @@ export default function HealthScreen() {
                     {e.minutes}분 · {e.kcal}kcal
                   </Text>
                   <Pressable onPress={() => removeExercise(date, e.id)} hitSlop={8}>
-                    <Icon name="close" size={15} color={colors.textSecondary} />
+                    <Icon name="close" size={16} color={colors.textSecondary} />
                   </Pressable>
                 </View>
               ))}
@@ -216,7 +216,7 @@ export default function HealthScreen() {
               <Pressable
                 key={code}
                 onPress={() => handleQuickAdd(code)}
-                style={[styles.chip, { borderColor: colors.borderDivider }]}
+                style={[styles.chip, { borderColor: colors.borderInput }]}
               >
                 <Text style={[styles.chipText, { color: colors.textPrimary }]}>+ {findExercise(code)?.name}</Text>
               </Pressable>
@@ -238,7 +238,7 @@ export default function HealthScreen() {
                   {latestWeight != null ? `최근 ${latestWeight}kg · 추이 보기` : '기록하고 추이 보기'}
                 </Text>
               </View>
-              <Icon name="chevronRight" size={17} color={colors.textSecondary} />
+              <Icon name="chevronRight" size={16} color={colors.textSecondary} />
             </View>
           </GlassCard>
         </Pressable>
@@ -263,7 +263,7 @@ export default function HealthScreen() {
                     {periodSetupDone ? '캘린더와 컨디션 기록 보기' : '마지막 시작일을 입력하면 주기를 계산해요'}
                   </Text>
                 </View>
-                <Icon name="chevronRight" size={17} color={colors.textSecondary} />
+                <Icon name="chevronRight" size={16} color={colors.textSecondary} />
               </View>
             </GlassCard>
           </Pressable>
@@ -331,7 +331,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 10,
     padding: 12,
-    borderRadius: 15,
+    borderRadius: 14,
   },
   suggestText: {
     flex: 1,
@@ -346,7 +346,7 @@ const styles = StyleSheet.create({
   addBtn: {
     height: 32,
     paddingHorizontal: 11,
-    borderRadius: 11,
+    borderRadius: 10,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
@@ -393,7 +393,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     borderRadius: 10,
     borderWidth: 1,
-    borderStyle: 'dashed',
   },
   chipPrimary: {
     borderStyle: 'solid',
@@ -407,7 +406,7 @@ const styles = StyleSheet.create({
   periodBadge: {
     width: 44,
     height: 44,
-    borderRadius: 15,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
   },
