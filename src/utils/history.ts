@@ -118,6 +118,23 @@ export function average(values: number[]): number {
   return Math.round(recorded.reduce((a, v) => a + v, 0) / recorded.length);
 }
 
+/**
+ * 오늘까지 이어서 기록한 날 수(오늘 포함).
+ *
+ * 오늘 아직 기록이 없으면 0이다 — 어제까지의 연속을 "지금 이어지는 중"이라고 말하면
+ * 오늘 아무것도 안 한 사람에게 칭찬이 뜬다.
+ */
+export function recordStreak(records: Record<string, DailyRecord>, today = new Date()): number {
+  let streak = 0;
+  for (let i = 0; i < 365; i++) {
+    const d = new Date(today);
+    d.setDate(today.getDate() - i);
+    if (!hasRecord(records[dateKey(d)])) break;
+    streak++;
+  }
+  return streak;
+}
+
 /** 기간 안에 기록이 있는 날 수. 0이면 화면은 차트 대신 빈 상태를 보여준다. */
 export function daysWithRecordBetween(
   records: Record<string, DailyRecord>,

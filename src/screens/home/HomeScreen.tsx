@@ -3,7 +3,6 @@ import { ScrollView, View, Pressable, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import ScreenBackground from '../../components/ScreenBackground';
 import HomeHeader from './HomeHeader';
-import HeroRow from './HeroRow';
 import KcalCard from './cards/KcalCard';
 import WaterCard from './cards/WaterCard';
 import ActivityCard from './cards/ActivityCard';
@@ -136,16 +135,16 @@ export default function HomeScreen() {
         contentContainerStyle={[styles.content, { paddingTop: insets.top + 14, paddingBottom: 108 }]}
         showsVerticalScrollIndicator={false}
       >
-        <HomeHeader />
-        {isBirthday && <BirthdayBanner name={profile.nickname} onPress={openBirthday} />}
+        {/* 로고·인사·브리핑이 한 덩어리다. 튜토리얼 1단계가 이 영역을 가리킨다. */}
         <View
           ref={(node) => {
             heroRef.current = node;
           }}
           onLayout={measureAllTargets}
         >
-          <HeroRow />
+          <HomeHeader />
         </View>
+        {isBirthday && <BirthdayBanner name={profile.nickname} onPress={openBirthday} />}
 
         <Pressable onLongPress={showSheet} delayLongPress={550} style={styles.grid}>
           {visibleCards.map((id, index) => {
