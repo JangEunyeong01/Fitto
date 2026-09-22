@@ -16,6 +16,7 @@ import { emptyMeals, useAppStore, type MealSlot } from '../../store/useAppStore'
 import { MEAL_SLOTS } from '../../constants/codes';
 import { useFoodSearchStore } from '../../store/useFoodSearchStore';
 import { dateKey } from '../../utils/timeOfDay';
+import { usePastRecord } from '../../hooks/usePastRecord';
 import { sumMealKcal } from '../../utils/health';
 import { brand, typography } from '../../theme/tokens';
 
@@ -29,6 +30,8 @@ export default function DietScreen() {
   const [date, setDate] = useState(dateKey());
   const isToday = date === dateKey();
   const record = useAppStore((s) => s.dailyRecords[date]);
+  // 지난 날짜는 로그인 때 안 받아온다. 화면을 열 때 그 날짜만 받아온다.
+  const loading = usePastRecord(date);
   const goal = useAppStore((s) => s.goals.kcal);
   const openSearch = useFoodSearchStore((s) => s.show);
   // onPress에 show를 그대로 넘기면 이벤트 객체가 옵션 자리로 들어가므로 감싸서 넘긴다.
@@ -61,14 +64,18 @@ export default function DietScreen() {
               <View style={styles.emptyChar}>
                 <FittoCharacter current={1} goal={5} size={96} glow={false} />
               </View>
-              {/* 명세 F-051 빈 상태 문구 */}
+              {/* 명세 F-051 빈 상태 문구. 서버에서 받아오는 중이면 "없다"고 단정하지 않는다. */}
               <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>
-                {isToday ? '오늘 뭐 드셨나요?' : '이날 뭐 드셨나요?'}
+                {loading ? '기록을 불러오는 중이에요' : isToday ? '오늘 뭐 드셨나요?' : '이날 뭐 드셨나요?'}
               </Text>
-              <Text style={[styles.emptyDesc, { color: colors.textSecondary }]}>
-                먹은 음식을 한 개만 추가해도 피또가 상태를 알려줄 수 있어요.
-              </Text>
-              <PrimaryButton label="첫 기록 시작하기" onPress={openSearchForDate} style={styles.emptyBtn} />
+              {!loading && (
+                <>
+                  <Text style={[styles.emptyDesc, { color: colors.textSecondary }]}>
+                    먹은 음식을 한 개만 추가해도 피또가 상태를 알려줄 수 있어요.
+                  </Text>
+                  <PrimaryButton label="첫 기록 시작하기" onPress={openSearchForDate} style={styles.emptyBtn} />
+                </>
+              )}
             </View>
           </GlassCard>
         ) : (

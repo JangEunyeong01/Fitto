@@ -19,6 +19,7 @@ import { QUICK_WORKOUTS, QUICK_WORKOUT_MINUTES, calcExerciseKcal, findExercise }
 import { recommendWorkouts } from '../../utils/workoutRecommend';
 import { sumMealKcal } from '../../utils/health';
 import { recentDays, recentDateKeys } from '../../utils/history';
+import { usePastRecord } from '../../hooks/usePastRecord';
 import WorkoutSettingRow from './WorkoutSettingRow';
 import RoutineCard from './RoutineCard';
 
@@ -35,6 +36,8 @@ export default function HealthScreen() {
   const records = useAppStore((s) => s.dailyRecords);
   const todayRecord = records[dateKey()];
   const record = records[date];
+  // 지난 날짜는 로그인 때 안 받아온다. 화면을 열 때 그 날짜만 받아온다.
+  const loading = usePastRecord(date);
   const weightLog = useAppStore((s) => s.weightLog);
   const profile = useAppStore((s) => s.profile);
   const weightKg = profile.weight;
@@ -119,10 +122,15 @@ export default function HealthScreen() {
           {exercises.length === 0 ? (
             // 명세 F-051: 빈 상태에서 무엇을 하면 되는지까지 알려준다. 지난 날짜엔 권유가 어색해서 문구만 둔다.
             <View style={styles.emptyBox}>
+              {/* 서버에서 받아오는 중이면 "없다"고 단정하지 않는다. */}
               <Text style={[styles.empty, { color: colors.textPrimary }]}>
-                {isToday ? '오늘 운동 기록이 없어요.' : '이날은 운동 기록이 없어요.'}
+                {loading
+                  ? '기록을 불러오는 중이에요.'
+                  : isToday
+                    ? '오늘 운동 기록이 없어요.'
+                    : '이날은 운동 기록이 없어요.'}
               </Text>
-              {isToday && (
+              {isToday && !loading && (
                 <Text style={[styles.emptyHint, { color: colors.textSecondary }]}>
                   아래 퀵 기록을 누르면 15분으로 바로 남길 수 있어요.
                 </Text>
