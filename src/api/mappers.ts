@@ -10,12 +10,15 @@ import type {
 import type { PeriodSettings } from '../utils/periodCycle';
 import type { WorkoutPreference } from '../utils/workoutRecommend';
 import type {
-  CustomIngredientDto,
+  CustomIngredientImportDto,
+  CustomIngredientPutDto,
+  CustomIngredientResponseDto,
   ImportPayload,
   MealItemDto,
   MealMemoDto,
   PeriodDailyDto,
   RecipeDto,
+  RecipeResponseDto,
   RoutineDto,
   User,
   WorkoutDto,
@@ -103,27 +106,18 @@ export function toImportPayload(s: LocalSnapshot): ImportPayload {
     }
   });
 
-  const recipes: RecipeDto[] = s.recipes.map((r) => ({
-    id: r.id,
-    name: r.name,
-    // 기기 안 사진 경로(file://)는 서버에서 못 읽는다. 업로드는 사진 API를 붙일 때 따로 처리한다.
-    photoUrl: null,
-    ingredients: r.ingredients.map((i) => ({ name: i.name, grams: i.grams, calories: i.kcal })),
-    totalCalories: r.totalKcal,
-  }));
+  const recipes = s.recipes.map(toRecipeDto);
+  const routines = s.routines.map(toRoutineDto);
 
-  const routines: RoutineDto[] = s.routines.map((r) => ({
-    id: r.id,
-    name: r.name,
-    exercises: r.exercises.map((e) => ({ exerciseCode: e.code, name: e.name, duration: e.minutes })),
-  }));
-
-  const customIngredients: CustomIngredientDto[] = s.customIngredients.map((i) => ({
+  // 가져오기는 100g 기준 값을 평평하게 받는다. 개별 저장(PUT)은 per100g로 묶는다 — 모양이 달라 따로 만든다.
+  const customIngredients: CustomIngredientImportDto[] = s.customIngredients.map((i) => ({
     name: i.name,
-    caloriesPer100g: i.kcal100,
-    carbsPer100g: i.carbs100,
-    proteinPer100g: i.protein100,
-    fatPer100g: i.fat100,
+    calories: i.kcal100,
+    carbs: i.carbs100,
+    protein: i.protein100,
+    fat: i.fat100,
+    sodium: null,
+    sugar: null,
     allergy: !!i.allergy,
   }));
 
@@ -148,6 +142,75 @@ export function toImportPayload(s: LocalSnapshot): ImportPayload {
     recipes,
     routines,
     customIngredients,
+  };
+}
+
+/**
+ * 레시피 ↔ 서버. 재료 양은 그램이고 서버 필드 이름은 amount다.
+ * 기기 안 사진 경로(file://)는 서버에서 못 읽으므로 보내지 않는다. 사진은 업로드 API를 붙일 때 따로 처리한다.
+ */
+export function toRecipeDto(r: Recipe): RecipeDto {
+  return {
+    id: r.id,
+    name: r.name,
+    ingredients: r.ingredients.map((i) => ({
+      name: i.name,
+      foodId: null,
+      customIngredientId: null,
+      amount: i.grams,
+      calories: i.kcal,
+      carbs: null,
+      protein: null,
+      fat: null,
+      sodium: null,
+      sugar: null,
+    })),
+  };
+}
+
+/** 사진은 서버에 없어서 기기에 있던 값을 이어 붙인다. */
+export function fromRecipeDto(dto: RecipeResponseDto, photoUri: string | null): Recipe {
+  return {
+    id: dto.id,
+    name: dto.name,
+    photoUri,
+    ingredients: dto.ingredients.map((i) => ({ name: i.name, grams: i.amount, kcal: i.calories })),
+    totalKcal: dto.totals.calories,
+  };
+}
+
+export function toRoutineDto(r: WorkoutRoutine): RoutineDto {
+  return {
+    id: r.id,
+    name: r.name,
+    exercises: r.exercises.map((e) => ({ exerciseCode: e.code || null, name: e.name, duration: e.minutes })),
+  };
+}
+
+export function fromRoutineDto(dto: RoutineDto): WorkoutRoutine {
+  return {
+    id: dto.id,
+    name: dto.name,
+    exercises: dto.exercises.map((e) => ({ code: e.exerciseCode ?? '', name: e.name, minutes: e.duration })),
+  };
+}
+
+export function toCustomIngredientPut(i: CustomIngredient): CustomIngredientPutDto {
+  return {
+    name: i.name,
+    per100g: { calories: i.kcal100, carbs: i.carbs100, protein: i.protein100, fat: i.fat100, sodium: null, sugar: null },
+    allergy: !!i.allergy,
+  };
+}
+
+export function fromCustomIngredientDto(dto: CustomIngredientResponseDto): CustomIngredient {
+  return {
+    name: dto.name,
+    kcal100: dto.per100g.calories,
+    carbs100: dto.per100g.carbs ?? 0,
+    protein100: dto.per100g.protein ?? 0,
+    fat100: dto.per100g.fat ?? 0,
+    allergy: dto.allergy,
   };
 }
 

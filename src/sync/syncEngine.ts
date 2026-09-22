@@ -1,12 +1,17 @@
 import { ApiError, NetworkError } from '../api/client';
 import { refresh } from '../api/auth';
+import { toCustomIngredientPut, toRecipeDto, toRoutineDto } from '../api/mappers';
 import {
   deleteMeal,
+  deleteRoutine,
   deleteWeight,
   deleteWorkout,
   patchMe,
   postMeal,
+  postRecipe,
+  postRoutine,
   postWorkout,
+  putCustomIngredient,
   putMealMemo,
   putPeriodDaily,
   putPeriodSettings,
@@ -74,6 +79,11 @@ export async function runSync(): Promise<void> {
         await send(head.op, auth.accessToken);
         shift();
       } catch (e) {
+        if (isRemoveAlreadyDone(head.op, e)) {
+          shift();
+          continue;
+        }
+
         if (e instanceof ApiError && e.status === 401) {
           const token = await refreshToken();
           if (!token) {
@@ -255,5 +265,43 @@ async function send(op: SyncOp, token: string): Promise<void> {
       });
       return;
     }
+
+    // 레시피·루틴·직접 입력 재료. 예전에는 대기열에 이 종류가 없어서, 가입할 때 한 번 올라간 뒤로
+    // 새로 만든 건 기기에만 남았다. 서버 API는 그때부터 있었는데 앱이 부르지 않았다.
+    case 'recipe.save': {
+      const recipe = s.recipes.find((r) => r.id === op.recipeId);
+      if (!recipe) return;
+      await postRecipe(toRecipeDto(recipe), token);
+      return;
+    }
+
+    case 'routine.save': {
+      const routine = s.routines.find((r) => r.id === op.routineId);
+      // 보내기 전에 지웠으면 보낼 게 없다. 뒤에 쌓인 삭제가 서버 쪽을 처리한다.
+      if (!routine) return;
+      await postRoutine(toRoutineDto(routine), token);
+      return;
+    }
+
+    case 'routine.remove':
+      await deleteRoutine(op.routineId, token);
+      return;
+
+    case 'ingredient.save': {
+      const ingredient = s.customIngredients.find((i) => i.name === op.name);
+      if (!ingredient) return;
+      await putCustomIngredient(toCustomIngredientPut(ingredient), token);
+      return;
+    }
   }
+}
+
+/**
+ * 삭제 요청이 404를 받으면 이미 지워진 것이다 — 원하는 상태에 도달했으니 성공으로 본다.
+ *
+ * 응답을 받기 전에 연결이 끊기면 서버는 지웠는데 기기는 실패로 알고 다시 보낸다.
+ * 이때 404를 실패로 세면 다섯 번 뒤 "올리지 못한 기록"에 뜬다. 사용자는 지운 게 안 지워졌다고 오해한다.
+ */
+function isRemoveAlreadyDone(op: SyncOp, e: unknown): boolean {
+  return op.kind.endsWith('.remove') && e instanceof ApiError && e.status === 404;
 }

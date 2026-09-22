@@ -118,27 +118,66 @@ export interface PeriodDailyDto {
   memo: string | null;
 }
 
+/**
+ * 레시피 재료(명세 7장). amount는 그램이다.
+ *
+ * 예전 타입은 `{ name, grams, calories }`였는데 서버는 `amount`를 필수로 받는다.
+ * 이 차이 때문에 레시피가 하나라도 있으면 /me/import 전체가 400으로 거절됐다(한 요청이 전부 저장되거나 전부 거절된다).
+ */
+export interface RecipeIngredientDto {
+  name: string;
+  foodId: string | null;
+  customIngredientId: string | null;
+  amount: number;
+  calories: number;
+  carbs: number | null;
+  protein: number | null;
+  fat: number | null;
+  sodium: number | null;
+  sugar: number | null;
+}
+
+/** POST /recipes, /me/import의 recipes 항목. */
 export interface RecipeDto {
   id: string;
   name: string;
-  photoUrl: string | null;
-  ingredients: { name: string; grams: number; calories: number }[];
-  totalCalories: number;
+  ingredients: RecipeIngredientDto[];
 }
 
+/** GET /recipes 응답 항목. */
+export interface RecipeResponseDto extends RecipeDto {
+  totals: { calories: number };
+}
+
+/** POST /routines, /me/import의 routines 항목. GET 응답도 같은 모양에 합계가 더 붙는다. */
 export interface RoutineDto {
   id: string;
   name: string;
-  exercises: { exerciseCode: string; name: string; duration: number }[];
+  exercises: { exerciseCode: string | null; name: string; duration: number }[];
 }
 
-export interface CustomIngredientDto {
+/** /me/import의 customIngredients 항목. 100g 기준 값이 평평하게 들어간다. */
+export interface CustomIngredientImportDto {
   name: string;
-  caloriesPer100g: number;
-  carbsPer100g: number;
-  proteinPer100g: number;
-  fatPer100g: number;
+  calories: number;
+  carbs: number | null;
+  protein: number | null;
+  fat: number | null;
+  sodium: number | null;
+  sugar: number | null;
   allergy: boolean;
+}
+
+/** PUT /ingredients/custom. 가져오기와 달리 100g 기준 값을 per100g로 묶는다(명세 7장). */
+export interface CustomIngredientPutDto {
+  name: string;
+  per100g: { calories: number; carbs: number | null; protein: number | null; fat: number | null; sodium: number | null; sugar: number | null };
+  allergy: boolean;
+}
+
+/** GET /ingredients/custom 응답 항목. */
+export interface CustomIngredientResponseDto extends CustomIngredientPutDto {
+  id: string;
 }
 
 /** POST /me/import — 게스트로 쓰던 기기 기록을 계정에 합칠 때 올리는 묶음(명세 6). */
@@ -152,7 +191,7 @@ export interface ImportPayload {
   period?: { settings?: PeriodSettingsDto; daily: PeriodDailyDto[] };
   recipes: RecipeDto[];
   routines: RoutineDto[];
-  customIngredients: CustomIngredientDto[];
+  customIngredients: CustomIngredientImportDto[];
 }
 
 export type ImportCounts = Record<string, number>;

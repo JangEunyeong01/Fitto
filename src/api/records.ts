@@ -1,5 +1,16 @@
 import { request } from './client';
-import type { MealItemDto, PeriodDailyDto, PeriodSettingsDto, User, WorkoutDto } from './types';
+import type {
+  CustomIngredientPutDto,
+  CustomIngredientResponseDto,
+  MealItemDto,
+  PeriodDailyDto,
+  PeriodSettingsDto,
+  RecipeDto,
+  RecipeResponseDto,
+  RoutineDto,
+  User,
+  WorkoutDto,
+} from './types';
 
 /**
  * 기록 API (명세 7~12장). 아웃박스가 이 함수들을 부른다.
@@ -119,4 +130,35 @@ export function getPeriodDaily(
   token: string
 ): Promise<{ items: PeriodDailyDto[] }> {
   return request('/period/daily', { query: { from, to }, token });
+}
+
+// 레시피·루틴·직접 입력 재료(명세 7·8장). 같은 id로 다시 보내면 새로 만들지 않고 덮어쓴다 — 대기열이 재시도해도 안전하다.
+
+export function postRecipe(recipe: RecipeDto, token: string): Promise<RecipeResponseDto> {
+  return request<RecipeResponseDto>('/recipes', { method: 'POST', body: recipe, token });
+}
+
+export function getRecipes(token: string): Promise<{ items: RecipeResponseDto[] }> {
+  return request('/recipes', { token });
+}
+
+export function postRoutine(routine: RoutineDto, token: string): Promise<RoutineDto> {
+  return request<RoutineDto>('/routines', { method: 'POST', body: routine, token });
+}
+
+export function deleteRoutine(routineId: string, token: string): Promise<void> {
+  return request<void>(`/routines/${routineId}`, { method: 'DELETE', token });
+}
+
+export function getRoutines(token: string): Promise<{ items: RoutineDto[] }> {
+  return request('/routines', { token });
+}
+
+/** 이름이 같으면 서버가 덮어쓴다(명세 7장). 기기도 이름으로 구분하므로 id 없이 보낸다. */
+export function putCustomIngredient(ingredient: CustomIngredientPutDto, token: string): Promise<CustomIngredientResponseDto> {
+  return request<CustomIngredientResponseDto>('/ingredients/custom', { method: 'PUT', body: ingredient, token });
+}
+
+export function getCustomIngredients(token: string): Promise<{ items: CustomIngredientResponseDto[] }> {
+  return request('/ingredients/custom', { token });
 }
