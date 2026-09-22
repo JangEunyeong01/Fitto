@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import PrimaryButton from '../../components/PrimaryButton';
-import ScreenBackground from '../../components/ScreenBackground';
+import ScreenBackground, { TITLE_GRADIENT_HEIGHT } from '../../components/ScreenBackground';
 import GlassCard from '../../components/GlassCard';
 import ToggleSwitch from '../../components/ToggleSwitch';
 import Badge from '../../components/Badge';
@@ -137,7 +137,7 @@ export default function SettingsScreen() {
     .join(' · ');
 
   return (
-    <ScreenBackground>
+    <ScreenBackground gradientHeight={TITLE_GRADIENT_HEIGHT}>
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={[styles.content, { paddingTop: insets.top + 14, paddingBottom: 108 }]}
