@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
-import GlassCard from '../../components/GlassCard';
 import SelectChip from '../../components/SelectChip';
 import { useTheme } from '../../theme/useTheme';
 import { typography } from '../../theme/tokens';
@@ -16,9 +15,11 @@ import type { WorkoutPreference } from '../../utils/workoutRecommend';
 
 /**
  * 명세 F-031: 강도 / 환경 / 오늘 목적. 기본은 접어두고 "편집"을 눌러야 펼친다.
- * 매일 바꾸는 값이 아니라서, 펼쳐두면 아래 추천 카드가 화면 밖으로 밀린다.
+ *
+ * 추천 카드 안에 들어간다. 매일 바꾸는 값이 아닌데 카드 한 장을 차지하고 있어서,
+ * 이 값으로 무엇이 달라지는지(= 바로 위 추천)와 붙여 뒀다.
  */
-export default function WorkoutSettingCard() {
+export default function WorkoutSettingRow() {
   const { colors } = useTheme();
   const preference = useAppStore((s) => s.workoutPreference);
   const setPreference = useAppStore((s) => s.setWorkoutPreference);
@@ -31,14 +32,14 @@ export default function WorkoutSettingCard() {
   ].join(' · ');
 
   return (
-    <GlassCard style={styles.card}>
+    <View style={[styles.wrap, { borderTopColor: colors.borderDivider }]}>
       <View style={styles.headerRow}>
         <View style={styles.headerText}>
-          <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>운동 설정</Text>
-          {!open && <Text style={[styles.summary, { color: colors.textSecondary }]}>{summary}</Text>}
+          <Text style={[styles.label, { color: colors.textSecondary }]}>추천 기준</Text>
+          {!open && <Text style={[styles.summary, { color: colors.textPrimary }]}>{summary}</Text>}
         </View>
-        <Pressable onPress={() => setOpen((v) => !v)} hitSlop={8}>
-          <Text style={[styles.editLabel, { color: colors.textSecondary }]}>{open ? '접기' : '편집'}</Text>
+        <Pressable onPress={() => setOpen((v) => !v)} hitSlop={12} accessibilityRole="button">
+          <Text style={[styles.editLabel, { color: colors.textAccent }]}>{open ? '접기' : '편집'}</Text>
         </Pressable>
       </View>
 
@@ -66,11 +67,11 @@ export default function WorkoutSettingCard() {
             colors={colors}
           />
           <Text style={[styles.note, { color: colors.textSecondary }]}>
-            바꾸면 아래 추천이 바로 다시 계산돼요.
+            바꾸면 위 추천이 바로 다시 계산돼요.
           </Text>
         </View>
       )}
-    </GlassCard>
+    </View>
   );
 }
 
@@ -107,8 +108,10 @@ function Row({
 }
 
 const styles = StyleSheet.create({
-  card: {
-    marginBottom: 12,
+  wrap: {
+    marginTop: 14,
+    paddingTop: 12,
+    borderTopWidth: StyleSheet.hairlineWidth,
   },
   headerRow: {
     flexDirection: 'row',
@@ -120,7 +123,7 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: 3,
   },
-  cardTitle: typography.sectionTitle,
+  label: typography.caption,
   summary: typography.bodySm,
   editLabel: typography.unit,
   body: {

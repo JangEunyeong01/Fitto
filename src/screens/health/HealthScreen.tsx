@@ -19,7 +19,7 @@ import { QUICK_WORKOUTS, QUICK_WORKOUT_MINUTES, calcExerciseKcal, findExercise }
 import { recommendWorkouts } from '../../utils/workoutRecommend';
 import { sumMealKcal } from '../../utils/health';
 import { recentDays, recentDateKeys } from '../../utils/history';
-import WorkoutSettingCard from './WorkoutSettingCard';
+import WorkoutSettingRow from './WorkoutSettingRow';
 import RoutineCard from './RoutineCard';
 
 export default function HealthScreen() {
@@ -105,58 +105,7 @@ export default function HealthScreen() {
 
         <DateNavigator date={date} onChange={setDate} />
 
-        {/* 움직임 현황과 오늘의 추천은 "오늘"을 위한 카드라, 지난 날짜를 볼 때는 기록만 보여준다. */}
-        {isToday && (
-          <>
-            <GlassCard style={styles.card}>
-              <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>움직임 현황</Text>
-              <View style={styles.statRow}>
-                <Stat label="운동한 날" value={`${workoutDays}일`} colors={colors} />
-                <Stat label="운동 시간" value={`${weekMinutes}분`} colors={colors} />
-                {/* 앉은 시간은 센서가 필요해 아직 보여줄 값이 없다. 걸음도 연결 전에는 값 대신 상태를 적는다. */}
-                <Stat
-                  label="평균 걸음"
-                  value={stepsConnected ? avgSteps.toLocaleString() : '연결 전'}
-                  colors={colors}
-                />
-              </View>
-              <Text style={[styles.statCaption, { color: colors.textSecondary }]}>최근 7일 기록 기준</Text>
-            </GlassCard>
-
-            <WorkoutSettingCard />
-
-            <GlassCard style={styles.card}>
-              <View style={styles.headerRow}>
-                <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>오늘의 퍼스널 트레이닝</Text>
-                <Badge label="룰 기반" tone="info" />
-              </View>
-              <Text style={[styles.comment, { color: colors.textPrimary }]}>{trainingComment}</Text>
-
-              <View style={styles.suggestList}>
-                {suggestions.map((w) => (
-                  <View key={w.code} style={[styles.suggestRow, { backgroundColor: colors.surfaceSubtle }]}>
-                    <View style={styles.suggestText}>
-                      <Text style={[styles.suggestName, { color: colors.textPrimary }]}>
-                        {w.name}{' '}
-                        <Text style={[styles.suggestDetail, { color: colors.textSecondary }]}>
-                          {w.minutes}분 · {w.kcal}kcal
-                        </Text>
-                      </Text>
-                      <Text style={[styles.suggestReason, { color: colors.textSecondary }]}>{w.reason}</Text>
-                    </View>
-                    <Pressable
-                      onPress={() => handleAdd(w.name, w.minutes, w.kcal, w.code)}
-                      style={[styles.addBtn, { borderColor: colors.borderGlass, backgroundColor: colors.surface }]}
-                    >
-                      <Text style={[styles.addLabel, { color: colors.textPrimary }]}>기록에 추가</Text>
-                    </Pressable>
-                  </View>
-                ))}
-              </View>
-            </GlassCard>
-          </>
-        )}
-
+        {/* 이 탭에 오는 이유는 "오늘 운동을 남기는 것"이라, 기록과 퀵칩을 맨 위에 둔다. */}
         <GlassCard style={styles.card}>
           <View style={styles.headerRow}>
             <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>운동 기록</Text>
@@ -224,52 +173,132 @@ export default function HealthScreen() {
           </View>
         </GlassCard>
 
+        {/* 추천과 움직임 현황은 "오늘"을 위한 카드라, 지난 날짜를 볼 때는 기록만 보여준다. */}
+        {isToday && (
+          <>
+            <GlassCard style={styles.card}>
+              <View style={styles.headerRow}>
+                <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>오늘의 퍼스널 트레이닝</Text>
+                <Badge label="룰 기반" tone="info" />
+              </View>
+              <Text style={[styles.comment, { color: colors.textPrimary }]}>{trainingComment}</Text>
+
+              <View style={styles.suggestList}>
+                {suggestions.map((w) => (
+                  <View key={w.code} style={[styles.suggestRow, { backgroundColor: colors.surfaceSubtle }]}>
+                    <View style={styles.suggestText}>
+                      <Text style={[styles.suggestName, { color: colors.textPrimary }]}>
+                        {w.name}{' '}
+                        <Text style={[styles.suggestDetail, { color: colors.textSecondary }]}>
+                          {w.minutes}분 · {w.kcal}kcal
+                        </Text>
+                      </Text>
+                      {/* 이유가 앞 운동과 같으면 적지 않는다. 같은 문장이 세 번 반복되면 읽지 않게 된다. */}
+                      {!!w.reason && (
+                        <Text style={[styles.suggestReason, { color: colors.textSecondary }]}>{w.reason}</Text>
+                      )}
+                    </View>
+                    <Pressable
+                      onPress={() => handleAdd(w.name, w.minutes, w.kcal, w.code)}
+                      style={[styles.addBtn, { borderColor: colors.borderGlass, backgroundColor: colors.surface }]}
+                    >
+                      <Text style={[styles.addLabel, { color: colors.textPrimary }]}>기록에 추가</Text>
+                    </Pressable>
+                  </View>
+                ))}
+              </View>
+
+              {/* 추천을 만드는 값이라 추천 바로 아래 둔다. 매일 바꾸는 값이 아니라 접어둔다. */}
+              <WorkoutSettingRow />
+            </GlassCard>
+
+            <GlassCard style={styles.card}>
+              <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>움직임 현황</Text>
+              <View style={styles.statRow}>
+                <Stat label="운동한 날" value={`${workoutDays}일`} colors={colors} />
+                <Stat label="운동 시간" value={`${weekMinutes}분`} colors={colors} />
+                {/* 앉은 시간은 센서가 필요해 아직 보여줄 값이 없다. 걸음도 연결 전에는 값 대신 상태를 적는다. */}
+                <Stat
+                  label="평균 걸음"
+                  value={stepsConnected ? avgSteps.toLocaleString() : '연결 전'}
+                  colors={colors}
+                />
+              </View>
+              <Text style={[styles.statCaption, { color: colors.textSecondary }]}>최근 7일 기록 기준</Text>
+            </GlassCard>
+          </>
+        )}
+
         <RoutineCard date={date} />
 
-        <Pressable onPress={() => navigation.navigate('Weight')}>
-          <GlassCard style={styles.card}>
-            <View style={styles.periodRow}>
-              <View style={[styles.periodBadge, { backgroundColor: alpha(brand.mint, 0.28) }]}>
-                <Icon name="weight" size={20} color={colors.textPrimary} />
-              </View>
-              <View style={styles.periodText}>
-                <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>체중 기록</Text>
-                <Text style={[styles.periodSub, { color: colors.textSecondary }]}>
-                  {latestWeight != null ? `최근 ${latestWeight}kg · 추이 보기` : '기록하고 추이 보기'}
-                </Text>
-              </View>
-              <Icon name="chevronRight" size={16} color={colors.textSecondary} />
-            </View>
-          </GlassCard>
-        </Pressable>
-
-        {periodOn && (
-          // 시작일 입력 전에는 상세 대신 설정으로 보낸다. 설정 화면은 설정 탭 스택에 있다.
-          <Pressable
-            onPress={() =>
-              periodSetupDone
-                ? navigation.navigate('PeriodDetail')
-                : navigation.navigate('Settings', { screen: 'PeriodSettings' })
-            }
-          >
-            <GlassCard style={styles.card}>
-              <View style={styles.periodRow}>
-                <View style={[styles.periodBadge, { backgroundColor: alpha(brand.lavender, 0.28) }]}>
-                  <Icon name="moon" size={20} color={colors.textPrimary} />
-                </View>
-                <View style={styles.periodText}>
-                  <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>생리 주기 상세</Text>
-                  <Text style={[styles.periodSub, { color: colors.textSecondary }]}>
-                    {periodSetupDone ? '캘린더와 컨디션 기록 보기' : '마지막 시작일을 입력하면 주기를 계산해요'}
-                  </Text>
-                </View>
-                <Icon name="chevronRight" size={16} color={colors.textSecondary} />
-              </View>
-            </GlassCard>
-          </Pressable>
-        )}
+        {/* 다른 화면으로 나가는 문 두 개. 기록 카드와 같은 무게로 쌓이지 않게 한 장에 묶는다. */}
+        <GlassCard style={styles.card}>
+          <LinkRow
+            icon="weight"
+            tint={alpha(brand.mint, 0.28)}
+            title="체중 기록"
+            sub={latestWeight != null ? `최근 ${latestWeight}kg · 추이 보기` : '기록하고 추이 보기'}
+            onPress={() => navigation.navigate('Weight')}
+            colors={colors}
+          />
+          {periodOn && (
+            <LinkRow
+              icon="moon"
+              tint={alpha(brand.lavender, 0.28)}
+              title="생리 주기 상세"
+              sub={periodSetupDone ? '캘린더와 컨디션 기록 보기' : '마지막 시작일을 입력하면 주기를 계산해요'}
+              // 시작일 입력 전에는 상세 대신 설정으로 보낸다. 설정 화면은 설정 탭 스택에 있다.
+              onPress={() =>
+                periodSetupDone
+                  ? navigation.navigate('PeriodDetail')
+                  : navigation.navigate('Settings', { screen: 'PeriodSettings' })
+              }
+              colors={colors}
+              divider
+            />
+          )}
+        </GlassCard>
       </ScrollView>
     </ScreenBackground>
+  );
+}
+
+/** 상세 화면으로 나가는 한 줄. 누르는 영역은 아이콘 칸(44)이 잡아준다. */
+function LinkRow({
+  icon,
+  tint,
+  title,
+  sub,
+  onPress,
+  colors,
+  divider,
+}: {
+  icon: 'weight' | 'moon';
+  tint: string;
+  title: string;
+  sub: string;
+  onPress: () => void;
+  colors: any;
+  divider?: boolean;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      style={[
+        styles.linkRow,
+        divider && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.borderDivider },
+      ]}
+    >
+      <View style={[styles.linkBadge, { backgroundColor: tint }]}>
+        <Icon name={icon} size={20} color={colors.textPrimary} />
+      </View>
+      <View style={styles.linkText}>
+        <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>{title}</Text>
+        <Text style={[styles.linkSub, { color: colors.textSecondary }]}>{sub}</Text>
+      </View>
+      <Icon name="chevronRight" size={16} color={colors.textSecondary} />
+    </Pressable>
   );
 }
 
@@ -398,21 +427,22 @@ const styles = StyleSheet.create({
     borderStyle: 'solid',
   },
   chipText: typography.label,
-  periodRow: {
+  linkRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
+    paddingVertical: 10,
   },
-  periodBadge: {
+  linkBadge: {
     width: 44,
     height: 44,
     borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  periodText: {
+  linkText: {
     flex: 1,
     gap: 2,
   },
-  periodSub: typography.bodySm,
+  linkSub: typography.bodySm,
 });

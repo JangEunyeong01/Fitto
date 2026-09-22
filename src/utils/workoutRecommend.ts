@@ -130,10 +130,12 @@ export function recommendWorkouts(input: RecommendInput, count = 3): WorkoutPick
   }
 
   // 세 개가 같은 이유를 달고 있으면 읽을 게 없다. 이미 쓴 문구는 건너뛰고 다음 후보를 쓴다.
+  // 남은 후보가 없으면 빈 문자열로 둔다 — 같은 문장을 두 번 적느니 아무 말도 하지 않는 게 낫다.
   const usedReasons = new Set<string>();
-  return picked.map(({ exercise, reasons }) => {
-    const reason = reasons.find((r) => !usedReasons.has(r)) ?? reasons[0] ?? DEFAULT_REASON;
-    usedReasons.add(reason);
+  return picked.map(({ exercise, reasons }, index) => {
+    const fallback = index === 0 ? reasons[0] ?? DEFAULT_REASON : '';
+    const reason = reasons.find((r) => !usedReasons.has(r)) ?? fallback;
+    if (reason) usedReasons.add(reason);
     return {
       code: exercise.code,
       name: exercise.name,
