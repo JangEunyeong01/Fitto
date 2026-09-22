@@ -26,6 +26,7 @@ import { enqueueSync } from './enqueue';
 import { useAuthStore } from '../store/useAuthStore';
 import { useOutboxStore } from '../store/useOutboxStore';
 import { refreshToken } from './syncEngine';
+import { markDateLoaded } from './pullDate';
 import { addDays, toDateKey } from '../utils/periodCycle';
 import type { MealUnit } from '../constants/codes';
 
@@ -155,6 +156,8 @@ async function pullOnce(token: string): Promise<void> {
 
     const workout = await getWorkout(date, token);
     const water = await getWater(date, token);
+    // 이 날짜는 여기서 받았으니 화면을 열 때 또 받지 않는다.
+    markDateLoaded(date);
 
     Object.assign(touch(date), {
       meals,
