@@ -3,6 +3,7 @@ import { STACK_OPTIONS } from './transitions';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import SettingsScreen from '../screens/settings/SettingsScreen';
 import ProfileScreen from '../screens/settings/ProfileScreen';
+import AccountScreen from '../screens/settings/AccountScreen';
 import NotificationsScreen from '../screens/settings/NotificationsScreen';
 import PeriodSettingsScreen from '../screens/period/PeriodSettingsScreen';
 import SignupScreen from '../screens/settings/SignupScreen';
@@ -13,6 +14,7 @@ import DeleteAccountScreen from '../screens/settings/DeleteAccountScreen';
 export type SettingsStackParamList = {
   SettingsMain: undefined;
   Profile: undefined;
+  Account: undefined;
   Notifications: undefined;
   PeriodSettings: undefined;
   Signup: undefined;
@@ -29,6 +31,7 @@ export default function SettingsStack() {
     <Stack.Navigator screenOptions={STACK_OPTIONS}>
       <Stack.Screen name="SettingsMain" component={SettingsScreen} />
       <Stack.Screen name="Profile" component={ProfileScreen} />
+      <Stack.Screen name="Account" component={AccountScreen} />
       <Stack.Screen name="Notifications" component={NotificationsScreen} />
       <Stack.Screen name="PeriodSettings" component={PeriodSettingsScreen} />
       <Stack.Screen name="Signup" component={SignupScreen} />

@@ -14,29 +14,16 @@ import { useTheme } from '../../theme/useTheme';
 import { useAppStore, ThemeMode } from '../../store/useAppStore';
 import { useCardOrderSheetStore } from '../../store/useCardOrderSheetStore';
 import { useBirthdayModalStore } from '../../store/useBirthdayModalStore';
+import { useOutboxStore } from '../../store/useOutboxStore';
 import { useTutorialStore } from '../../store/useTutorialStore';
-import { useToastStore } from '../../store/useToastStore';
 import { useFoodSearchStore } from '../../store/useFoodSearchStore';
 import { useAuthStore } from '../../store/useAuthStore';
-import { useOutboxStore, type FailedItem } from '../../store/useOutboxStore';
-import { logout as requestLogout } from '../../api/auth';
-import { describeOp } from '../../sync/types';
 import { PERSONA_OPTIONS } from '../onboarding/onboardingData';
 import { GOAL_OPTIONS, labelOf } from '../../constants/codes';
 import { daysBetween, toDateKey } from '../../utils/periodCycle';
-import { semantic, typography } from '../../theme/tokens';
+import { typography } from '../../theme/tokens';
 // 버전은 app.json 한 곳에서만 올린다. 화면에 따로 적어두면 배포 때 둘 중 하나를 꼭 까먹는다.
 import appConfig from '../../../app.json';
-
-/** "3분 전"처럼 사람이 읽는 표현으로. 초 단위는 보여줘도 알 것이 없어 "방금"으로 묶는다. */
-function formatSyncedAgo(timestamp: number): string {
-  const minutes = Math.floor((Date.now() - timestamp) / 60_000);
-  if (minutes < 1) return '방금';
-  if (minutes < 60) return `${minutes}분 전`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}시간 전`;
-  return `${Math.floor(hours / 24)}일 전`;
-}
 
 const THEME_OPTIONS: { value: ThemeMode; label: string }[] = [
   { value: 'light', label: '라이트' },
@@ -63,50 +50,10 @@ export default function SettingsScreen() {
 
   const authStatus = useAuthStore((s) => s.status);
   const authEmail = useAuthStore((s) => s.email);
-  const signOut = useAuthStore((s) => s.signOut);
 
-  const pendingCount = useOutboxStore((s) => s.items.length);
-  const lastSyncedAt = useOutboxStore((s) => s.lastSyncedAt);
-  const failedItems = useOutboxStore((s) => s.failed);
-
-  const handleRetryFailed = () => {
-    useOutboxStore.getState().retryFailed();
-    showToast('다시 올려볼게요');
-  };
-
-  const handleClearFailed = () => {
-    useOutboxStore.getState().clearFailed();
-    showToast('목록을 비웠어요. 기록은 기기에 그대로 있어요');
-  };
-
-  /**
-   * 동기화 상태 한 줄. 못 올린 게 있으면 그 사실을 먼저 알린다 —
-   * "언제 올라갔는지"보다 "아직 안 올라간 게 있는지"가 사용자에게 중요하다.
-   */
-  const syncLabel = pendingCount > 0
-    ? `기록 ${pendingCount}건 올리는 중`
-    : lastSyncedAt
-      ? `${formatSyncedAgo(lastSyncedAt)} 동기화됨`
-      : '아직 동기화한 기록이 없어요';
-
-  /**
-   * 로그아웃. 서버에 refreshToken 폐기를 요청하되, 실패해도 기기에서는 지운다 —
-   * 네트워크가 안 될 때 로그아웃이 막히면 기기를 빌려준 상황에서 빠져나올 수 없다.
-   */
-  const handleLogout = async () => {
-    const token = useAuthStore.getState().refreshToken;
-    if (token) {
-      try {
-        await requestLogout(token);
-      } catch {
-        // 서버에 못 알려도 기기에서는 지운다. 토큰은 만료되면 무효가 된다.
-      }
-    }
-    signOut();
-    // 아직 못 올린 작업은 버린다. 남겨두면 다음에 로그인한 계정으로 올라간다.
-    useOutboxStore.getState().clear();
-    showToast('로그아웃했어요');
-  };
+  // 계정 줄에 띄울 경고. 실패한 기록은 폰을 바꾸면 사라져서, 계정 화면에 들어가야 아는 건 늦다.
+  const failedCount = useOutboxStore((s) => s.failed.length);
+  const failedNotice = failedCount > 0 ? `올리지 못한 기록 ${failedCount}건` : null;
 
   // 명세 F-043 데이터 초기화 2단계 확인. 0: 닫힘, 1: 첫 확인, 2: 마지막 확인.
   // 네이티브 Alert는 웹에서 버튼을 못 달아서 카드 안에서 단계를 넘긴다.
@@ -126,7 +73,6 @@ export default function SettingsScreen() {
   const showCardOrderSheet = useCardOrderSheetStore((s) => s.show);
   const showBirthdayModal = useBirthdayModalStore((s) => s.show);
   const startTutorial = useTutorialStore((s) => s.start);
-  const showToast = useToastStore((s) => s.show);
 
   // 명세 F-008: 시작일을 1일차로 센다. 시작일을 모르는 상태(초기화 직후)면 줄을 숨긴다.
   const togetherDays = startDate ? daysBetween(startDate, toDateKey(new Date())) + 1 : null;
@@ -145,8 +91,9 @@ export default function SettingsScreen() {
       >
         <Text style={[styles.title, { color: colors.textPrimary }]}>설정</Text>
 
-        <Pressable onPress={() => navigation.navigate('Profile')}>
-          <GlassCard style={styles.card}>
+        {/* 내 정보와 계정은 "나"에 대한 것이라 한 장에 둔다. 계정 속내용은 화면을 따로 팠다. */}
+        <GlassCard style={styles.card}>
+          <Pressable onPress={() => navigation.navigate('Profile')} accessibilityRole="button">
             <View style={styles.profileRow}>
               <LinearGradient colors={accentGradient} style={styles.avatar} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} />
               <View style={styles.profileText}>
@@ -162,52 +109,18 @@ export default function SettingsScreen() {
               </View>
               <Icon name="chevronRight" size={16} color={colors.textSecondary} />
             </View>
-          </GlassCard>
-        </Pressable>
+          </Pressable>
 
-        {/* 명세 3-2: 가입 유도는 여기 한 곳에서만 한다. 기능을 막고 가입을 요구하지 않는다. */}
-        <GlassCard style={styles.card}>
-          <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>계정</Text>
-          {authStatus === 'member' ? (
-            <>
-              <Text style={[styles.previewText, { color: colors.textSecondary }]}>{authEmail}</Text>
-              <Text style={[styles.syncText, { color: colors.textSecondary }]}>{syncLabel}</Text>
-              <FailedRecords
-                items={failedItems}
-                colors={colors}
-                onRetry={handleRetryFailed}
-                onClear={handleClearFailed}
-              />
+          <Divider colors={colors} />
 
-              <Divider colors={colors} />
-              <NavRow label="비밀번호 변경" onPress={() => navigation.navigate('PasswordChange')} colors={colors} />
-              <Divider colors={colors} />
-              <NavRow label="로그아웃" actionLabel="실행" onPress={handleLogout} colors={colors} />
-              <Divider colors={colors} />
-              {/* 되돌릴 수 없는 동작이라 다른 줄과 색으로 구분한다. 확인은 탈퇴 화면에서 받는다. */}
-              <Pressable onPress={() => navigation.navigate('DeleteAccount')} style={styles.row}>
-                <Text style={[styles.rowLabel, { color: colors.textDanger }]}>회원 탈퇴</Text>
-                <Icon name="chevronRight" size={16} color={colors.textDanger} />
-              </Pressable>
-            </>
-          ) : (
-            <>
-              <Text style={[styles.previewText, { color: colors.textSecondary }]}>
-                계정을 만들면 기록을 백업하고 다른 기기에서도 이어서 볼 수 있어요.
-              </Text>
-              {/* 로그인이 풀린 뒤에도 못 올린 기록은 보여야 한다. 안 보이면 있는 줄도 모른다. */}
-              <FailedRecords
-                items={failedItems}
-                colors={colors}
-                onRetry={handleRetryFailed}
-                onClear={handleClearFailed}
-              />
-              <Divider colors={colors} />
-              <NavRow label="계정 만들기" onPress={() => navigation.navigate('Signup')} colors={colors} />
-              <Divider colors={colors} />
-              <NavRow label="로그인" onPress={() => navigation.navigate('Login')} colors={colors} />
-            </>
-          )}
+          {/* 못 올린 기록이 있으면 들어가 보기 전에 알려준다. 계정 화면에 들어가야 아는 건 늦다. */}
+          <NavRow
+            label="계정"
+            desc={authStatus === 'member' ? failedNotice ?? authEmail : '게스트로 쓰는 중 · 기록은 이 기기에만'}
+            descTone={failedNotice ? 'danger' : 'normal'}
+            onPress={() => navigation.navigate('Account')}
+            colors={colors}
+          />
         </GlassCard>
 
         <GlassCard style={styles.card}>
@@ -220,16 +133,17 @@ export default function SettingsScreen() {
             />
           </View>
           <Text style={[styles.previewText, { color: colors.textSecondary }]}>{personaDesc}</Text>
-        </GlassCard>
 
-        <GlassCard style={styles.card}>
+          <Divider colors={colors} />
           <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>화면 모드</Text>
           <View style={styles.gap10}>
             <SegmentedControl options={THEME_OPTIONS} value={theme} onChange={setTheme} />
           </View>
 
-          <View style={[styles.divider, { borderTopColor: colors.borderDivider }]} />
+          <Divider colors={colors} />
+          <NavRow label="홈 카드 순서" actionLabel="변경" onPress={showCardOrderSheet} colors={colors} />
 
+          <Divider colors={colors} />
           {/* README: 글씨 크기 조절은 V2 예정 기능이라 지금은 눌러도 반응하지 않는 자리만 잡아둔다. */}
           <View style={styles.row}>
             <Text style={[styles.rowLabel, { color: colors.textPrimary }]}>글씨 크기 조절</Text>
@@ -248,9 +162,10 @@ export default function SettingsScreen() {
           )}
           <Divider colors={colors} />
           <NavRow label="알림" onPress={() => navigation.navigate('Notifications')} colors={colors} />
-          <Divider colors={colors} />
-          <NavRow label="홈 카드 순서" actionLabel="변경" onPress={showCardOrderSheet} colors={colors} />
-          <Divider colors={colors} />
+        </GlassCard>
+
+        {/* 매일 쓰는 게 아니라 "다시 보고 싶을 때" 찾는 것들. 아래로 모은다. */}
+        <GlassCard style={styles.card}>
           <NavRow
             label="튜토리얼 다시 보기"
             actionLabel="실행"
@@ -262,15 +177,8 @@ export default function SettingsScreen() {
             colors={colors}
           />
           <Divider colors={colors} />
-          <NavRow
-            label="온보딩 다시 보기"
-            actionLabel="실행"
-            onPress={resetOnboarding}
-            colors={colors}
-          />
-        </GlassCard>
-
-        <GlassCard style={styles.card}>
+          <NavRow label="온보딩 다시 보기" actionLabel="실행" onPress={resetOnboarding} colors={colors} />
+          <Divider colors={colors} />
           <View style={styles.row}>
             <View style={styles.rowTextCol}>
               <View style={styles.rowTitleLine}>
@@ -328,40 +236,6 @@ export default function SettingsScreen() {
   );
 }
 
-/**
- * 서버로 올리지 못한 기록. 기기에는 남아 있지만 폰을 바꾸면 사라지므로 숨기지 않는다.
- * 로그인 상태와 상관없이 보여준다 — 로그인이 풀린 뒤에 더 필요한 정보다.
- */
-function FailedRecords({
-  items,
-  colors,
-  onRetry,
-  onClear,
-}: {
-  items: FailedItem[];
-  colors: any;
-  onRetry: () => void;
-  onClear: () => void;
-}) {
-  if (items.length === 0) return null;
-
-  return (
-    <View style={[styles.failedBox, { borderColor: semantic.danger }]}>
-      <Text style={[styles.failedTitle, { color: colors.textDanger }]}>올리지 못한 기록 {items.length}건</Text>
-      {items.slice(0, 3).map((item) => (
-        <Text key={item.id} style={[styles.failedRow, { color: colors.textSecondary }]} numberOfLines={1}>
-          · {describeOp(item.op)} — {item.reason}
-        </Text>
-      ))}
-      {items.length > 3 && <Text style={[styles.failedRow, { color: colors.textSecondary }]}>· 외 {items.length - 3}건</Text>}
-      <View style={styles.failedButtons}>
-        <PrimaryButton label="다시 시도" variant="secondary" size="md" style={styles.flex} onPress={onRetry} />
-        <PrimaryButton label="목록 비우기" variant="text" size="md" style={styles.flex} onPress={onClear} />
-      </View>
-    </View>
-  );
-}
-
 function ToggleRow({
   label,
   value,
@@ -383,18 +257,35 @@ function ToggleRow({
 
 function NavRow({
   label,
+  desc,
+  descTone = 'normal',
   actionLabel,
   onPress,
   colors,
 }: {
   label: string;
+  /** 줄 아래 한 줄 더. 들어가 보기 전에 알아야 하는 값만 적는다. */
+  desc?: string | null;
+  descTone?: 'normal' | 'danger';
   actionLabel?: string;
   onPress: () => void;
   colors: any;
 }) {
   return (
-    <Pressable onPress={onPress} style={styles.row}>
-      <Text style={[styles.rowLabel, { color: colors.textPrimary }]}>{label}</Text>
+    <Pressable onPress={onPress} accessibilityRole="button" style={styles.row}>
+      {desc ? (
+        <View style={styles.rowTextCol}>
+          <Text style={[styles.rowLabel, { color: colors.textPrimary }]}>{label}</Text>
+          <Text
+            style={[styles.rowDesc, { color: descTone === 'danger' ? colors.textDanger : colors.textSecondary }]}
+            numberOfLines={1}
+          >
+            {desc}
+          </Text>
+        </View>
+      ) : (
+        <Text style={[styles.rowLabel, { color: colors.textPrimary }]}>{label}</Text>
+      )}
       {actionLabel ? (
         <Text style={[styles.rowAction, { color: colors.textSecondary }]}>{actionLabel}</Text>
       ) : (
