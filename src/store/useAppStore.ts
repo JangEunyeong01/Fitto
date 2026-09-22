@@ -277,6 +277,9 @@ interface AppState {
     weightLog?: Record<string, number>;
     periodSettings?: PeriodSettings;
     periodSetupDone?: boolean;
+    recipes?: Recipe[];
+    routines?: WorkoutRoutine[];
+    customIngredients?: CustomIngredient[];
   }) => void;
 }
 
@@ -633,14 +636,25 @@ export const useAppStore = create<AppState>()(
         enqueueSync({ kind: 'meal.memo', date: dateKey, mealType: slot, memo: text.trim() || null });
       },
 
-      addRecipe: (recipe) => set((s) => ({ recipes: [recipe, ...s.recipes] })),
-      addRoutine: (routine) => set((s) => ({ routines: [routine, ...s.routines] })),
-      removeRoutine: (id) => set((s) => ({ routines: s.routines.filter((r) => r.id !== id) })),
+      addRecipe: (recipe) => {
+        set((s) => ({ recipes: [recipe, ...s.recipes] }));
+        enqueueSync({ kind: 'recipe.save', recipeId: recipe.id });
+      },
+      addRoutine: (routine) => {
+        set((s) => ({ routines: [routine, ...s.routines] }));
+        enqueueSync({ kind: 'routine.save', routineId: routine.id });
+      },
+      removeRoutine: (id) => {
+        set((s) => ({ routines: s.routines.filter((r) => r.id !== id) }));
+        enqueueSync({ kind: 'routine.remove', routineId: id });
+      },
       // 직접 입력한 재료는 칩 목록에 남아 재사용된다(README 5장). 같은 이름이면 최신 값으로 덮어쓴다.
-      addCustomIngredient: (ingredient) =>
+      addCustomIngredient: (ingredient) => {
         set((s) => ({
           customIngredients: [ingredient, ...s.customIngredients.filter((c) => c.name !== ingredient.name)],
-        })),
+        }));
+        enqueueSync({ kind: 'ingredient.save', name: ingredient.name });
+      },
 
       // getInitialState는 이 함수가 처음 만든 상태(액션 포함)라 replace로 통째로 바꿔도 액션이 사라지지 않는다.
       // persist가 바뀐 상태를 그대로 저장소에 다시 쓰므로 AsyncStorage를 따로 지울 필요는 없다.
@@ -663,6 +677,9 @@ export const useAppStore = create<AppState>()(
             profile: patch.profile ?? s.profile,
             goals: patch.goals ?? s.goals,
             persona: patch.persona ?? s.persona,
+            recipes: patch.recipes ?? s.recipes,
+            routines: patch.routines ?? s.routines,
+            customIngredients: patch.customIngredients ?? s.customIngredients,
           };
         }),
     }),

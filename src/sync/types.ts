@@ -20,7 +20,12 @@ export type SyncOp =
   | { kind: 'weight.remove'; date: string }
   | { kind: 'period.settings' }
   | { kind: 'period.daily'; date: string }
-  | { kind: 'profile.patch' };
+  | { kind: 'profile.patch' }
+  | { kind: 'recipe.save'; recipeId: string }
+  | { kind: 'routine.save'; routineId: string }
+  | { kind: 'routine.remove'; routineId: string }
+  /** 직접 입력 재료는 기기에서 이름으로 구분한다(같은 이름이면 덮어씀). 서버도 같은 규칙이다. */
+  | { kind: 'ingredient.save'; name: string };
 
 /**
  * 큐에 담긴 항목.
@@ -64,6 +69,14 @@ export function describeOp(op: SyncOp): string {
       return `${op.date} 생리 기록`;
     case 'profile.patch':
       return '프로필';
+    case 'recipe.save':
+      return '레시피';
+    case 'routine.save':
+      return '운동 루틴';
+    case 'routine.remove':
+      return '운동 루틴 삭제';
+    case 'ingredient.save':
+      return `직접 입력 재료(${op.name})`;
   }
 }
 
@@ -84,6 +97,13 @@ export function isSameTarget(a: SyncOp, b: SyncOp): boolean {
     case 'period.settings':
     case 'profile.patch':
       return true;
+    // 저장은 보낼 때 최신 값을 읽으므로 같은 대상이면 한 번이면 된다.
+    case 'recipe.save':
+      return a.recipeId === (b as typeof a).recipeId;
+    case 'routine.save':
+      return a.routineId === (b as typeof a).routineId;
+    case 'ingredient.save':
+      return a.name === (b as typeof a).name;
     default:
       // 기록 추가·삭제는 대상이 각각 다르므로 합치지 않는다.
       return false;

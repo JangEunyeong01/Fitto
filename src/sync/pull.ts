@@ -1,16 +1,28 @@
 import { getMe } from '../api/auth';
 import { ApiError, NetworkError } from '../api/client';
 import {
+  getCustomIngredients,
   getDiet,
   getPeriod,
   getPeriodDaily,
+  getRecipes,
+  getRoutines,
   getSteps,
   getWater,
   getWeights,
   getWorkout,
 } from '../api/records';
-import { fromUser } from '../api/mappers';
-import { useAppStore, type DailyRecord, type MealItem, type MealSlot } from '../store/useAppStore';
+import { fromCustomIngredientDto, fromRecipeDto, fromRoutineDto, fromUser } from '../api/mappers';
+import {
+  useAppStore,
+  type CustomIngredient,
+  type DailyRecord,
+  type MealItem,
+  type MealSlot,
+  type Recipe,
+  type WorkoutRoutine,
+} from '../store/useAppStore';
+import { enqueueSync } from './enqueue';
 import { useAuthStore } from '../store/useAuthStore';
 import { useOutboxStore } from '../store/useOutboxStore';
 import { refreshToken } from './syncEngine';
@@ -62,6 +74,50 @@ export async function pullAll(): Promise<void> {
       console.warn('서버 기록을 내려받지 못했습니다', e);
     }
   }
+}
+
+/**
+ * 레시피·루틴·직접 입력 재료를 내려받아 기기 목록과 합친다.
+ *
+ * 서버에 없는데 기기에만 있는 항목은 지우지 않고 올린다. 이 종류는 예전에 대기열에 없어서,
+ * 가입한 뒤 만든 것들이 서버에 한 번도 올라간 적이 없다. 서버 목록으로 덮으면 그게 사라진다.
+ *
+ * ponytail: 다른 기기에서 지운 항목도 "기기에만 있는 것"으로 보여 다시 올라간다.
+ * 여러 기기에서 삭제를 맞추려면 서버에 삭제 기록(tombstone)이 필요하다. 한 사람이 폰 하나로 쓰는 지금은 넘어간다.
+ */
+async function pullTemplates(token: string): Promise<{
+  recipes: Recipe[];
+  routines: WorkoutRoutine[];
+  customIngredients: CustomIngredient[];
+}> {
+  const [recipeRes, routineRes, ingredientRes] = [
+    await getRecipes(token),
+    await getRoutines(token),
+    await getCustomIngredients(token),
+  ];
+  const local = useAppStore.getState();
+
+  const serverRecipeIds = new Set(recipeRes.items.map((r) => r.id));
+  const localOnlyRecipes = local.recipes.filter((r) => !serverRecipeIds.has(r.id));
+  const recipes = [
+    ...localOnlyRecipes,
+    // 사진은 서버에 없다. 기기에 있던 경로를 이어 붙인다.
+    ...recipeRes.items.map((dto) => fromRecipeDto(dto, local.recipes.find((r) => r.id === dto.id)?.photoUri ?? null)),
+  ];
+
+  const serverRoutineIds = new Set(routineRes.items.map((r) => r.id));
+  const localOnlyRoutines = local.routines.filter((r) => !serverRoutineIds.has(r.id));
+  const routines = [...localOnlyRoutines, ...routineRes.items.map(fromRoutineDto)];
+
+  const serverIngredientNames = new Set(ingredientRes.items.map((i) => i.name));
+  const localOnlyIngredients = local.customIngredients.filter((i) => !serverIngredientNames.has(i.name));
+  const customIngredients = [...localOnlyIngredients, ...ingredientRes.items.map(fromCustomIngredientDto)];
+
+  localOnlyRecipes.forEach((r) => enqueueSync({ kind: 'recipe.save', recipeId: r.id }));
+  localOnlyRoutines.forEach((r) => enqueueSync({ kind: 'routine.save', routineId: r.id }));
+  localOnlyIngredients.forEach((i) => enqueueSync({ kind: 'ingredient.save', name: i.name }));
+
+  return { recipes, routines, customIngredients };
 }
 
 async function pullOnce(token: string): Promise<void> {
@@ -151,6 +207,8 @@ async function pullOnce(token: string): Promise<void> {
     // 주기 미설정. 기기 설정을 그대로 둔다.
   }
 
+  const templates = await pullTemplates(token);
+
   useAppStore.getState().applyServerRecords({
     profile: mapped.profile,
     goals: mapped.goals,
@@ -159,6 +217,7 @@ async function pullOnce(token: string): Promise<void> {
     weightLog,
     periodSettings,
     periodSetupDone,
+    ...templates,
   });
   useOutboxStore.getState().markSynced();
 }
