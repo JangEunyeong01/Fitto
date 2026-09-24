@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { View, Text, Pressable, TextInput, ScrollView, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Badge from '../../components/Badge';
+import HighlightText from '../../components/HighlightText';
 import Icon from '../../components/Icon';
 import SelectChip from '../../components/SelectChip';
 import TextField from '../../components/TextField';
@@ -17,6 +18,7 @@ import { slotLabel } from '../../utils/meal';
 import { useFoodSearchStore } from '../../store/useFoodSearchStore';
 import { useToastStore } from '../../store/useToastStore';
 import { dateKey } from '../../utils/timeOfDay';
+import { searchByName } from '../../utils/hangul';
 
 const MAX_SERVINGS = 10;
 const MAX_GRAMS = 2000;
@@ -58,11 +60,8 @@ function FoodSearchForm() {
   const [unit, setUnit] = useState<MealUnit>('serving');
   const [amount, setAmount] = useState('1');
 
-  const results = useMemo(() => {
-    const q = query.trim();
-    if (!q) return FOODS;
-    return FOODS.filter((f) => f.name.includes(q));
-  }, [query]);
+  // 초성으로도 찾는다("ㄱㅊ" → 곱창구이). 걸린 자리를 같이 받아 그 글자만 색을 입힌다.
+  const results = useMemo(() => searchByName(FOODS, query, (f) => f.name), [query]);
 
   const pick = (food: Food) => {
     if (findAllergyHit(food, avoid)) {
@@ -197,7 +196,7 @@ function FoodSearchForm() {
               <TextInput
                 value={query}
                 onChangeText={setQuery}
-                placeholder="음식 이름을 검색하세요"
+                placeholder="음식 이름 또는 초성 (예: ㄱㅊ)"
                 placeholderTextColor={colors.textSecondary}
                 style={[styles.searchInput, { color: colors.textPrimary }]}
               />
@@ -231,7 +230,7 @@ function FoodSearchForm() {
               {results.length === 0 && (
                 <Text style={[styles.empty, { color: colors.textSecondary }]}>검색 결과가 없어요.</Text>
               )}
-              {results.map((food) => {
+              {results.map(({ item: food, match }) => {
                 const hit = findAllergyHit(food, avoid);
                 const caution = hit ? null : findCautionHit(food, conditions);
                 return (
@@ -245,7 +244,7 @@ function FoodSearchForm() {
                   >
                     <View style={styles.rowText}>
                       <View style={styles.nameRow}>
-                        <Text style={[styles.name, { color: colors.textPrimary }]}>{food.name}</Text>
+                        <HighlightText text={food.name} match={match} style={[styles.name, { color: colors.textPrimary }]} />
                         <Badge
                           label={
                             hit

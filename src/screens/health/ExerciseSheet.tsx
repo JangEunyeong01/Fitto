@@ -3,6 +3,7 @@ import { View, Text, Pressable, ScrollView, StyleSheet, KeyboardAvoidingView, Pl
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import TextField from '../../components/TextField';
 import SelectChip from '../../components/SelectChip';
+import HighlightText from '../../components/HighlightText';
 import PrimaryButton from '../../components/PrimaryButton';
 import Icon from '../../components/Icon';
 import { useTheme } from '../../theme/useTheme';
@@ -11,6 +12,7 @@ import { useAppStore } from '../../store/useAppStore';
 import { useExerciseSheetStore } from '../../store/useExerciseSheetStore';
 import { useToastStore } from '../../store/useToastStore';
 import { newId } from '../../utils/id';
+import { searchByName } from '../../utils/hangul';
 import { dateKey } from '../../utils/timeOfDay';
 import { EXERCISES, calcExerciseKcal, findExercise } from '../../data/workouts';
 
@@ -37,10 +39,8 @@ function ExerciseForm({ date, onClose }: { date: string; onClose: () => void }) 
   const [minutes, setMinutes] = useState('');
   const [memo, setMemo] = useState('');
 
-  const results = useMemo(() => {
-    const q = query.trim();
-    return q ? EXERCISES.filter((e) => e.name.includes(q)) : EXERCISES;
-  }, [query]);
+  // 초성으로도 찾는다("ㅃㄹㄱ" → 빠르게 걷기). 걸린 자리를 같이 받아 그 글자만 색을 입힌다.
+  const results = useMemo(() => searchByName(EXERCISES, query, (e) => e.name), [query]);
 
   const exercise = picked ? findExercise(picked) : undefined;
   const mins = parseInt(minutes, 10);
@@ -97,12 +97,18 @@ function ExerciseForm({ date, onClose }: { date: string; onClose: () => void }) 
           </View>
 
           <ScrollView style={styles.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-            <TextField size="sm" clearable value={query} onChangeText={setQuery} placeholder="운동 검색" />
+            <TextField
+              size="sm"
+              clearable
+              value={query}
+              onChangeText={setQuery}
+              placeholder="운동 이름 또는 초성 (예: ㄷㄹㄱ)"
+            />
             <View style={styles.chipWrap}>
-              {results.map((e) => (
+              {results.map(({ item: e, match }) => (
                 <SelectChip
                   key={e.code}
-                  label={e.name}
+                  label={<HighlightText text={e.name} match={match} />}
                   selected={picked === e.code}
                   onPress={() => setPicked(e.code)}
                   size="sm"

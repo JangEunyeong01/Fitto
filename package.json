@@ -35,7 +35,8 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "check:api": "node scripts/check-mappers.mjs",
-    "check:copy": "node scripts/check-briefing.mjs"
+    "check:copy": "node scripts/check-briefing.mjs",
+    "check:search": "node scripts/check-hangul.mjs"
   },
   "private": true
 }
