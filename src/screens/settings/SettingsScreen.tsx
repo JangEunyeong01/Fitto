@@ -15,6 +15,8 @@ import { useAppStore, ThemeMode } from '../../store/useAppStore';
 import { useCardOrderSheetStore } from '../../store/useCardOrderSheetStore';
 import { useBirthdayModalStore } from '../../store/useBirthdayModalStore';
 import { useOutboxStore } from '../../store/useOutboxStore';
+import { useToastStore } from '../../store/useToastStore';
+import { SCREEN_LOCK_SUPPORTED, confirmOwner } from '../../utils/deviceAuth';
 import { useTutorialStore } from '../../store/useTutorialStore';
 import { useFoodSearchStore } from '../../store/useFoodSearchStore';
 import { useAuthStore } from '../../store/useAuthStore';
@@ -44,6 +46,8 @@ export default function SettingsScreen() {
   const theme = useAppStore((s) => s.theme);
   const setTheme = useAppStore((s) => s.setTheme);
   const periodOn = useAppStore((s) => s.periodOn);
+  const screenLock = useAppStore((s) => s.screenLock);
+  const setScreenLock = useAppStore((s) => s.setScreenLock);
   const setPeriodOn = useAppStore((s) => s.setPeriodOn);
   const resetOnboarding = useAppStore((s) => s.resetOnboarding);
   const resetAll = useAppStore((s) => s.resetAll);
@@ -71,6 +75,22 @@ export default function SettingsScreen() {
   };
 
   const showCardOrderSheet = useCardOrderSheetStore((s) => s.show);
+  const showToast = useToastStore((s) => s.show);
+
+  /**
+   * 켤 때도 끌 때도 본인 확인을 받는다. 켤 때 확인하는 건 폰에 잠금이 정말 걸려 있는지 보려는 것,
+   * 끌 때 확인하는 건 폰을 잠깐 빌린 사람이 잠금을 꺼두고 돌려주는 걸 막으려는 것이다.
+   */
+  const toggleScreenLock = async (next: boolean) => {
+    const result = await confirmOwner(next ? '화면 잠금 켜기' : '화면 잠금 끄기');
+    if (result === 'no-device-lock') {
+      showToast('폰에 잠금(비밀번호·지문)을 먼저 설정해 주세요');
+      return;
+    }
+    if (result === 'failed') return;
+    setScreenLock(next);
+    showToast(next ? '화면 잠금을 켰어요' : '화면 잠금을 껐어요');
+  };
   const showBirthdayModal = useBirthdayModalStore((s) => s.show);
   const startTutorial = useTutorialStore((s) => s.start);
 
@@ -162,6 +182,25 @@ export default function SettingsScreen() {
           )}
           <Divider colors={colors} />
           <NavRow label="알림" onPress={() => navigation.navigate('Notifications')} colors={colors} />
+          <Divider colors={colors} />
+          {SCREEN_LOCK_SUPPORTED ? (
+            <ToggleRow
+              label="화면 잠금"
+              desc="앱을 열 때 지문·얼굴·폰 비밀번호로 확인해요"
+              value={screenLock}
+              onChange={toggleScreenLock}
+              colors={colors}
+            />
+          ) : (
+            // 웹 미리보기에는 생체 인증이 없다. 기능이 있다는 건 보여주고 토글만 막는다.
+            <View style={styles.row}>
+              <View style={styles.rowTextCol}>
+                <Text style={[styles.rowLabel, { color: colors.textPrimary }]}>화면 잠금</Text>
+                <Text style={[styles.rowDesc, { color: colors.textSecondary }]}>휴대폰 앱에서 켤 수 있어요</Text>
+              </View>
+              <Badge label="앱 전용" />
+            </View>
+          )}
         </GlassCard>
 
         {/* 매일 쓰는 게 아니라 "다시 보고 싶을 때" 찾는 것들. 아래로 모은다. */}
@@ -238,18 +277,27 @@ export default function SettingsScreen() {
 
 function ToggleRow({
   label,
+  desc,
   value,
   onChange,
   colors,
 }: {
   label: string;
+  desc?: string;
   value: boolean;
   onChange: (v: boolean) => void;
   colors: any;
 }) {
   return (
     <View style={styles.row}>
-      <Text style={[styles.rowLabel, { color: colors.textPrimary }]}>{label}</Text>
+      {desc ? (
+        <View style={styles.rowTextCol}>
+          <Text style={[styles.rowLabel, { color: colors.textPrimary }]}>{label}</Text>
+          <Text style={[styles.rowDesc, { color: colors.textSecondary }]}>{desc}</Text>
+        </View>
+      ) : (
+        <Text style={[styles.rowLabel, { color: colors.textPrimary }]}>{label}</Text>
+      )}
       <ToggleSwitch value={value} onChange={onChange} />
     </View>
   );

@@ -183,6 +183,8 @@ interface AppState {
   /** 운동 설정(명세 F-031). 추천 규칙이 이 값을 받는다. */
   workoutPreference: WorkoutPreference;
   periodOn: boolean;
+  /** 화면 잠금. 켜면 앱을 열 때와 오래 나갔다 돌아올 때 지문·얼굴·폰 비밀번호로 확인한다. */
+  screenLock: boolean;
   periodSettings: PeriodSettings;
   /**
    * 사용자가 마지막 생리 시작일을 직접 고른 적이 있는지(명세 F-017).
@@ -233,6 +235,7 @@ interface AppState {
   setAlarms: (patch: Partial<Alarms>) => void;
   setWorkoutPreference: (patch: Partial<WorkoutPreference>) => void;
   setPeriodOn: (v: boolean) => void;
+  setScreenLock: (v: boolean) => void;
   setPeriodSettings: (patch: Partial<PeriodSettings>) => void;
   setDayCondition: (dateKey: string, condition: DailyRecord['periodCondition']) => void;
   toggleDaySymptom: (dateKey: string, symptom: string) => void;
@@ -356,6 +359,7 @@ export const useAppStore = create<AppState>()(
       goals: defaultGoals,
       workoutPreference: { intensity: 'normal', equipment: 'bodyweight', focus: 'full' },
       periodOn: true,
+      screenLock: false,
       periodSettings: defaultPeriodSettings(),
       periodSetupDone: false,
       // 전역 상수를 그대로 상태에 넣으면 어딘가에서 배열을 직접 수정했을 때 기본값이 오염된다.
@@ -434,6 +438,7 @@ export const useAppStore = create<AppState>()(
       setWorkoutPreference: (patch) =>
         set((s) => ({ workoutPreference: { ...s.workoutPreference, ...patch } })),
       setPeriodOn: (v) => set({ periodOn: v }),
+      setScreenLock: (v) => set({ screenLock: v }),
       // 주기·기간 숫자만 바꾼 건 입력 완료로 보지 않는다. 시작일이 없으면 예측 자체가 기본값 기준이라서.
       setPeriodSettings: (patch) => {
         set((s) => ({
