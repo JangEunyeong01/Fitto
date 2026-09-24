@@ -23,7 +23,13 @@
     },
     "plugins": [
       "expo-font",
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "피또 화면 잠금을 풀 때 Face ID로 본인인지 확인해요."
+        }
+      ]
     ]
   }
 }

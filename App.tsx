@@ -12,6 +12,7 @@ import ExerciseSheet from './src/screens/health/ExerciseSheet';
 import BirthdayModal from './src/screens/home/BirthdayModal';
 import TutorialOverlay from './src/components/TutorialOverlay';
 import SessionExpiredModal from './src/components/SessionExpiredModal';
+import LockGate from './src/components/LockGate';
 import { useTheme } from './src/theme/useTheme';
 import { useFittoFonts } from './src/theme/fonts';
 import { lightColors } from './src/theme/tokens';
@@ -56,6 +57,8 @@ function AppShell() {
           홈 화면 안에 두면 탭바가 딤 위로 올라와 튜토리얼 중에 다른 탭으로 나갈 수 있었다. */}
       <TutorialOverlay />
       <Toast />
+      {/* 화면 잠금은 시트·튜토리얼·토스트까지 전부 덮어야 해서 맨 마지막에 둔다. */}
+      <LockGate />
       <StatusBar style={mode === 'dark' ? 'light' : 'dark'} />
     </>
   );
