@@ -7,6 +7,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.HexFormat;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,19 +45,27 @@ public class AuthService {
 	private final JwtTokenProvider tokenProvider;
 	private final UserGoalService userGoalService;
 	private final LoginAttemptGuard loginAttemptGuard;
+	private final EmailCodeService emailCodeService;
 
 	/** 현재 비밀번호를 찍어보는 걸 막는다. 토큰이 있어야 부를 수 있으니 로그인보다 좁게 잡아도 된다. */
 	private final AttemptCounter passwordAttempts = new AttemptCounter(5, Duration.ofMinutes(10));
 
+	/**
+	 * 코드로 재설정하는 시도. 이메일 기준과 IP 기준을 같이 센다(로그인과 같은 이유).
+	 * 코드 하나당 5번은 EmailCode가 막고, 이건 코드를 새로 받아가며 계속 찍는 걸 막는다.
+	 */
+	private final AttemptCounter resetAttempts = new AttemptCounter(10, Duration.ofHours(1));
+
 	public AuthService(UserRepository userRepository, RefreshTokenRepository refreshTokenRepository,
 			PasswordEncoder passwordEncoder, JwtTokenProvider tokenProvider, UserGoalService userGoalService,
-			LoginAttemptGuard loginAttemptGuard) {
+			LoginAttemptGuard loginAttemptGuard, EmailCodeService emailCodeService) {
 		this.userRepository = userRepository;
 		this.refreshTokenRepository = refreshTokenRepository;
 		this.passwordEncoder = passwordEncoder;
 		this.tokenProvider = tokenProvider;
 		this.userGoalService = userGoalService;
 		this.loginAttemptGuard = loginAttemptGuard;
+		this.emailCodeService = emailCodeService;
 	}
 
 	@Transactional
@@ -176,6 +185,86 @@ public class AuthService {
 		log.info("비밀번호 변경: userId={} 폐기={}건", userId, revoked);
 
 		return new TokenResponse(tokenProvider.createAccessToken(userId), issueRefreshToken(userId));
+	}
+
+	/**
+	 * 비밀번호 찾기 코드 요청(명세 4-5).
+	 *
+	 * 가입 여부와 상관없이 같은 응답을 곧바로 돌려준다. 계정 찾기·코드 해싱(BCrypt)·메일 발송을 전부
+	 * 응답 뒤로 미루는 이유는 **시간** 때문이다. 가입된 이메일일 때만 이 일들이 일어나면
+	 * 응답이 수백 ms 늦어지고, 그걸 재면 가입 여부가 드러난다(로그인에서 더미 해시로 막은 것과 같은 문제).
+	 *
+	 * ponytail: 공용 스레드 풀에서 돈다. 서버가 여러 대가 되거나 메일이 밀리면 큐(메시지 브로커)로 옮긴다.
+	 */
+	public void requestPasswordReset(String email) {
+		String normalized = email.toLowerCase();
+		CompletableFuture.runAsync(() -> {
+			try {
+				emailCodeService.issueIfRegistered(normalized, EmailCode.Purpose.RESET_PASSWORD);
+			} catch (ApiException e) {
+				// 1분 안 재요청·메일 발송 불가. 응답은 이미 나갔으니 남기기만 한다.
+				log.warn("비밀번호 찾기 코드 미발송: email={} 사유={}", LogMask.email(normalized), e.getErrorCode());
+			} catch (RuntimeException e) {
+				log.error("비밀번호 찾기 코드 발송 실패: email={} 예외={}", LogMask.email(normalized), e.getClass().getSimpleName());
+			}
+		});
+	}
+
+	/**
+	 * 코드로 비밀번호 재설정(명세 4-5). 성공하면 바로 로그인된 상태로 돌려준다.
+	 *
+	 * 없는 계정·틀린 코드·만료된 코드를 같은 오류로 돌려준다. 계정이 없을 때도 더미 해시와 비교시켜 시간을 맞춘다.
+	 * 재설정하면 모든 기기의 로그인을 끊는다 — 비밀번호를 찾는 이유 중 하나가 "누가 내 계정에 들어온 것 같다"라서.
+	 * 메일함을 열어 코드를 맞힌 것이므로 이메일 인증도 된 것으로 본다.
+	 */
+	@Transactional(noRollbackFor = ApiException.class)
+	public AuthResponse resetPassword(String email, String code, String newPassword, String clientIp) {
+		String normalized = email.toLowerCase();
+		if (resetAttempts.isBlocked(normalized) || resetAttempts.isBlocked(clientIp)) {
+			log.warn("비밀번호 재설정 차단: email={} ip={}", LogMask.email(normalized), clientIp);
+			throw new ApiException(ErrorCode.TOO_MANY_REQUESTS);
+		}
+
+		User user = userRepository.findByEmail(normalized).orElse(null);
+		try {
+			if (user == null) {
+				passwordEncoder.matches(code, DUMMY_HASH);
+				throw new ApiException(ErrorCode.CODE_INVALID);
+			}
+			emailCodeService.consume(user.getId(), EmailCode.Purpose.RESET_PASSWORD, code);
+		} catch (ApiException e) {
+			resetAttempts.record(normalized);
+			resetAttempts.record(clientIp);
+			log.warn("비밀번호 재설정 실패: email={} ip={}", LogMask.email(normalized), clientIp);
+			throw e;
+		}
+
+		resetAttempts.clear(normalized);
+		user.changePassword(passwordEncoder.encode(newPassword));
+		user.markEmailVerified();
+		int revoked = refreshTokenRepository.revokeAllByUserId(user.getId(), Instant.now());
+		log.info("비밀번호 재설정: userId={} 폐기={}건", user.getId(), revoked);
+
+		return new AuthResponse(UserResponse.from(user), tokenProvider.createAccessToken(user.getId()),
+				issueRefreshToken(user.getId()));
+	}
+
+	/** 로그인한 사람의 이메일로 인증 코드를 보낸다(명세 5-4). 이미 인증됐으면 보내지 않는다. */
+	@Transactional
+	public void sendEmailVerification(UUID userId) {
+		User user = userRepository.findById(userId).orElseThrow(() -> new ApiException(ErrorCode.UNAUTHORIZED));
+		if (user.isEmailVerified()) {
+			return;
+		}
+		emailCodeService.issue(user, EmailCode.Purpose.VERIFY_EMAIL);
+	}
+
+	@Transactional(noRollbackFor = ApiException.class)
+	public UserResponse confirmEmailVerification(UUID userId, String code) {
+		User user = userRepository.findById(userId).orElseThrow(() -> new ApiException(ErrorCode.UNAUTHORIZED));
+		emailCodeService.consume(userId, EmailCode.Purpose.VERIFY_EMAIL, code);
+		user.markEmailVerified();
+		return UserResponse.from(user);
 	}
 
 	/** accessToken은 서버에 상태가 없어 만료까지 유효하다. 받은 refreshToken만 폐기한다(명세 4장). */

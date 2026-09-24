@@ -39,7 +39,7 @@ public class AccountService {
 	 * 엔티티 이름이라 표 이름과 다를 수 있다(RefreshToken → refresh_tokens).
 	 */
 	private static final List<String> SIMPLE_ENTITIES = List.of("MealItem", "MealMemo", "DailyWater", "DailySteps",
-			"WeightLog", "Workout", "CustomIngredient", "PeriodSetting", "RefreshToken");
+			"WeightLog", "Workout", "CustomIngredient", "PeriodSetting", "RefreshToken", "EmailCode");
 
 	/**
 	 * 비밀번호 확인 시도 제한.

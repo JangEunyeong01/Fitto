@@ -43,6 +43,10 @@ fitto:
     secret: ${JWT_SECRET:local-dev-secret-change-me-32bytes-minimum}
     access-ttl: 30m
     refresh-ttl: 14d
+  mail:
+    # 메일 서비스를 붙이기 전까지 비밀번호 찾기·이메일 인증 코드를 서버 로그에 찍는다. 로컬 전용.
+    # 운영(prod)에서 켜면 부팅이 실패한다(StartupSecurityCheck).
+    log-codes: true
 
 server:
   port: 8080

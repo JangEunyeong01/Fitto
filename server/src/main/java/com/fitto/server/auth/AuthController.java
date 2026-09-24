@@ -1,5 +1,7 @@
 package com.fitto.server.auth;
 
+import java.time.Duration;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -11,6 +13,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.fitto.server.auth.dto.AuthResponse;
 import com.fitto.server.auth.dto.LoginRequest;
+import com.fitto.server.auth.dto.PasswordForgotRequest;
+import com.fitto.server.auth.dto.PasswordResetRequest;
 import com.fitto.server.auth.dto.SignupRequest;
 import com.fitto.server.auth.dto.TokenRequest;
 import com.fitto.server.auth.dto.TokenResponse;
@@ -31,6 +35,12 @@ public class AuthController {
 	private final AuthService authService;
 	private final SignupThrottle signupThrottle;
 	private final SignupAllowlist signupAllowlist;
+
+	/**
+	 * 비밀번호 찾기 요청 제한(IP 기준). 가입 여부와 상관없이 세므로 이 제한으로는 아무것도 새지 않는다.
+	 * 막지 않으면 남의 이메일로 코드 메일을 무더기로 보내는 데 쓰일 수 있다.
+	 */
+	private final AttemptCounter forgotAttempts = new AttemptCounter(10, Duration.ofHours(1));
 
 	public AuthController(AuthService authService, SignupThrottle signupThrottle, SignupAllowlist signupAllowlist) {
 		this.authService = authService;
@@ -65,6 +75,27 @@ public class AuthController {
 	public AuthResponse login(@Valid @RequestBody LoginRequest request, HttpServletRequest httpRequest) {
 		// IP도 함께 넘긴다. 이메일 기준만으로는 계정을 바꿔가며 훑는 공격을 못 막는다.
 		return authService.login(request, httpRequest.getRemoteAddr());
+	}
+
+	/** 가입 여부와 상관없이 항상 202. 코드 발급과 발송은 응답 뒤에서 한다(AuthService 참고). */
+	@PostMapping("/password/forgot")
+	public ResponseEntity<Void> forgotPassword(@Valid @RequestBody PasswordForgotRequest request,
+			HttpServletRequest httpRequest) {
+		String clientKey = httpRequest.getRemoteAddr();
+		if (forgotAttempts.isBlocked(clientKey)) {
+			log.warn("비밀번호 찾기 차단: ip={}", clientKey);
+			throw new ApiException(ErrorCode.TOO_MANY_REQUESTS);
+		}
+		forgotAttempts.record(clientKey);
+		authService.requestPasswordReset(request.email());
+		return ResponseEntity.accepted().build();
+	}
+
+	@PostMapping("/password/reset")
+	public AuthResponse resetPassword(@Valid @RequestBody PasswordResetRequest request,
+			HttpServletRequest httpRequest) {
+		return authService.resetPassword(request.email(), request.code(), request.newPassword(),
+				httpRequest.getRemoteAddr());
 	}
 
 	@PostMapping("/refresh")

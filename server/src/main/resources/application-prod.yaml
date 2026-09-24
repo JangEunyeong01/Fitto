@@ -38,6 +38,10 @@ fitto:
   signup:
     # 가입을 받을 이메일. 쉼표로 여러 개. 비우면 누구나 가입할 수 있다.
     allowed-emails: ${SIGNUP_ALLOWED_EMAILS:}
+  mail:
+    # 기본 설정(application.yaml)은 로컬용으로 켜져 있다. 여기서 꺼야 운영이 뜬다.
+    # 메일 서비스를 붙이기 전까지 운영의 비밀번호 찾기·이메일 인증은 "지금은 메일을 보낼 수 없어요"로 거절된다.
+    log-codes: false
 
 server:
   port: ${PORT:8080}

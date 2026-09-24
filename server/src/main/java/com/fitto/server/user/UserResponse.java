@@ -10,6 +10,7 @@ import java.util.List;
 public record UserResponse(
 		String userId,
 		String email,
+		boolean emailVerified,
 		String name,
 		Gender gender,
 		Integer age,
@@ -53,6 +54,7 @@ public record UserResponse(
 		return new UserResponse(
 				user.getId().toString(),
 				user.getEmail(),
+				user.isEmailVerified(),
 				user.getName(),
 				user.getGender(),
 				user.getAge(),
