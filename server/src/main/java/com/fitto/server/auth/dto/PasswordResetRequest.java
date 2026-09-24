@@ -12,10 +12,10 @@ import jakarta.validation.constraints.Size;
 public record PasswordResetRequest(
 		@NotBlank @Email @Size(max = 254) String email,
 
-		@NotBlank @Pattern(regexp = "^\d{6}$", message = "코드는 숫자 6자리예요.")
+		@NotBlank @Pattern(regexp = "^[0-9]{6}$", message = "코드는 숫자 6자리예요.")
 		String code,
 
 		@NotBlank @Size(min = 8, max = 64)
-		@Pattern(regexp = "^(?=.*[A-Za-z])(?=.*\d).+$", message = "비밀번호는 영문과 숫자를 모두 포함해야 해요.")
+		@Pattern(regexp = "^(?=.*[A-Za-z])(?=.*[0-9]).+$", message = "비밀번호는 영문과 숫자를 모두 포함해야 해요.")
 		String newPassword) {
 }
