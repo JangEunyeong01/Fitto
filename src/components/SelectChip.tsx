@@ -6,7 +6,8 @@ import { radius, selection, typography, weight } from '../theme/tokens';
 type ChipSize = 'sm' | 'md' | 'lg' | 'field';
 
 interface SelectChipProps {
-  label: string;
+  /** 글자 한 줄. 검색 결과처럼 일부만 강조해야 하면 <HighlightText>를 넣어도 된다. */
+  label: React.ReactNode;
   selected: boolean;
   onPress: () => void;
   /**
