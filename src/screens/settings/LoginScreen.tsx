@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import ScreenBackground from '../../components/ScreenBackground';
 import GlassCard from '../../components/GlassCard';
 import TextLink from '../../components/TextLink';
@@ -35,8 +35,17 @@ export default function LoginScreen() {
   const setPersona = useAppStore((s) => s.setPersona);
   const showToast = useToastStore((s) => s.show);
 
-  const [email, setEmail] = useState('');
+  const route = useRoute<any>();
+  const [email, setEmail] = useState<string>(route.params?.email ?? '');
   const [password, setPassword] = useState('');
+
+  // 비밀번호 찾기에서 돌아오면 그 이메일을 채워준다. 이 화면은 이미 떠 있어서 처음 값만으로는 안 바뀐다.
+  useEffect(() => {
+    if (route.params?.email) {
+      setEmail(route.params.email);
+      setPassword('');
+    }
+  }, [route.params?.email]);
   const [busy, setBusy] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
   const wakeNotice = useWakeNotice(busy);
@@ -53,7 +62,12 @@ export default function LoginScreen() {
 
     try {
       const result = await login(email.trim(), password);
-      signIn({ accessToken: result.accessToken, refreshToken: result.refreshToken, email: result.user.email });
+      signIn({
+        accessToken: result.accessToken,
+        refreshToken: result.refreshToken,
+        email: result.user.email,
+        emailVerified: result.user.emailVerified,
+      });
 
       // 서버 값이 최종값이다(명세 2장). 로그인하면 기기 프로필을 서버 값으로 맞춘다.
       const mapped = fromUser(result.user);
@@ -146,7 +160,13 @@ export default function LoginScreen() {
           {/* 무료 서버가 잠들어 있으면 1분 넘게 걸린다. 스피너만 돌면 고장으로 보인다. */}
           {wakeNotice && <Text style={[styles.wakeNotice, { color: colors.textSecondary }]}>{wakeNotice}</Text>}
 
-          {/* 로그인 화면에서 막히지 않게 가입으로 가는 길을 둔다. 비밀번호 찾기는 메일 발송을 붙인 뒤에 넣는다. */}
+          {/* 로그인 화면에서 막히지 않게 가입·비밀번호 찾기로 가는 길을 둔다. */}
+          <View style={styles.linkRow}>
+            <TextLink
+              label="비밀번호를 잊으셨나요?"
+              onPress={() => navigation.navigate('ForgotPassword', { email: email.trim() || undefined })}
+            />
+          </View>
           <View style={styles.linkRow}>
             <Text style={[styles.link, { color: colors.textSecondary }]}>계정이 없으신가요?</Text>
             <TextLink label="계정 만들기" onPress={() => navigation.navigate('Signup')} />

@@ -129,6 +129,8 @@ async function pullOnce(token: string): Promise<void> {
   // setProfile이 아니라 전용 액션으로 넣는다 — setProfile은 대기열에 쌓아서 방금 받은 값을 다시 올려보낸다.
   const user = await getMe(token);
   const mapped = fromUser(user);
+  // 다른 기기에서 인증했을 수 있다. 서버 값을 따른다.
+  useAuthStore.getState().setEmailVerified(user.emailVerified);
 
   const dailyRecords: Record<string, Partial<DailyRecord>> = {};
   const touch = (date: string) => (dailyRecords[date] ??= {});

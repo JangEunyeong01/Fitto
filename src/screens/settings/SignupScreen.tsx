@@ -84,7 +84,12 @@ export default function SignupScreen() {
         startedAt: startDate ? new Date(`${startDate}T00:00:00`).toISOString() : undefined,
       });
 
-      signIn({ accessToken: result.accessToken, refreshToken: result.refreshToken, email: result.user.email });
+      signIn({
+        accessToken: result.accessToken,
+        refreshToken: result.refreshToken,
+        email: result.user.email,
+        emailVerified: result.user.emailVerified,
+      });
 
       // 가입과 기록 이전은 따로 실패할 수 있다. 이전이 실패해도 계정은 이미 만들어졌으므로
       // 로그인 상태는 유지하고, 다음 실행 때 다시 시도하면 된다(모든 기록에 ID가 있어 중복되지 않는다).

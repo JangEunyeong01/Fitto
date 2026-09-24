@@ -28,6 +28,8 @@ export interface WorkoutPreferenceDto {
 export interface User {
   userId: string;
   email: string;
+  /** 이메일로 받은 코드를 맞혔는지(명세 5-4). */
+  emailVerified: boolean;
   name: string;
   gender: string | null;
   age: number | null;

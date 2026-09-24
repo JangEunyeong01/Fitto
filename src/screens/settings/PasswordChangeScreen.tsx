@@ -14,15 +14,9 @@ import { useToastStore } from '../../store/useToastStore';
 import { changePassword } from '../../api/auth';
 import { ApiError, NetworkError } from '../../api/client';
 import { useWakeNotice } from '../../hooks/useWakeNotice';
+import { passwordError } from '../../utils/password';
 
 type Field = 'current' | 'next' | 'confirm';
-
-/** 가입과 같은 규칙(명세 4장). 변경으로 더 약한 비밀번호를 넣을 수 있으면 규칙이 있으나 마나다. */
-function passwordError(value: string): string | null {
-  if (value.length < 8) return '8자 이상으로 입력해 주세요';
-  if (!/[A-Za-z]/.test(value) || !/\d/.test(value)) return '영문과 숫자를 모두 포함해 주세요';
-  return null;
-}
 
 /**
  * 비밀번호 변경(명세 5장).

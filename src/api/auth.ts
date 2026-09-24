@@ -81,6 +81,30 @@ export function deleteAccount(password: string, token: string): Promise<void> {
   return awake(() => request<void>('/users/me', { method: 'DELETE', body: { password }, token }));
 }
 
+/**
+ * 비밀번호 찾기 코드 요청(명세 4-5). 가입 여부와 상관없이 항상 성공으로 돌아온다 —
+ * 서버가 가입 여부를 알려주지 않으므로 화면도 "가입된 이메일이면 도착해요"라고만 말한다.
+ */
+export function requestPasswordReset(email: string): Promise<void> {
+  return awake(() => request<void>('/auth/password/forgot', { method: 'POST', body: { email } }));
+}
+
+/** 코드로 비밀번호 재설정(명세 4-5). 한 번 쓴 코드는 다시 못 쓰므로 깨운 뒤 한 번만 보낸다. */
+export function resetPassword(params: { email: string; code: string; newPassword: string }): Promise<AuthResult> {
+  return awake(() => request<AuthResult>('/auth/password/reset', { method: 'POST', body: params }));
+}
+
+/** 이메일 인증 코드 보내기(명세 5-4). 이미 인증된 계정이면 서버가 아무것도 보내지 않는다. */
+export function sendEmailVerification(token: string): Promise<void> {
+  return awake(() => request<void>('/users/me/email/verification', { method: 'POST', token }));
+}
+
+export function confirmEmailVerification(code: string, token: string): Promise<User> {
+  return awake(() =>
+    request<User>('/users/me/email/verification/confirm', { method: 'POST', body: { code }, token })
+  );
+}
+
 /** 게스트로 쌓은 기기 기록을 계정으로 옮긴다(명세 6장). */
 export function importGuestData(payload: ImportPayload, token: string): Promise<ImportResult> {
   return request<ImportResult>('/me/import', { method: 'POST', body: payload, token });
