@@ -46,7 +46,11 @@ public class PayloadSizeFilter extends OncePerRequestFilter {
 
 		// 길이를 안 밝히고 보내는 경우(청크 전송)는 받지 않는다. 크기를 미리 알 수 없어 위 검사를 빠져나간다.
 		// 앱의 fetch는 본문이 있으면 항상 Content-Length를 붙인다.
-		boolean unknownLength = length < 0 && hasBody(request);
+		//
+		// 청크 전송인지는 Transfer-Encoding으로 본다. 예전엔 "길이 없는 POST"를 전부 막았는데,
+		// 본문 없는 POST(이메일 인증 코드 보내기)까지 413으로 걸렸다. HTTP에서 본문은 Content-Length나
+		// Transfer-Encoding이 있을 때만 존재하므로, 둘 다 없으면 본문이 없는 요청이다.
+		boolean unknownLength = length < 0 && hasBody(request) && isChunked(request);
 
 		if (length > MAX_BYTES || unknownLength) {
 			response.setStatus(ErrorCode.PAYLOAD_TOO_LARGE.getStatus().value());
@@ -58,6 +62,11 @@ public class PayloadSizeFilter extends OncePerRequestFilter {
 		}
 
 		chain.doFilter(request, response);
+	}
+
+	private static boolean isChunked(HttpServletRequest request) {
+		String encoding = request.getHeader("Transfer-Encoding");
+		return encoding != null && encoding.toLowerCase().contains("chunked");
 	}
 
 	private static boolean hasBody(HttpServletRequest request) {
