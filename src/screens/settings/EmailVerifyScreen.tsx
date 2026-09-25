@@ -3,13 +3,12 @@ import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import ScreenBackground from '../../components/ScreenBackground';
-import GlassCard from '../../components/GlassCard';
-import TextField from '../../components/TextField';
+import CodeInput from '../../components/CodeInput';
 import TextLink from '../../components/TextLink';
 import PrimaryButton from '../../components/PrimaryButton';
 import DetailHeader from '../detail/DetailHeader';
 import { useTheme } from '../../theme/useTheme';
-import { typography } from '../../theme/tokens';
+import { typography, weight } from '../../theme/tokens';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useToastStore } from '../../store/useToastStore';
 import { confirmEmailVerification, sendEmailVerification } from '../../api/auth';
@@ -91,59 +90,54 @@ export default function EmailVerifyScreen() {
       >
         <DetailHeader title="이메일 인증" />
 
-        <GlassCard style={styles.card}>
-          <Text style={[styles.email, { color: colors.textPrimary }]}>{email}</Text>
-          <Text style={[styles.desc, { color: colors.textSecondary }]}>
-            이 주소로 비밀번호를 찾을 수 있는지 확인해요. 주소가 틀렸다면 인증 메일이 도착하지 않아요.
-          </Text>
+        {/* 카드 없이 화면에 바로(시안 24). */}
+        <Text style={[styles.email, { color: colors.textPrimary }]}>{email}</Text>
+        <Text style={[styles.sub, { color: colors.textSecondary }]}>
+          이 주소로 비밀번호를 찾을 수 있는지 확인해요. 주소가 틀렸다면 인증 메일이 도착하지 않아요.
+        </Text>
 
-          {!sent ? (
-            <>
-              {error && <Text style={[styles.error, { color: colors.textDanger }]}>{error.message}</Text>}
-              {wakeNotice && <Text style={[styles.desc, { color: colors.textSecondary }]}>{wakeNotice}</Text>}
-              <View style={styles.buttonWrap}>
-                <PrimaryButton label="인증 코드 받기" onPress={send} loading={busy} />
-              </View>
-            </>
-          ) : (
-            <>
-              <Text style={[styles.label, { color: colors.textSecondary }]}>코드 6자리</Text>
-              <TextField
-                value={code}
-                onChangeText={(v) => {
-                  setCode(v.replace(/[^0-9]/g, ''));
-                  if (error?.onCode) setError(null);
-                }}
-                placeholder="123456"
-                keyboardType="number-pad"
-                textContentType="oneTimeCode"
-                autoComplete="one-time-code"
-                maxLength={6}
-                error={error?.onCode ? error.message : null}
+        {!sent ? (
+          <>
+            {error && <Text style={[styles.error, { color: colors.textDanger }]}>{error.message}</Text>}
+            {wakeNotice && <Text style={[styles.hint, { color: colors.textSecondary }]}>{wakeNotice}</Text>}
+            <View style={styles.buttonWrap}>
+              <PrimaryButton label="인증 코드 받기" onPress={send} loading={busy} />
+            </View>
+          </>
+        ) : (
+          <>
+            <Text style={[styles.label, { color: colors.textSecondary }]}>코드 6자리</Text>
+            <CodeInput
+              value={code}
+              onChange={(v) => {
+                setCode(v);
+                if (error?.onCode) setError(null);
+              }}
+              error={error?.onCode ? error.message : null}
+            />
+            <Text style={[styles.hint, { color: colors.textSecondary }]}>
+              10분 동안 쓸 수 있어요. 안 보이면 스팸함도 확인해 주세요.
+            </Text>
+
+            {error && !error.onCode && (
+              <Text style={[styles.error, { color: colors.textDanger }]}>{error.message}</Text>
+            )}
+            {wakeNotice && <Text style={[styles.hint, { color: colors.textSecondary }]}>{wakeNotice}</Text>}
+
+            <View style={styles.buttonWrap}>
+              <PrimaryButton label="인증하기" onPress={confirm} loading={busy} inactive={code.length !== 6} />
+            </View>
+
+            <View style={styles.linkRow}>
+              <TextLink
+                tone="muted"
+                label={cooldown > 0 ? `코드 다시 받기 (${cooldown}초)` : '코드 다시 받기'}
+                onPress={send}
+                disabled={cooldown > 0 || busy}
               />
-              <Text style={[styles.desc, { color: colors.textSecondary }]}>
-                10분 동안 쓸 수 있어요. 안 보이면 스팸함도 확인해 주세요.
-              </Text>
-
-              {error && !error.onCode && (
-                <Text style={[styles.error, { color: colors.textDanger }]}>{error.message}</Text>
-              )}
-              {wakeNotice && <Text style={[styles.desc, { color: colors.textSecondary }]}>{wakeNotice}</Text>}
-
-              <View style={styles.buttonWrap}>
-                <PrimaryButton label="인증하기" onPress={confirm} loading={busy} inactive={code.length !== 6} />
-              </View>
-
-              <View style={styles.linkRow}>
-                <TextLink
-                  label={cooldown > 0 ? `코드 다시 받기 (${cooldown}초)` : '코드 다시 받기'}
-                  onPress={send}
-                  disabled={cooldown > 0 || busy}
-                />
-              </View>
-            </>
-          )}
-        </GlassCard>
+            </View>
+          </>
+        )}
       </ScrollView>
     </ScreenBackground>
   );
@@ -160,18 +154,29 @@ const styles = StyleSheet.create({
   content: {
     paddingHorizontal: 16,
   },
-  card: {
-    marginBottom: 12,
+  email: {
+    fontSize: 15,
+    ...weight(700),
+    lineHeight: 15 * 1.5,
+    paddingHorizontal: 2,
   },
-  email: typography.itemTitle,
+  sub: {
+    fontSize: 13,
+    ...weight(400),
+    lineHeight: 13 * 1.5,
+    marginTop: 4,
+    paddingHorizontal: 2,
+  },
   label: {
     ...typography.label,
-    marginTop: 16,
-    marginBottom: 8,
+    marginTop: 14,
+    marginBottom: 6,
   },
-  desc: {
-    ...typography.caption,
-    marginTop: 8,
+  hint: {
+    fontSize: 12,
+    ...weight(400),
+    lineHeight: 18,
+    marginTop: 6,
   },
   error: {
     ...typography.caption,
@@ -181,8 +186,9 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   linkRow: {
-    marginTop: 12,
+    marginTop: 4,
     minHeight: 44,
     justifyContent: 'center',
+    alignItems: 'flex-start',
   },
 });

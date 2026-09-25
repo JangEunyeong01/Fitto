@@ -1,12 +1,17 @@
 import React from 'react';
 import { Pressable, Text, StyleSheet, StyleProp, ViewStyle } from 'react-native';
 import { useTheme } from '../theme/useTheme';
-import { typography } from '../theme/tokens';
+import { typography, weight } from '../theme/tokens';
 
 interface TextLinkProps {
   label: string;
   onPress: () => void;
   disabled?: boolean;
+  /**
+   * accent: 파란 글씨 링크(기본). muted: 회색 보조 동작 — "나중에", "코드 다시 받기"처럼
+   * 칠한 버튼 아래에서 한 발 물러서 있어야 하는 것(시안 24·36).
+   */
+  tone?: 'accent' | 'muted';
   style?: StyleProp<ViewStyle>;
 }
 
@@ -20,8 +25,9 @@ interface TextLinkProps {
  * `›`는 붙이지 않는다(시안 규칙 17). 파란 글씨만으로 누를 수 있다는 게 읽히고,
  * 화살표는 목록 줄 오른쪽 끝의 이동 표시(아이콘)에만 남긴다.
  */
-export default function TextLink({ label, onPress, disabled, style }: TextLinkProps) {
+export default function TextLink({ label, onPress, disabled, tone = 'accent', style }: TextLinkProps) {
   const { colors } = useTheme();
+  const color = disabled ? colors.textDisabled : tone === 'muted' ? colors.textSecondary : colors.textAccent;
 
   return (
     <Pressable
@@ -33,9 +39,7 @@ export default function TextLink({ label, onPress, disabled, style }: TextLinkPr
       accessibilityState={{ disabled: !!disabled }}
       style={({ pressed }) => [styles.wrap, { opacity: pressed ? 0.6 : 1 }, style]}
     >
-      <Text style={[typography.label, { color: disabled ? colors.textDisabled : colors.textAccent }]}>
-        {label}
-      </Text>
+      <Text style={[tone === 'muted' ? styles.muted : typography.label, { color }]}>{label}</Text>
     </Pressable>
   );
 }
@@ -43,4 +47,8 @@ export default function TextLink({ label, onPress, disabled, style }: TextLinkPr
 // 정렬은 놓이는 줄이 정한다. 여기서 alignSelf를 주면 가로줄 안에서 글씨가 위로 붙는다.
 const styles = StyleSheet.create({
   wrap: {},
+  muted: {
+    fontSize: 14,
+    ...weight(600),
+  },
 });

@@ -3,13 +3,13 @@ import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import ScreenBackground from '../../components/ScreenBackground';
-import GlassCard from '../../components/GlassCard';
+import CodeInput from '../../components/CodeInput';
 import TextField from '../../components/TextField';
 import TextLink from '../../components/TextLink';
 import PrimaryButton from '../../components/PrimaryButton';
 import DetailHeader from '../detail/DetailHeader';
 import { useTheme } from '../../theme/useTheme';
-import { typography } from '../../theme/tokens';
+import { typography, weight } from '../../theme/tokens';
 import { useToastStore } from '../../store/useToastStore';
 import { requestPasswordReset, resetPassword } from '../../api/auth';
 import { ApiError, NetworkError } from '../../api/client';
@@ -126,9 +126,10 @@ export default function ForgotPasswordScreen() {
       >
         <DetailHeader title="비밀번호 찾기" />
 
+        {/* 입력 한두 개짜리 폼은 카드 없이 화면에 바로 둔다(시안 23~25). 카드를 씌우면 상자 속 상자가 된다. */}
         {step === 'email' ? (
-          <GlassCard style={styles.card}>
-            <Text style={[styles.desc, { color: colors.textSecondary }]}>
+          <>
+            <Text style={[styles.lead, { color: colors.textSecondary }]}>
               가입한 이메일로 6자리 코드를 보내드려요. 코드를 입력하면 새 비밀번호를 정할 수 있어요.
             </Text>
 
@@ -144,30 +145,22 @@ export default function ForgotPasswordScreen() {
             />
 
             {error && !error.field && <Text style={[styles.error, { color: colors.textDanger }]}>{error.message}</Text>}
-            {wakeNotice && <Text style={[styles.desc, { color: colors.textSecondary }]}>{wakeNotice}</Text>}
+            {wakeNotice && <Text style={[styles.hint, { color: colors.textSecondary }]}>{wakeNotice}</Text>}
 
             <View style={styles.buttonWrap}>
               <PrimaryButton label="코드 받기" onPress={sendCode} loading={busy} inactive={!email.trim()} />
             </View>
-          </GlassCard>
+          </>
         ) : (
-          <GlassCard style={styles.card}>
+          <>
             <Text style={[styles.sentTo, { color: colors.textPrimary }]}>{target}</Text>
-            <Text style={[styles.desc, { color: colors.textSecondary }]}>
-              가입된 이메일이면 곧 코드가 도착해요. 10분 동안 쓸 수 있어요. 안 보이면 스팸함도 확인해 주세요.
-            </Text>
+            <Text style={[styles.sub, { color: colors.textSecondary }]}>가입된 이메일이면 곧 코드가 도착해요.</Text>
 
             <Text style={[styles.label, { color: colors.textSecondary }]}>코드 6자리</Text>
-            <TextField
-              value={code}
-              onChangeText={onChange('code', (v) => setCode(v.replace(/[^0-9]/g, '')))}
-              placeholder="123456"
-              keyboardType="number-pad"
-              textContentType="oneTimeCode"
-              autoComplete="one-time-code"
-              maxLength={6}
-              error={fieldError('code')}
-            />
+            <CodeInput value={code} onChange={onChange('code', setCode)} error={fieldError('code')} />
+            <Text style={[styles.hint, { color: colors.textSecondary }]}>
+              10분 동안 쓸 수 있어요. 안 보이면 스팸함도 확인해 주세요.
+            </Text>
 
             <Text style={[styles.label, { color: colors.textSecondary }]}>새 비밀번호</Text>
             <TextField
@@ -176,6 +169,7 @@ export default function ForgotPasswordScreen() {
               placeholder="영문과 숫자를 포함해 8자 이상"
               autoCapitalize="none"
               secureTextEntry
+              revealable
               maxLength={64}
               error={fieldError('next')}
             />
@@ -187,33 +181,33 @@ export default function ForgotPasswordScreen() {
               placeholder="한 번 더 입력해 주세요"
               autoCapitalize="none"
               secureTextEntry
+              revealable
               maxLength={64}
               error={fieldError('confirm')}
             />
 
             {error && !error.field && <Text style={[styles.error, { color: colors.textDanger }]}>{error.message}</Text>}
-            {wakeNotice && <Text style={[styles.desc, { color: colors.textSecondary }]}>{wakeNotice}</Text>}
+            {wakeNotice && <Text style={[styles.hint, { color: colors.textSecondary }]}>{wakeNotice}</Text>}
 
-            <Text style={[styles.desc, { color: colors.textSecondary }]}>
-              비밀번호를 바꾸면 모든 기기에서 로그아웃돼요.
-            </Text>
+            <Text style={[styles.note, { color: colors.textSecondary }]}>비밀번호를 바꾸면 모든 기기에서 로그아웃돼요.</Text>
 
             <View style={styles.buttonWrap}>
               <PrimaryButton
                 label="비밀번호 바꾸기"
                 onPress={submit}
                 loading={busy}
-                inactive={!code || !next || !confirm}
+                inactive={code.length !== 6 || !next || !confirm}
               />
             </View>
 
+            {/* 보조 동작은 회색 글씨(시안 24). 칠한 버튼은 위 하나만. */}
             <View style={styles.linkRow}>
-              <TextLink
+              <TextLink tone="muted"
                 label={cooldown > 0 ? `코드 다시 받기 (${cooldown}초)` : '코드 다시 받기'}
                 onPress={sendCode}
                 disabled={cooldown > 0 || busy}
               />
-              <TextLink
+              <TextLink tone="muted"
                 label="이메일 다시 입력"
                 onPress={() => {
                   setStep('email');
@@ -222,7 +216,7 @@ export default function ForgotPasswordScreen() {
                 }}
               />
             </View>
-          </GlassCard>
+          </>
         )}
       </ScrollView>
     </ScreenBackground>
@@ -240,18 +234,41 @@ const styles = StyleSheet.create({
   content: {
     paddingHorizontal: 16,
   },
-  card: {
-    marginBottom: 12,
+  lead: {
+    fontSize: 14,
+    ...weight(400),
+    lineHeight: 21,
+    paddingHorizontal: 2,
   },
-  sentTo: typography.itemTitle,
+  sentTo: {
+    fontSize: 15,
+    ...weight(700),
+    lineHeight: 15 * 1.5,
+    paddingHorizontal: 2,
+  },
+  sub: {
+    fontSize: 13,
+    ...weight(400),
+    lineHeight: 13 * 1.5,
+    marginTop: 4,
+    paddingHorizontal: 2,
+  },
   label: {
     ...typography.label,
     marginTop: 14,
-    marginBottom: 8,
+    marginBottom: 6,
   },
-  desc: {
-    ...typography.caption,
-    marginTop: 8,
+  hint: {
+    fontSize: 12,
+    ...weight(400),
+    lineHeight: 18,
+    marginTop: 6,
+  },
+  note: {
+    fontSize: 12,
+    ...weight(400),
+    lineHeight: 18,
+    marginTop: 12,
   },
   error: {
     ...typography.caption,
@@ -263,7 +280,7 @@ const styles = StyleSheet.create({
   linkRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 12,
+    marginTop: 4,
     minHeight: 44,
     alignItems: 'center',
   },
