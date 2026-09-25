@@ -4,18 +4,18 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import ScreenBackground from '../../components/ScreenBackground';
 import GlassCard from '../../components/GlassCard';
-import Badge from '../../components/Badge';
 import Icon from '../../components/Icon';
 import DateNavigator from '../../components/DateNavigator';
+import QuickWorkoutRow from '../../components/QuickWorkoutRow';
 import { useTheme } from '../../theme/useTheme';
-import { alpha, brand, selection, typography, weight } from '../../theme/tokens';
+import { typography, weight } from '../../theme/tokens';
 import { useAppStore } from '../../store/useAppStore';
 import { useExerciseSheetStore } from '../../store/useExerciseSheetStore';
 import { useToastStore } from '../../store/useToastStore';
 import { newId } from '../../utils/id';
 import { dateKey } from '../../utils/timeOfDay';
 import { personaCopy } from '../../copy/persona';
-import { QUICK_WORKOUTS, QUICK_WORKOUT_MINUTES, calcExerciseKcal, findExercise } from '../../data/workouts';
+import { QUICK_WORKOUT_MINUTES, calcExerciseKcal, findExercise } from '../../data/workouts';
 import { recommendWorkouts } from '../../utils/workoutRecommend';
 import { sumMealKcal } from '../../utils/health';
 import { recentDays, recentDateKeys } from '../../utils/history';
@@ -89,6 +89,14 @@ export default function HealthScreen() {
     showToast(`${name} 기록 완료`);
   };
 
+  const handleRemove = (exercise: (typeof exercises)[number]) => {
+    removeExercise(date, exercise.id);
+    showToast(`${exercise.name} 기록을 지웠어요`, {
+      label: '실행 취소',
+      onPress: () => addExercise(date, exercise),
+    });
+  };
+
   // 퀵칩은 내장 운동이라 소모 칼로리를 MET로 계산한다(고정값을 쓰면 체중과 어긋난다).
   const handleQuickAdd = (code: string) => {
     const exercise = findExercise(code);
@@ -104,43 +112,42 @@ export default function HealthScreen() {
         contentContainerStyle={[styles.content, { paddingTop: insets.top + 14, paddingBottom: 108 }]}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={[typography.screenTitle, { color: colors.textPrimary, marginBottom: 16 }]}>헬스</Text>
+        <View style={styles.titleRow}>
+          <Text style={[typography.screenTitle, { color: colors.textPrimary }]}>헬스</Text>
+          {/* 탭 화면의 기록 버튼은 진한 글씨 + 아이콘(시안 규칙 1). 운동·시간·메모를 받는 시트를 연다(명세 F-034). */}
+          <Pressable
+            // onPress에 show를 그대로 넘기면 이벤트 객체가 날짜 자리로 들어가서 감싼다.
+            onPress={() => openExerciseSheet(date)}
+            accessibilityRole="button"
+            style={({ pressed }) => [styles.recordBtn, { opacity: pressed ? 0.6 : 1 }]}
+          >
+            <Icon name="plus" size={20} color={colors.textPrimary} strokeWidth={2} />
+            <Text style={[styles.recordBtnLabel, { color: colors.textPrimary }]}>운동 기록</Text>
+          </Pressable>
+        </View>
 
         <DateNavigator date={date} onChange={setDate} />
 
-        {/* 이 탭에 오는 이유는 "오늘 운동을 남기는 것"이라, 기록과 퀵칩을 맨 위에 둔다. */}
+        {/* 이 탭에 오는 이유는 "오늘 운동을 남기는 것"이라, 기록과 빠른 기록을 맨 위에 둔다. */}
         <GlassCard style={styles.card}>
           <View style={styles.headerRow}>
             <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>운동 기록</Text>
             {/* 명세 F-033: 그날 총 운동 시간·소모 칼로리 */}
             {exercises.length > 0 && (
-              <Text style={[styles.totalText, { color: colors.textSecondary }]}>
+              <Text style={[styles.meta, { color: colors.textSecondary }]}>
                 총 {totalMinutes}분 · {totalKcal.toLocaleString()}kcal
               </Text>
             )}
           </View>
           {exercises.length === 0 ? (
-            // 명세 F-051: 빈 상태에서 무엇을 하면 되는지까지 알려준다. 지난 날짜엔 권유가 어색해서 문구만 둔다.
-            <View style={styles.emptyBox}>
-              {/* 서버에서 받아오는 중이면 "없다"고 단정하지 않는다. */}
-              <Text style={[styles.empty, { color: colors.textPrimary }]}>
-                {loading
-                  ? '기록을 불러오는 중이에요.'
-                  : isToday
-                    ? '오늘 운동 기록이 없어요.'
-                    : '이날은 운동 기록이 없어요.'}
-              </Text>
-              {isToday && !loading && (
-                <Text style={[styles.emptyHint, { color: colors.textSecondary }]}>
-                  아래 퀵 기록을 누르면 15분으로 바로 남길 수 있어요.
-                </Text>
-              )}
-            </View>
+            // 서버에서 받아오는 중이면 "없다"고 단정하지 않는다.
+            <Text style={[styles.empty, { color: colors.textSecondary }]}>
+              {loading ? '기록을 불러오는 중이에요.' : isToday ? '오늘 운동 기록이 없어요.' : '이날은 운동 기록이 없어요.'}
+            </Text>
           ) : (
             <View style={styles.recordList}>
               {exercises.map((e) => (
                 <View key={e.id} style={styles.recordRow}>
-                  <View style={[styles.dot, { backgroundColor: brand.mint }]} />
                   <View style={styles.recordText}>
                     <Text style={[styles.recordName, { color: colors.textPrimary }]}>{e.name}</Text>
                     {!!e.memo && (
@@ -152,7 +159,13 @@ export default function HealthScreen() {
                   <Text style={[styles.recordDetail, { color: colors.textSecondary }]}>
                     {e.minutes}분 · {e.kcal}kcal
                   </Text>
-                  <Pressable onPress={() => removeExercise(date, e.id)} hitSlop={8}>
+                  {/* 한 줄 기록은 묻지 않고 바로 지우고, 토스트에서 되살린다(시안 규칙 24). */}
+                  <Pressable
+                    onPress={() => handleRemove(e)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${e.name} 삭제`}
+                    style={styles.removeBtn}
+                  >
                     <Icon name="close" size={16} color={colors.textSecondary} />
                   </Pressable>
                 </View>
@@ -160,25 +173,7 @@ export default function HealthScreen() {
             </View>
           )}
 
-          <View style={[styles.chipRow, { borderTopColor: colors.borderDivider }]}>
-            {/* 퀵칩은 한 탭 기록용(15분 고정), 직접 추가는 운동·시간·메모를 받는 시트(명세 F-034). */}
-            <Pressable
-              // onPress에 show를 그대로 넘기면 이벤트 객체가 날짜 자리로 들어가서 감싼다.
-              onPress={() => openExerciseSheet(date)}
-              style={[styles.chip, styles.chipPrimary, { borderColor: selection.border, backgroundColor: selection.bg }]}
-            >
-              <Text style={[styles.chipText, { color: colors.textPrimary }]}>+ 직접 추가</Text>
-            </Pressable>
-            {QUICK_WORKOUTS.map((code) => (
-              <Pressable
-                key={code}
-                onPress={() => handleQuickAdd(code)}
-                style={[styles.chip, { borderColor: colors.borderInput }]}
-              >
-                <Text style={[styles.chipText, { color: colors.textPrimary }]}>+ {findExercise(code)?.name}</Text>
-              </Pressable>
-            ))}
-          </View>
+          <QuickWorkoutRow onAdd={handleQuickAdd} />
         </GlassCard>
 
         {/* 추천과 움직임 현황은 "오늘"을 위한 카드라, 지난 날짜를 볼 때는 기록만 보여준다. */}
@@ -187,34 +182,36 @@ export default function HealthScreen() {
             <GlassCard style={styles.card}>
               <View style={styles.headerRow}>
                 <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>오늘의 퍼스널 트레이닝</Text>
-                <Badge label="룰 기반" tone="info" />
+                {/* 판단의 주체를 과장하지 않으려는 표시. 배지 대신 회색 글씨(시안 규칙 2). */}
+                <Text style={[styles.metaSmall, { color: colors.textSecondary }]}>룰 기반</Text>
               </View>
               <Text style={[styles.comment, { color: colors.textPrimary }]}>{trainingComment}</Text>
 
-              <View style={styles.suggestList}>
-                {suggestions.map((w) => (
-                  <View key={w.code} style={[styles.suggestRow, { backgroundColor: colors.surfaceSubtle }]}>
-                    <View style={styles.suggestText}>
-                      <Text style={[styles.suggestName, { color: colors.textPrimary }]}>
-                        {w.name}{' '}
-                        <Text style={[styles.suggestDetail, { color: colors.textSecondary }]}>
-                          {w.minutes}분 · {w.kcal}kcal
-                        </Text>
+              {/* 추천마다 박스를 두지 않고 얇은 선으로 나눈다(시안 규칙 5). */}
+              {suggestions.map((w) => (
+                <View key={w.code} style={[styles.suggestRow, { borderTopColor: colors.borderDivider }]}>
+                  <View style={styles.suggestText}>
+                    <Text style={[styles.suggestName, { color: colors.textPrimary }]}>
+                      {w.name}{' '}
+                      <Text style={[styles.suggestDetail, { color: colors.textSecondary }]}>
+                        {w.minutes}분 · {w.kcal}kcal
                       </Text>
-                      {/* 이유가 앞 운동과 같으면 적지 않는다. 같은 문장이 세 번 반복되면 읽지 않게 된다. */}
-                      {!!w.reason && (
-                        <Text style={[styles.suggestReason, { color: colors.textSecondary }]}>{w.reason}</Text>
-                      )}
-                    </View>
-                    <Pressable
-                      onPress={() => handleAdd(w.name, w.minutes, w.kcal, w.code)}
-                      style={[styles.addBtn, { borderColor: colors.borderGlass, backgroundColor: colors.surface }]}
-                    >
-                      <Text style={[styles.addLabel, { color: colors.textPrimary }]}>기록에 추가</Text>
-                    </Pressable>
+                    </Text>
+                    {/* 이유가 앞 운동과 같으면 적지 않는다. 같은 문장이 세 번 반복되면 읽지 않게 된다. */}
+                    {!!w.reason && (
+                      <Text style={[styles.suggestReason, { color: colors.textSecondary }]}>{w.reason}</Text>
+                    )}
                   </View>
-                ))}
-              </View>
+                  <Pressable
+                    onPress={() => handleAdd(w.name, w.minutes, w.kcal, w.code)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${w.name} 기록에 추가`}
+                    style={styles.addBtn}
+                  >
+                    <Text style={[styles.addLabel, { color: colors.textAccent }]}>추가</Text>
+                  </Pressable>
+                </View>
+              ))}
 
               {/* 추천을 만드는 값이라 추천 바로 아래 둔다. 매일 바꾸는 값이 아니라 접어둔다. */}
               <WorkoutSettingRow />
@@ -229,6 +226,7 @@ export default function HealthScreen() {
                 <Stat
                   label="평균 걸음"
                   value={stepsConnected ? avgSteps.toLocaleString() : '연결 전'}
+                  muted={!stepsConnected}
                   colors={colors}
                 />
               </View>
@@ -240,10 +238,9 @@ export default function HealthScreen() {
         <RoutineCard date={date} />
 
         {/* 다른 화면으로 나가는 문 두 개. 기록 카드와 같은 무게로 쌓이지 않게 한 장에 묶는다. */}
-        <GlassCard style={styles.card}>
+        <GlassCard style={styles.card} noPadding>
           <LinkRow
             icon="weight"
-            tint={alpha(brand.mint, 0.28)}
             title="체중 기록"
             sub={latestWeight != null ? `최근 ${latestWeight}kg · 추이 보기` : '기록하고 추이 보기'}
             onPress={() => navigation.navigate('Weight')}
@@ -252,7 +249,6 @@ export default function HealthScreen() {
           {periodOn && (
             <LinkRow
               icon="moon"
-              tint={alpha(brand.lavender, 0.28)}
               title="생리 주기 상세"
               sub={periodSetupDone ? '캘린더와 컨디션 기록 보기' : '마지막 시작일을 입력하면 주기를 계산해요'}
               // 시작일 입력 전에는 상세 대신 설정으로 보낸다. 설정 화면은 설정 탭 스택에 있다.
@@ -271,10 +267,9 @@ export default function HealthScreen() {
   );
 }
 
-/** 상세 화면으로 나가는 한 줄. 누르는 영역은 아이콘 칸(44)이 잡아준다. */
+/** 상세 화면으로 나가는 한 줄. 아이콘은 색 칸 없이 선만(시안 규칙 6). */
 function LinkRow({
   icon,
-  tint,
   title,
   sub,
   onPress,
@@ -282,7 +277,6 @@ function LinkRow({
   divider,
 }: {
   icon: 'weight' | 'moon';
-  tint: string;
   title: string;
   sub: string;
   onPress: () => void;
@@ -298,11 +292,9 @@ function LinkRow({
         divider && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.borderDivider },
       ]}
     >
-      <View style={[styles.linkBadge, { backgroundColor: tint }]}>
-        <Icon name={icon} size={20} color={colors.textPrimary} />
-      </View>
+      <Icon name={icon} size={24} color={colors.textPrimary} />
       <View style={styles.linkText}>
-        <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>{title}</Text>
+        <Text style={[styles.linkTitle, { color: colors.textPrimary }]}>{title}</Text>
         <Text style={[styles.linkSub, { color: colors.textSecondary }]}>{sub}</Text>
       </View>
       <Icon name="chevronRight" size={16} color={colors.textSecondary} />
@@ -311,11 +303,11 @@ function LinkRow({
 }
 
 // KcalCard의 섭취/소모/남음 3열 패턴과 통일: 라벨 → 값 순서로 세로로 쌓는다.
-function Stat({ label, value, colors }: { label: string; value: string; colors: any }) {
+function Stat({ label, value, muted, colors }: { label: string; value: string; muted?: boolean; colors: any }) {
   return (
     <View style={styles.statCol}>
       <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{label}</Text>
-      <Text style={[styles.statValue, { color: colors.textPrimary }]}>{value}</Text>
+      <Text style={[styles.statValue, { color: muted ? colors.textSecondary : colors.textPrimary }]}>{value}</Text>
     </View>
   );
 }
@@ -327,130 +319,138 @@ const styles = StyleSheet.create({
   content: {
     paddingHorizontal: 16,
   },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    minHeight: 40,
+    marginBottom: 12,
+  },
+  recordBtn: {
+    height: 44,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+  recordBtnLabel: {
+    fontSize: 15,
+    ...weight(600),
+  },
   card: {
     marginBottom: 12,
   },
-  cardTitle: typography.sectionTitle,
+  cardTitle: typography.cardTitle,
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: 8,
+    minHeight: 22,
   },
+  meta: typography.unit,
+  metaSmall: typography.micro,
   statRow: {
     flexDirection: 'row',
     marginTop: 14,
   },
   statCaption: {
     ...typography.caption,
-    marginTop: 10,
+    marginTop: 12,
   },
   statCol: {
     flex: 1,
-    gap: 4,
+    gap: 3,
   },
   statValue: {
-    fontSize: 18,
+    fontSize: 17,
     ...weight(700),
-    letterSpacing: -0.6,
   },
-  statLabel: typography.caption,
+  statLabel: typography.micro,
   comment: {
     ...typography.body,
-    marginTop: 10,
-  },
-  suggestList: {
-    marginTop: 12,
-    gap: 8,
+    marginTop: 8,
+    marginBottom: 10,
   },
   suggestRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    padding: 12,
-    borderRadius: 14,
+    gap: 12,
+    minHeight: 56,
+    paddingVertical: 6,
+    borderTopWidth: StyleSheet.hairlineWidth,
   },
   suggestText: {
     flex: 1,
-    gap: 3,
+    minWidth: 0,
   },
-  suggestName: typography.sectionTitle,
-  suggestDetail: typography.bodySm,
+  suggestName: {
+    fontSize: 14,
+    ...weight(600),
+  },
+  suggestDetail: {
+    fontSize: 13,
+    ...weight(400),
+  },
   suggestReason: {
     ...typography.caption,
-    lineHeight: 11 * 1.45,
+    marginTop: 3,
   },
   addBtn: {
-    height: 32,
-    paddingHorizontal: 11,
-    borderRadius: 10,
-    borderWidth: 1,
-    alignItems: 'center',
+    height: 44,
     justifyContent: 'center',
   },
-  addLabel: typography.label,
-  emptyBox: {
-    marginTop: 10,
-    gap: 4,
+  addLabel: {
+    fontSize: 14,
+    ...weight(600),
   },
-  empty: typography.body,
-  emptyHint: typography.caption,
+  empty: {
+    ...typography.body,
+    marginTop: 8,
+  },
   recordList: {
-    marginTop: 10,
-    gap: 8,
+    marginTop: 6,
   },
   recordRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-  },
-  dot: {
-    width: 7,
-    height: 7,
-    borderRadius: 3.5,
+    gap: 10,
+    minHeight: 44,
   },
   recordText: {
     flex: 1,
     gap: 1,
   },
-  recordName: typography.rowLabel,
+  recordName: {
+    fontSize: 14,
+    ...weight(600),
+  },
   recordMemo: typography.caption,
-  recordDetail: typography.caption,
-  totalText: typography.label,
-  chipRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginTop: 14,
-    paddingTop: 12,
-    borderTopWidth: StyleSheet.hairlineWidth,
+  recordDetail: {
+    fontSize: 13,
+    ...weight(400),
   },
-  chip: {
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    borderRadius: 10,
-    borderWidth: 1,
+  // 보이는 ×는 16이지만 누르는 영역은 44×44.
+  removeBtn: {
+    width: 44,
+    height: 44,
+    marginRight: -14,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  chipPrimary: {
-    borderStyle: 'solid',
-  },
-  chipText: typography.label,
   linkRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    paddingVertical: 10,
-  },
-  linkBadge: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
+    gap: 14,
+    height: 64,
+    paddingHorizontal: 18,
   },
   linkText: {
     flex: 1,
     gap: 2,
   },
-  linkSub: typography.bodySm,
+  linkTitle: {
+    fontSize: 15,
+    ...weight(600),
+  },
+  linkSub: typography.caption,
 });

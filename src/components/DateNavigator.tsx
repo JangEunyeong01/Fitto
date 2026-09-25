@@ -28,12 +28,11 @@ export default function DateNavigator({ date, onChange }: DateNavigatorProps) {
     <View style={styles.row}>
       <Pressable
         onPress={() => onChange(addDays(date, -1))}
-        hitSlop={8}
-        style={[styles.btn, { borderColor: colors.borderDivider }]}
+        style={styles.btn}
         accessibilityRole="button"
         accessibilityLabel="이전 날"
       >
-        <Icon name="chevronLeft" size={16} color={colors.textPrimary} />
+        <Icon name="chevronLeft" size={20} color={colors.textPrimary} />
       </Pressable>
 
       <Pressable onPress={() => onChange(today)} disabled={isToday} style={styles.center}>
@@ -44,12 +43,11 @@ export default function DateNavigator({ date, onChange }: DateNavigatorProps) {
       <Pressable
         onPress={() => onChange(addDays(date, 1))}
         disabled={isToday}
-        hitSlop={8}
-        style={[styles.btn, { borderColor: colors.borderDivider, opacity: isToday ? 0.35 : 1 }]}
+        style={[styles.btn, { opacity: isToday ? 0.35 : 1 }]}
         accessibilityRole="button"
         accessibilityLabel="다음 날"
       >
-        <Icon name="chevronRight" size={16} color={colors.textPrimary} />
+        <Icon name="chevronRight" size={20} color={colors.textPrimary} />
       </Pressable>
     </View>
   );
@@ -60,13 +58,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    height: 48,
     marginBottom: 12,
   },
+  // 상자 없이 화살표만(시안 04·05). 누르는 영역은 44×44 그대로.
   btn: {
-    width: 32,
-    height: 32,
-    borderRadius: 10,
-    borderWidth: 1,
+    width: 44,
+    height: 44,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -75,5 +73,5 @@ const styles = StyleSheet.create({
     gap: 1,
   },
   label: typography.itemTitle,
-  sub: typography.caption,
+  sub: typography.micro,
 });

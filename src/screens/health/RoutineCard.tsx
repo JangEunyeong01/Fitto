@@ -7,7 +7,7 @@ import SelectChip from '../../components/SelectChip';
 import TextField from '../../components/TextField';
 import PrimaryButton from '../../components/PrimaryButton';
 import { useTheme } from '../../theme/useTheme';
-import { overlay, selection, typography } from '../../theme/tokens';
+import { overlay, typography } from '../../theme/tokens';
 import { useAppStore, type WorkoutRoutine } from '../../store/useAppStore';
 import { useToastStore } from '../../store/useToastStore';
 import { newId } from '../../utils/id';
@@ -55,8 +55,8 @@ export default function RoutineCard({ date }: RoutineCardProps) {
       <GlassCard style={styles.card}>
         <View style={styles.headerRow}>
           <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>나만의 루틴</Text>
-          <Pressable onPress={() => setFormOpen(true)} hitSlop={8}>
-            <Text style={[styles.addLink, { color: colors.textSecondary }]}>+ 만들기</Text>
+          <Pressable onPress={() => setFormOpen(true)} accessibilityRole="button" style={styles.textBtn}>
+            <Text style={[styles.addLink, { color: colors.textAccent }]}>+ 만들기</Text>
           </Pressable>
         </View>
 
@@ -67,7 +67,8 @@ export default function RoutineCard({ date }: RoutineCardProps) {
         ) : (
           <View style={styles.list}>
             {routines.map((r) => (
-              <View key={r.id} style={[styles.row, { backgroundColor: colors.surfaceSubtle }]}>
+              // 루틴마다 박스를 두지 않고 얇은 선으로 나눈다(시안 규칙 5).
+              <View key={r.id} style={[styles.row, { borderTopColor: colors.borderDivider }]}>
                 <View style={styles.rowText}>
                   <Text style={[styles.name, { color: colors.textPrimary }]}>{r.name}</Text>
                   <Text style={[styles.meta, { color: colors.textSecondary }]}>
@@ -77,15 +78,17 @@ export default function RoutineCard({ date }: RoutineCardProps) {
                 </View>
                 <Pressable
                   onPress={() => use(r)}
-                  style={[styles.useBtn, { borderColor: selection.border, backgroundColor: selection.bg }]}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${r.name} 기록에 추가`}
+                  style={styles.textBtn}
                 >
-                  <Text style={[styles.useLabel, { color: colors.textPrimary }]}>사용</Text>
+                  <Text style={[styles.useLabel, { color: colors.textAccent }]}>사용</Text>
                 </Pressable>
                 <Pressable
                   onPress={() => removeRoutine(r.id)}
-                  hitSlop={8}
                   accessibilityRole="button"
                   accessibilityLabel={`${r.name} 삭제`}
+                  style={styles.removeBtn}
                 >
                   <Icon name="close" size={16} color={colors.textSecondary} />
                 </Pressable>
@@ -248,22 +251,34 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: 8,
   },
-  cardTitle: typography.sectionTitle,
-  addLink: typography.unit,
+  cardTitle: typography.cardTitle,
+  addLink: {
+    ...typography.rowLabel,
+  },
+  textBtn: {
+    height: 44,
+    justifyContent: 'center',
+  },
+  removeBtn: {
+    width: 44,
+    height: 44,
+    marginRight: -14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   empty: {
-    ...typography.body,
-    marginTop: 10,
+    ...typography.bodySm,
+    marginTop: 2,
   },
   list: {
-    marginTop: 12,
-    gap: 8,
+    marginTop: 4,
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    padding: 12,
-    borderRadius: 14,
+    gap: 12,
+    minHeight: 56,
+    borderTopWidth: StyleSheet.hairlineWidth,
   },
   rowText: {
     flex: 1,
@@ -271,15 +286,7 @@ const styles = StyleSheet.create({
   },
   name: typography.rowLabel,
   meta: typography.caption,
-  useBtn: {
-    height: 32,
-    paddingHorizontal: 14,
-    borderRadius: 10,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  useLabel: typography.label,
+  useLabel: typography.rowLabel,
   overlay: {
     position: 'absolute',
     left: 0,
