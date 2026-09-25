@@ -1,14 +1,13 @@
 import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { BlurView } from 'expo-blur';
-import { LinearGradient } from 'expo-linear-gradient';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { StackActions } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/useTheme';
 import Icon, { type IconName } from '../components/Icon';
 import { useQuickLogSheetStore } from '../store/useQuickLogSheetStore';
-import { primaryButtonShadow, radius, tabBarShadowColor, weight } from '../theme/tokens';
+import { alpha, radius, tabBarShadowColor, weight } from '../theme/tokens';
 
 const TAB_LABELS: Record<string, string> = {
   Home: '홈',
@@ -24,9 +23,15 @@ const TAB_ICONS: Record<string, IconName> = {
   Settings: 'settings',
 };
 
-// README 탭바 B안(기본): 홈 · 식단 — [+FAB] — 헬스 · 설정
+/**
+ * 하단 탭바: 홈 · 식단 — [+] — 헬스 · 설정
+ *
+ * 시안 규칙 4: **파랑을 쓰지 않는다.** 예전엔 고른 탭과 가운데 +가 파란 그라데이션이라,
+ * 어느 화면에서나 가장 눈에 띄는 게 탭바였다. 파랑은 그 화면의 칠해진 버튼 하나에 양보한다.
+ * 고른 탭은 진한 글씨 + 굵기 700 + 굵은 선 아이콘으로 알린다(색 차이만으로 알리지 않는다).
+ */
 export default function TabBar({ state, navigation }: BottomTabBarProps) {
-  const { colors, mode, primaryGradient } = useTheme();
+  const { colors, mode } = useTheme();
   const insets = useSafeAreaInsets();
   const showSheet = useQuickLogSheetStore((s) => s.show);
 
@@ -54,19 +59,18 @@ export default function TabBar({ state, navigation }: BottomTabBarProps) {
       navigation.navigate(route.name);
     };
 
+    const tint = focused ? colors.textPrimary : colors.textSecondary;
     return (
-      <Pressable key={route.key} onPress={onPress} style={styles.tabItem}>
-        {focused ? (
-          <LinearGradient colors={primaryGradient} style={styles.tabActiveBg} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
-            <Icon name={icon} size={20} color={colors.textOnPrimary} strokeWidth={2} />
-            <Text style={[styles.label, { color: colors.textOnPrimary }, weight(700)]}>{label}</Text>
-          </LinearGradient>
-        ) : (
-          <View style={styles.tabInactiveBg}>
-            <Icon name={icon} size={20} color={colors.textSecondary} />
-            <Text style={[styles.label, { color: colors.textSecondary }, weight(500)]}>{label}</Text>
-          </View>
-        )}
+      <Pressable
+        key={route.key}
+        onPress={onPress}
+        style={styles.tabItem}
+        accessibilityRole="tab"
+        accessibilityState={{ selected: focused }}
+        accessibilityLabel={label}
+      >
+        <Icon name={icon} size={20} color={tint} strokeWidth={focused ? 2 : 1.8} />
+        <Text style={[styles.label, { color: tint }, weight(focused ? 700 : 500)]}>{label}</Text>
       </Pressable>
     );
   };
@@ -79,18 +83,33 @@ export default function TabBar({ state, navigation }: BottomTabBarProps) {
           tint={mode === 'dark' ? 'dark' : 'light'}
           style={[styles.bar, { borderColor: colors.borderGlass }]}
         >
-          <View style={[styles.barInner, { backgroundColor: colors.surface }]}>
+          <View style={[styles.barInner, { backgroundColor: alpha(colors.surfaceSolid, 0.82) }]}>
             {leftRoutes.map(renderTab)}
-            <View style={styles.fabSpacer} />
+            {/* 빠른 기록. 탭바 안에 흰 원 + 얇은 선으로 둔다(예전엔 위로 튀어나온 파란 버튼). */}
+            <View style={styles.fabSlot}>
+              <Pressable
+                onPress={showSheet}
+                // 보이는 지름 42. 사방 4씩 넓혀 누르는 영역을 50으로.
+                hitSlop={4}
+                accessibilityRole="button"
+                accessibilityLabel="빠른 기록"
+                style={({ pressed }) => [
+                  styles.fab,
+                  {
+                    backgroundColor: colors.surfaceSolid,
+                    // 글씨색을 옅게 써서 라이트·다크 모두 같은 세기로 보이게 한다.
+                    borderColor: alpha(colors.textPrimary, 0.18),
+                    transform: [{ scale: pressed ? 0.94 : 1 }],
+                  },
+                ]}
+              >
+                <Icon name="plus" size={24} color={colors.textPrimary} strokeWidth={2} />
+              </Pressable>
+            </View>
             {rightRoutes.map(renderTab)}
           </View>
         </BlurView>
       </View>
-      <Pressable onPress={showSheet} style={styles.fabWrap} hitSlop={8}>
-        <LinearGradient colors={primaryGradient} style={styles.fab} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
-          <Icon name="plus" size={24} color={colors.textOnPrimary} strokeWidth={2.2} />
-        </LinearGradient>
-      </Pressable>
     </View>
   );
 }
@@ -127,17 +146,6 @@ const styles = StyleSheet.create({
   tabItem: {
     flex: 1,
     height: '100%',
-  },
-  tabActiveBg: {
-    flex: 1,
-    borderRadius: radius.tabItem,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 3,
-  },
-  tabInactiveBg: {
-    flex: 1,
-    borderRadius: radius.tabItem,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 3,
@@ -145,25 +153,17 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 12,
   },
-  fabSpacer: {
+  fabSlot: {
     width: 56,
-  },
-  fabWrap: {
-    position: 'absolute',
-    top: -3,
-    left: '50%',
-    marginLeft: -28,
-  },
-  fab: {
-    width: 56,
-    height: 50,
-    borderRadius: radius.fab,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: primaryButtonShadow,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 1,
-    shadowRadius: 20,
-    elevation: 6,
+  },
+  fab: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    borderWidth: 1.5,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

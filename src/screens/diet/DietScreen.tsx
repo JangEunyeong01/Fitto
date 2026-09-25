@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import ScreenBackground, { TITLE_GRADIENT_HEIGHT } from '../../components/ScreenBackground';
+import ScreenBackground from '../../components/ScreenBackground';
 import GlassCard from '../../components/GlassCard';
 import PrimaryButton from '../../components/PrimaryButton';
 import ProgressBar from '../../components/ProgressBar';
@@ -44,7 +44,7 @@ export default function DietScreen() {
   const over = totalKcal > goal;
 
   return (
-    <ScreenBackground gradientHeight={TITLE_GRADIENT_HEIGHT}>
+    <ScreenBackground showTimeGradient={false}>
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={[styles.content, { paddingTop: insets.top + 14, paddingBottom: 108 }]}

@@ -139,7 +139,6 @@ export default function EmailVerifyScreen() {
                   label={cooldown > 0 ? `코드 다시 받기 (${cooldown}초)` : '코드 다시 받기'}
                   onPress={send}
                   disabled={cooldown > 0 || busy}
-                  chevron={false}
                 />
               </View>
             </>

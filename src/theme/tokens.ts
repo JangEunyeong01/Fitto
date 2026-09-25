@@ -281,6 +281,8 @@ export function weight(w: FontWeightKey) {
  * 9.5·10.5px 글자는 폰에서 읽기 어려웠다.
  */
 const TYPE_SCALE = {
+  /** 홈 칼로리 카드의 섭취 숫자 하나. 화면에서 가장 먼저 읽혀야 하는 값이라 한 단계를 따로 둔다(시안 02). */
+  displayXl: 36,
   displayLg: 28,
   displayMd: 24,
   heading1: 20,
@@ -299,11 +301,14 @@ const TYPE_SCALE = {
  */
 export const typography = {
   // Heading
-  screenTitle: { fontSize: TYPE_SCALE.heading1, ...weight(700), letterSpacing: -0.6, lineHeight: 20 * 1.35 },
-  subScreenTitle: { fontSize: TYPE_SCALE.heading2, ...weight(700), letterSpacing: -0.4, lineHeight: 17 * 1.4 },
+  /** 탭 화면 제목(식단·헬스·설정). 시안 규칙 7: 24. */
+  screenTitle: { fontSize: TYPE_SCALE.displayMd, ...weight(700), letterSpacing: -0.7, lineHeight: 24 * 1.25 },
+  /** 상세 화면 제목(뒤로가기 옆). 시안은 19인데 단계에 없는 값이라 20으로 맞췄다. */
+  subScreenTitle: { fontSize: TYPE_SCALE.heading1, ...weight(700), letterSpacing: -0.5, lineHeight: 20 * 1.35 },
   onboardingTitle: { fontSize: TYPE_SCALE.displayMd, ...weight(700), letterSpacing: -0.7, lineHeight: 24 * 1.32 },
 
   // Display — 대표 수치. 카드별 크기가 따로 필요한 곳은 화면에서 fontSize만 덮어쓴다.
+  heroNumber: { fontSize: TYPE_SCALE.displayXl, ...weight(700), letterSpacing: -1.4, fontVariant: tabularNums },
   bigNumber: { fontSize: TYPE_SCALE.displayLg, ...weight(700), letterSpacing: -1.05, fontVariant: tabularNums },
   midNumber: { fontSize: TYPE_SCALE.displayMd, ...weight(700), letterSpacing: -0.9, fontVariant: tabularNums },
 
@@ -354,7 +359,8 @@ export const spacing = {
   bottomSubScreen: 40,
   cardGap: 12,
   cardGapCompact: 10,
-  cardPadding: 16,
+  /** 시안 규칙 8: 카드 여백 18. */
+  cardPadding: 18,
 };
 
 /**
@@ -394,20 +400,24 @@ export const gauge = {
 
 export const minTouchTarget = 44;
 
+/**
+ * 카드 그림자. 시안 규칙 8 "그림자 약하게" — 0 4px 16px rgba(44,62,80,.06).
+ * 예전 0 10px 30px은 카드마다 떠 보여서, 바탕을 조용히 두려는 방향(Quiet Base)과 맞지 않았다.
+ */
 export const glassShadow = {
   light: {
-    shadowColor: lightColors.shadowColor,
-    shadowOffset: { width: 0, height: 10 },
+    shadowColor: 'rgba(44,62,80,.06)',
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 1,
-    shadowRadius: 30,
-    elevation: 6,
+    shadowRadius: 16,
+    elevation: 2,
   },
   dark: {
     shadowColor: darkColors.shadowColor,
-    shadowOffset: { width: 0, height: 10 },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 1,
-    shadowRadius: 30,
-    elevation: 6,
+    shadowRadius: 16,
+    elevation: 2,
   },
 };
 

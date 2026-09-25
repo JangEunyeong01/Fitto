@@ -1,14 +1,15 @@
 import React from 'react';
 import { Pressable, Text, StyleSheet, StyleProp, ViewStyle, ActivityIndicator, View } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../theme/useTheme';
-import { typography } from '../theme/tokens';
+import { brand, typography } from '../theme/tokens';
 
 /**
  * 버튼 변형(UI 기준서 5-1).
  *
- * - primary: 그 화면의 가장 중요한 동작 하나. 파스텔 면 + 짙은 글씨
- * - secondary: 보조 동작(이전, 취소, 기록에 추가). 흰 면 + 입력 테두리
+ * - primary: 그 화면을 끝내는 동작 하나(시안 규칙 1). **단색** 피또 블루 + 짙은 글씨.
+ *   예전엔 그라데이션 + 그림자였는데, 화면마다 칠해진 버튼이 여러 개라 전부 떠 보였다
+ * - secondary: 테두리 박스. 시안 규칙 2로 대부분 글씨 버튼으로 바뀌고, 남는 자리는 탈퇴 확인 모달뿐이다.
+ *   화면을 옮길 때마다 하나씩 걷어내고, 다 걷히면 이 변형도 지운다
  * - text: 가벼운 이동(건너뛰기, 나중에 하기). 면 없음
  * - danger: 되돌릴 수 없는 동작의 **최종 확인에만**(탈퇴, 데이터 초기화)
  */
@@ -62,7 +63,7 @@ export default function PrimaryButton({
   loading,
   accessibilityLabel,
 }: PrimaryButtonProps) {
-  const { colors, primaryGradient, primaryButtonShadow, primaryButtonShadowSmall, radius } = useTheme();
+  const { colors, radius } = useTheme();
   const resolvedSize: ButtonSize = size ?? (small ? 'md' : 'lg');
   const muted = disabled || inactive;
 
@@ -85,9 +86,6 @@ export default function PrimaryButton({
     </Text>
   );
 
-  // 그림자는 주 버튼에만. 비활성일 땐 걷어서 눌러야 할 버튼처럼 보이지 않게 한다.
-  const showShadow = variant === 'primary' && !muted;
-
   return (
     <Pressable
       onPress={onPress}
@@ -104,11 +102,6 @@ export default function PrimaryButton({
             height: HEIGHT[resolvedSize],
             borderRadius: radius.button,
             transform: [{ scale: state.pressed && !muted ? 0.97 : 1 }],
-            shadowColor: showShadow ? (resolvedSize === 'lg' ? primaryButtonShadow : primaryButtonShadowSmall) : 'transparent',
-            shadowOffset: { width: 0, height: resolvedSize === 'lg' ? 8 : 6 },
-            shadowOpacity: showShadow && !state.pressed ? 1 : 0,
-            shadowRadius: resolvedSize === 'lg' ? 20 : 14,
-            elevation: showShadow && !state.pressed ? 5 : 0,
           },
           focused && { borderWidth: 2, borderColor: colors.focusRing },
           style,
@@ -116,33 +109,22 @@ export default function PrimaryButton({
       }}
     >
       {({ pressed }) => {
-        if (variant === 'primary' && !muted) {
-          return (
-            <LinearGradient
-              colors={pressed ? [primaryGradient[1], primaryGradient[1]] : primaryGradient}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={[styles.fill, { borderRadius: radius.button }]}
-            >
-              {content}
-            </LinearGradient>
-          );
-        }
+        const face = (): ViewStyle => {
+          // 시안: rgba(44,62,80,.07) 면 + 흐린 글씨. 다크에서도 뒤집히는 fillMuted를 쓴다.
+          if (muted) return { backgroundColor: colors.fillMuted };
+          if (variant === 'primary') return { backgroundColor: pressed ? brand.blueDeep : brand.blue };
+          if (variant === 'danger') return { backgroundColor: pressed ? DANGER_PRESSED : DANGER_FACE };
+          if (variant === 'secondary') {
+            return {
+              backgroundColor: pressed ? colors.surfaceMuted : colors.surfaceSolid,
+              borderWidth: 1,
+              borderColor: colors.borderInput,
+            };
+          }
+          return { opacity: pressed ? 0.6 : 1 };
+        };
 
-        const face =
-          muted
-            ? { backgroundColor: colors.surfaceMuted }
-            : variant === 'danger'
-              ? { backgroundColor: pressed ? DANGER_PRESSED : DANGER_FACE }
-              : variant === 'secondary'
-                ? {
-                    backgroundColor: pressed ? colors.surfaceMuted : colors.surfaceSolid,
-                    borderWidth: 1,
-                    borderColor: colors.borderInput,
-                  }
-                : { opacity: pressed ? 0.6 : 1 };
-
-        return <View style={[styles.fill, { borderRadius: radius.button }, face]}>{content}</View>;
+        return <View style={[styles.fill, { borderRadius: radius.button }, face()]}>{content}</View>;
       }}
     </Pressable>
   );

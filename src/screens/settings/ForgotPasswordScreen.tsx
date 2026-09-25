@@ -212,7 +212,6 @@ export default function ForgotPasswordScreen() {
                 label={cooldown > 0 ? `코드 다시 받기 (${cooldown}초)` : '코드 다시 받기'}
                 onPress={sendCode}
                 disabled={cooldown > 0 || busy}
-                chevron={false}
               />
               <TextLink
                 label="이메일 다시 입력"
@@ -221,7 +220,6 @@ export default function ForgotPasswordScreen() {
                   setCode('');
                   setError(null);
                 }}
-                chevron={false}
               />
             </View>
           </GlassCard>

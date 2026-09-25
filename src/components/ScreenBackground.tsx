@@ -7,18 +7,15 @@ import { getTimeSlot } from '../utils/timeOfDay';
 
 interface ScreenBackgroundProps {
   children?: React.ReactNode;
-  showTimeGradient?: boolean;
   /**
-   * 색이 깔리는 높이. 홈은 인사·브리핑까지(기본값), 다른 탭은 제목 줄까지만 쓴다.
-   * 상세 화면은 `showTimeGradient={false}`로 아예 끈다.
+   * 시간대 색을 깔지. **홈에서만 켠다**(시안 규칙 10). 식단·헬스·설정·상세 화면은 바탕색 그대로다.
+   * 탭마다 색이 깔리면 화면을 옮길 때마다 인상이 바뀌어서, 시간대 색은 "홈에 들어왔다"는 신호로만 쓴다.
    */
-  gradientHeight?: number;
+  showTimeGradient?: boolean;
 }
 
 /** 홈: 로고 + 인사 + 브리핑이 들어가는 높이. */
-export const HEADER_GRADIENT_HEIGHT = 260;
-/** 식단·헬스·설정: 화면 제목 줄만 덮는다. */
-export const TITLE_GRADIENT_HEIGHT = 130;
+const GRADIENT_HEIGHT = 260;
 
 /**
  * 화면 바탕.
@@ -28,11 +25,7 @@ export const TITLE_GRADIENT_HEIGHT = 130;
  * 같은 회색 글씨가 카드 위치마다 다르게 보였다. 시간대 색(피또의 인상)은 그대로 살리되
  * 대비가 흔들리는 구간을 없앴다.
  */
-export default function ScreenBackground({
-  children,
-  showTimeGradient = true,
-  gradientHeight = HEADER_GRADIENT_HEIGHT,
-}: ScreenBackgroundProps) {
+export default function ScreenBackground({ children, showTimeGradient = true }: ScreenBackgroundProps) {
   const { colors, mode } = useTheme();
   const slot = getTimeSlot();
   const color = timeSlots[slot].color;
@@ -49,7 +42,7 @@ export default function ScreenBackground({
           // 끝에서 배경색으로 떨어뜨린다. 투명으로 끝내면 경계가 어디인지 흐려진다.
           colors={[alpha(color, top), alpha(color, mid), colors.bg]}
           locations={[0, 0.55, 1]}
-          style={[styles.headerGradient, { height: gradientHeight }]}
+          style={styles.headerGradient}
         />
       )}
       {children}
@@ -63,6 +56,7 @@ const styles = StyleSheet.create({
   },
   headerGradient: {
     position: 'absolute',
+    height: GRADIENT_HEIGHT,
     top: 0,
     left: 0,
     right: 0,

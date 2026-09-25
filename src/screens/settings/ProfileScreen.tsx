@@ -5,7 +5,7 @@ import ScreenBackground from '../../components/ScreenBackground';
 import GlassCard from '../../components/GlassCard';
 import TextField from '../../components/TextField';
 import DetailHeader from '../detail/DetailHeader';
-import SegmentedControl from '../../components/SegmentedControl';
+import SelectChip from '../../components/SelectChip';
 import OptionRow from '../onboarding/OptionRow';
 import TagPicker from '../onboarding/TagPicker';
 import { useTheme } from '../../theme/useTheme';
@@ -122,12 +122,17 @@ export default function ProfileScreen() {
           </View>
 
           <Text style={[styles.label, { color: colors.textSecondary, marginTop: 14 }]}>성별</Text>
-          <View style={styles.gap10}>
-            <SegmentedControl
-              options={GENDERS.map((g) => ({ value: g.code, label: g.label }))}
-              value={profile.gender}
-              onChange={(gender) => setProfile({ gender })}
-            />
+          {/* 안 고른 상태가 있을 수 있어서 붙은 세그먼트 대신 떨어진 칩(시안 규칙 13). */}
+          <View style={[styles.gap10, styles.genderRow]}>
+            {GENDERS.map((g) => (
+              <SelectChip
+                key={g.code}
+                label={g.label}
+                selected={profile.gender === g.code}
+                onPress={() => setProfile({ gender: g.code })}
+                fill
+              />
+            ))}
           </View>
         </GlassCard>
 
@@ -257,6 +262,10 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   cardTitle: typography.sectionTitle,
+  genderRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
   gap10: {
     marginTop: 10,
   },
