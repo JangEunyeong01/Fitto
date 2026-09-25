@@ -4,7 +4,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import TextLink from '../../components/TextLink';
 import TextField from '../../components/TextField';
 import PrimaryButton from '../../components/PrimaryButton';
-import AuthSheetLayout from './AuthSheetLayout';
+import AuthSheetLayout, { useGoHomeLater } from './AuthSheetLayout';
 import { useTheme } from '../../theme/useTheme';
 import { typography, weight } from '../../theme/tokens';
 import { useAppStore } from '../../store/useAppStore';
@@ -23,6 +23,7 @@ import { useWakeNotice } from '../../hooks/useWakeNotice';
  */
 export default function LoginScreen() {
   const navigation = useNavigation<any>();
+  const goHomeLater = useGoHomeLater();
   const { colors } = useTheme();
 
   const signIn = useAuthStore((s) => s.signIn);
@@ -185,7 +186,7 @@ export default function LoginScreen() {
       </View>
 
       {navigation.canGoBack() && (
-        <Pressable onPress={() => navigation.goBack()} accessibilityRole="button" style={styles.laterBtn}>
+        <Pressable onPress={goHomeLater} accessibilityRole="button" style={styles.laterBtn}>
           <Text style={[styles.laterLabel, { color: colors.textSecondary }]}>나중에 하기</Text>
         </Pressable>
       )}

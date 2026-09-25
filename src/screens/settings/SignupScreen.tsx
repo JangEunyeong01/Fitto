@@ -4,7 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 import TextLink from '../../components/TextLink';
 import TextField from '../../components/TextField';
 import PrimaryButton from '../../components/PrimaryButton';
-import AuthSheetLayout from './AuthSheetLayout';
+import AuthSheetLayout, { useGoHomeLater } from './AuthSheetLayout';
 import { useTheme } from '../../theme/useTheme';
 import { typography, weight } from '../../theme/tokens';
 import { useAppStore } from '../../store/useAppStore';
@@ -23,6 +23,7 @@ import { useWakeNotice } from '../../hooks/useWakeNotice';
  */
 export default function SignupScreen() {
   const navigation = useNavigation<any>();
+  const goHomeLater = useGoHomeLater();
   const { colors } = useTheme();
 
   const profile = useAppStore((s) => s.profile);
@@ -188,7 +189,7 @@ export default function SignupScreen() {
 
       {/* 가입은 선택이라는 걸 분명히 한다. 막다른 길처럼 보이지 않게 빠져나가는 길을 둔다. */}
       {navigation.canGoBack() && (
-        <Pressable onPress={() => navigation.goBack()} accessibilityRole="button" style={styles.laterBtn}>
+        <Pressable onPress={goHomeLater} accessibilityRole="button" style={styles.laterBtn}>
           <Text style={[styles.laterLabel, { color: colors.textSecondary }]}>나중에 하기</Text>
         </Pressable>
       )}

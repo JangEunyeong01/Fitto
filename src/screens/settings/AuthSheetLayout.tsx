@@ -2,10 +2,12 @@ import React from 'react';
 import { View, Text, Image, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
 import Icon from '../../components/Icon';
 import { useTheme } from '../../theme/useTheme';
 import { lightColors, radius, typography, weight } from '../../theme/tokens';
 import { FITTO_HELLO } from '../../theme/assets';
+import { useAppStore } from '../../store/useAppStore';
 
 /**
  * 로그인·계정 만들기 화면의 틀(시안 21-B·22-B).
@@ -29,6 +31,29 @@ const HEADER_BODY = 248;
 /** 피또 전신 그림 비율(578×731). 폭 128이면 높이 약 162. */
 const FITTO_W = 128;
 const FITTO_H = Math.round((FITTO_W * 731) / 578);
+
+/**
+ * "나중에 하기" — 들어온 길과 상관없이 홈으로 간다.
+ *
+ * 예전엔 뒤로 가기였는데, 그러면 들어온 곳(계정 화면, 온보딩 끝 계정 선택)으로 돌아가서
+ * 가입을 미루겠다는 사람을 또 다른 계정 화면에 세워두게 됐다.
+ */
+export function useGoHomeLater() {
+  const navigation = useNavigation<any>();
+  const dismissAccountPrompt = useAppStore((s) => s.dismissAccountPrompt);
+
+  return () => {
+    // 온보딩 끝 계정 선택에서 들어왔다. 그 질문을 닫으면 루트가 홈(탭)으로 바뀐다.
+    if (navigation.getState()?.routeNames?.includes('AccountChoice')) {
+      dismissAccountPrompt();
+      return;
+    }
+    // 설정 탭에서 들어왔다. 설정 스택을 처음으로 되돌려 두고 홈 탭으로 간다.
+    // 안 되돌리면 나중에 설정 탭을 눌렀을 때 이 화면이 다시 뜬다.
+    navigation.popToTop();
+    navigation.navigate('Home');
+  };
+}
 
 interface AuthSheetLayoutProps {
   /**
