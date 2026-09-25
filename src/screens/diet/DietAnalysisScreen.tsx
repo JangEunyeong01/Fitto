@@ -1,16 +1,14 @@
 import React from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
 import ScreenBackground from '../../components/ScreenBackground';
 import GlassCard from '../../components/GlassCard';
 import DetailHeader from '../detail/DetailHeader';
+import DetailBarChart from '../detail/DetailBarChart';
 import { useTheme } from '../../theme/useTheme';
 import { typography, weight } from '../../theme/tokens';
 import { useAppStore } from '../../store/useAppStore';
 import { recentDays, average } from '../../utils/history';
-
-const BAR_HEIGHT = 104;
 
 /** 한 주의 흐름을 말하려면 최소 이만큼은 기록돼 있어야 한다. */
 const MIN_DAYS = 3;
@@ -24,13 +22,12 @@ const MIN_DAYS = 3;
  */
 export default function DietAnalysisScreen() {
   const insets = useSafeAreaInsets();
-  const { colors, brand } = useTheme();
+  const { colors } = useTheme();
   const records = useAppStore((s) => s.dailyRecords);
   const goal = useAppStore((s) => s.goals.kcal);
 
   const { labels, values, daysWithRecord } = recentDays(records, 'intake');
   const avgKcal = average(values);
-  const maxVal = Math.max(...values, goal);
 
   return (
     <ScreenBackground showTimeGradient={false}>
@@ -50,31 +47,14 @@ export default function DietAnalysisScreen() {
             </Text>
           ) : (
             <>
-              <Text style={[styles.avgKcal, { color: colors.textPrimary }]}>
-                {avgKcal.toLocaleString()}
-                <Text style={[styles.avgUnit, { color: colors.textSecondary }]}> kcal · 기록한 날의 하루 평균</Text>
-              </Text>
+              <View style={styles.avgRow}>
+                <Text style={[styles.avgKcal, { color: colors.textPrimary }]}>{avgKcal.toLocaleString()}</Text>
+                <Text style={[styles.avgUnit, { color: colors.textSecondary }]}>kcal · 기록한 날의 하루 평균</Text>
+              </View>
 
-              <View style={styles.stackRow}>
-                {labels.map((label, i) => {
-                  const value = values[i];
-                  const h = value > 0 ? Math.max(6, (value / maxVal) * BAR_HEIGHT) : 0;
-                  const isToday = i === labels.length - 1;
-                  return (
-                    <View key={`${label}-${i}`} style={styles.stackCol}>
-                      {/* 빈 칸에 배경을 깔면 기록이 없는 날도 막대가 꽉 찬 것처럼 보인다. 바닥선만 둔다. */}
-                      <View style={[styles.stackTrack, { height: BAR_HEIGHT, borderBottomColor: colors.borderDivider }]}>
-                        {value > 0 &&
-                          (isToday ? (
-                            <LinearGradient colors={[brand.blue, brand.blueDeep]} style={{ height: h }} />
-                          ) : (
-                            <View style={{ height: h, backgroundColor: brand.blue }} />
-                          ))}
-                      </View>
-                      <Text style={[styles.stackLabel, { color: isToday ? colors.textPrimary : colors.textSecondary }]}>{label}</Text>
-                    </View>
-                  );
-                })}
+              {/* 물·걸음 상세와 같은 막대. 오늘만 파랑, 기록 없는 날은 막대를 비운다(시안 12). */}
+              <View style={styles.chartWrap}>
+                <DetailBarChart labels={labels} values={values} highlightIndex={labels.length - 1} maxHeight={96} />
               </View>
 
               <Text style={[styles.caption, { color: colors.textSecondary }]}>
@@ -92,11 +72,10 @@ export default function DietAnalysisScreen() {
           </Text>
         </GlassCard>
 
-        <GlassCard style={styles.card}>
-          <Text style={[styles.notice, { color: colors.textSecondary }]}>
-            분석은 기록된 식단만 반영해요. 의료 진단을 대체하지 않아요.
-          </Text>
-        </GlassCard>
+        {/* 안내 한 줄은 카드 없이. 카드로 싸면 내용 카드와 무게가 같아진다(시안 12). */}
+        <Text style={[styles.notice, { color: colors.textSecondary }]}>
+          분석은 기록된 식단만 반영해요. 의료 진단을 대체하지 않아요.
+        </Text>
       </ScrollView>
     </ScreenBackground>
   );
@@ -112,39 +91,43 @@ const styles = StyleSheet.create({
   card: {
     marginBottom: 12,
   },
-  cardTitle: typography.sectionTitle,
+  cardTitle: typography.cardTitle,
   empty: {
-    ...typography.bodySm,
+    fontSize: 13,
+    ...weight(400),
+    lineHeight: 13 * 1.5,
+    marginTop: 6,
+  },
+  avgRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 4,
     marginTop: 10,
   },
   avgKcal: {
-    fontSize: 26,
+    fontSize: 30,
     ...weight(700),
-    letterSpacing: -1,
+    letterSpacing: -1.1,
+    lineHeight: 32,
+  },
+  avgUnit: {
+    fontSize: 14,
+    ...weight(600),
+  },
+  chartWrap: {
+    marginTop: 14,
+  },
+  caption: {
+    fontSize: 12,
+    ...weight(400),
+    lineHeight: 18,
     marginTop: 10,
   },
-  avgUnit: typography.unit,
-  stackRow: {
-    flexDirection: 'row',
-    marginTop: 16,
-    gap: 6,
+  notice: {
+    fontSize: 12,
+    ...weight(400),
+    lineHeight: 18,
+    paddingHorizontal: 4,
+    paddingTop: 4,
   },
-  stackCol: {
-    flex: 1,
-    alignItems: 'center',
-    gap: 6,
-  },
-  stackTrack: {
-    width: '100%',
-    borderRadius: 5,
-    overflow: 'hidden',
-    justifyContent: 'flex-end',
-    borderBottomWidth: 1,
-  },
-  stackLabel: typography.captionSm,
-  caption: {
-    ...typography.caption,
-    marginTop: 12,
-  },
-  notice: typography.caption,
 });
