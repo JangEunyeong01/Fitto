@@ -62,18 +62,18 @@ export default function HomeHeader() {
         <Text style={[styles.logo, { color: colors.textPrimary }]}>Fitto</Text>
         <Pressable
           onPress={() => navigation.navigate('Settings')}
-          // 보이는 크기 34. 사방 5씩 넓혀 누르는 영역 44를 맞춘다.
-          hitSlop={5}
+          // 상자 없이 아이콘만(시안 02). 보이는 영역 36에 사방 4씩 넓혀 누르는 영역 44.
+          hitSlop={4}
           accessibilityRole="button"
           accessibilityLabel="설정"
-          style={[styles.iconBtn, { backgroundColor: colors.surfaceSolid, borderColor: colors.borderGlass }]}
+          style={styles.iconBtn}
         >
           <Icon name="settings" size={20} color={colors.textPrimary} />
         </Pressable>
       </View>
 
       <Text style={[styles.greeting, { color: colors.textPrimary }]}>{briefing.greeting}</Text>
-      <Text style={[styles.base, { color: colors.textPrimary }]}>{briefing.base}</Text>
+      <Text style={[styles.base, { color: colors.textSecondary }]}>{briefing.base}</Text>
       {/* 오늘 특별한 일이 있을 때만. 없으면 줄을 만들지 않는다. */}
       {!!briefing.event && <Text style={[styles.event, { color: colors.textSecondary }]}>{briefing.event}</Text>}
     </View>
@@ -82,14 +82,13 @@ export default function HomeHeader() {
 
 const styles = StyleSheet.create({
   wrap: {
-    gap: 2,
-    marginBottom: 20,
+    marginBottom: 22,
   },
   topRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 14,
+    marginBottom: 16,
   },
   logo: {
     fontSize: 20,
@@ -97,22 +96,26 @@ const styles = StyleSheet.create({
     letterSpacing: -0.4,
   },
   iconBtn: {
-    width: 34,
-    height: 34,
-    borderRadius: 10,
-    borderWidth: 1,
+    width: 36,
+    height: 36,
+    marginRight: -8,
     alignItems: 'center',
     justifyContent: 'center',
   },
+  // 시안은 25인데 글자 단계에 없는 값이라 24(display-md)로 맞췄다.
   greeting: {
-    fontSize: 22,
-    ...weight(700),
-    letterSpacing: -0.6,
-    lineHeight: 22 * 1.35,
+    ...typography.onboardingTitle,
+    letterSpacing: -0.8,
+    lineHeight: 24 * 1.3,
   },
   base: {
-    ...typography.body,
+    fontSize: 15,
+    ...weight(400),
+    lineHeight: 15 * 1.5,
+    marginTop: 6,
+  },
+  event: {
+    ...typography.bodySm,
     marginTop: 2,
   },
-  event: typography.bodySm,
 });

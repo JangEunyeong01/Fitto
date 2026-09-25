@@ -3,6 +3,7 @@ import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import GlassCard from '../../../components/GlassCard';
+import TextLink from '../../../components/TextLink';
 import ProgressBar from '../../../components/ProgressBar';
 import { useTheme } from '../../../theme/useTheme';
 import { useAppStore } from '../../../store/useAppStore';
@@ -30,19 +31,21 @@ export default function StepsCard() {
    * 기록이 하나라도 들어오면(연결 후) 아래 차트로 돌아간다.
    */
   if (total === 0) {
+    // 연결 전엔 목표도 숨긴다(시안 02). "목표 8,000보"만 떠 있으면 못 채운 숙제처럼 읽힌다.
     return (
-      <Pressable onPress={() => navigation.navigate('StepsDetail')} style={styles.pressFill}>
-        <GlassCard fill>
-          <View style={styles.topRow}>
-            <Text style={[styles.label, { color: colors.textSecondary }]}>걸음수</Text>
-          </View>
-          <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>아직 연결 전이에요</Text>
-          <Text style={[styles.emptyDesc, { color: colors.textSecondary }]}>
-            폰의 건강 데이터를 연결하면 걸음 수가 여기에 보여요.
-          </Text>
-          <Text style={[styles.caption, { color: colors.textSecondary }]}>목표 {goal.toLocaleString()}보</Text>
-        </GlassCard>
-      </Pressable>
+      <GlassCard fill>
+        <View style={styles.topRow}>
+          <Text style={[styles.label, { color: colors.textPrimary }]}>걸음수</Text>
+        </View>
+        <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>아직 연결 전이에요</Text>
+        <Text style={[styles.emptyDesc, { color: colors.textSecondary }]}>
+          건강 데이터를 연결하면 걸음 수가 표시돼요.
+        </Text>
+        {/* ponytail: 폰 건강 데이터 연동은 아직 없다. 지금은 걸음 상세(연결 안내)로 보내고, 센서를 붙이면 연결 화면으로 바꾼다. */}
+        <View style={styles.linkWrap}>
+          <TextLink label="건강 데이터 연결" onPress={() => navigation.navigate('StepsDetail')} />
+        </View>
+      </GlassCard>
     );
   }
 
@@ -51,7 +54,7 @@ export default function StepsCard() {
     <Pressable onPress={() => navigation.navigate('StepsDetail')} style={styles.pressFill}>
       <GlassCard fill>
         <View style={styles.topRow}>
-          <Text style={[styles.label, { color: colors.textSecondary }]}>걸음수</Text>
+          <Text style={[styles.label, { color: colors.textPrimary }]}>걸음수</Text>
         </View>
         <View style={styles.numRow}>
           <Text style={[styles.bigNum, { color: colors.textPrimary }]}>{steps.toLocaleString()}</Text>
@@ -91,8 +94,10 @@ const styles = StyleSheet.create({
   },
   topRow: {
     flexDirection: 'row',
+    minHeight: 22,
+    alignItems: 'center',
   },
-  label: typography.unit,
+  label: typography.cardTitle,
   numRow: {
     flexDirection: 'row',
     alignItems: 'baseline',
@@ -134,7 +139,12 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     ...typography.itemTitle,
-    marginTop: 6,
+    marginTop: 12,
+  },
+  linkWrap: {
+    marginTop: 'auto',
+    minHeight: 44,
+    justifyContent: 'center',
   },
   emptyDesc: {
     ...typography.bodySm,
