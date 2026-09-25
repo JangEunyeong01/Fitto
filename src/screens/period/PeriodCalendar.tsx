@@ -3,10 +3,15 @@ import { View, Text, Pressable, StyleSheet } from 'react-native';
 import GlassCard from '../../components/GlassCard';
 import Icon from '../../components/Icon';
 import { useTheme } from '../../theme/useTheme';
-import { alpha, brand, typography } from '../../theme/tokens';
+import { alpha, brand, typography, weight } from '../../theme/tokens';
 import { getMonthGrid, getDayType, type PeriodSettings } from '../../utils/periodCycle';
 
 const WEEKDAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
+
+const PERIOD_FILL = alpha(brand.peach, 0.38);
+const FERTILE_FILL = alpha(brand.lavender, 0.34);
+/** 배란일 테두리. 라벤더 그대로는 흰 카드 위에서 선이 안 보여 한 단계 진하게(시안 10). */
+const OVULATION_RING = '#A996D8';
 
 interface PeriodCalendarProps {
   year: number;
@@ -17,7 +22,10 @@ interface PeriodCalendarProps {
   settings: PeriodSettings | null;
 }
 
-// README: 캘린더 카드. 7열 그리드, 생리일/가임기/배란일 색 구분, 선택일은 파랑 그라데이션.
+/**
+ * 달력 카드(시안 10). 생리일·가임기는 옅은 면, 배란일은 테두리.
+ * 고른 날은 남색으로 덮지 않고 그 위에 파란 테두리만 두른다 — 덮으면 그날이 생리일인지 가임기인지 안 보인다.
+ */
 export default function PeriodCalendar({ year, month, onShiftMonth, selected, onSelect, settings }: PeriodCalendarProps) {
   const { colors, brand: themeBrand } = useTheme();
   const cells = getMonthGrid(year, month);
@@ -25,21 +33,31 @@ export default function PeriodCalendar({ year, month, onShiftMonth, selected, on
   return (
     <GlassCard style={styles.card}>
       <View style={styles.navRow}>
-        <Pressable onPress={() => onShiftMonth(-1)} style={[styles.navBtn, { borderColor: colors.borderDivider }]}>
-          <Icon name="chevronLeft" size={16} color={colors.textPrimary} />
+        <Pressable
+          onPress={() => onShiftMonth(-1)}
+          accessibilityRole="button"
+          accessibilityLabel="이전 달"
+          style={[styles.navBtn, styles.navLeft]}
+        >
+          <Icon name="chevronLeft" size={20} color={colors.textPrimary} />
         </Pressable>
         <Text style={[styles.monthLabel, { color: colors.textPrimary }]}>
           {year}년 {month}월
         </Text>
-        <Pressable onPress={() => onShiftMonth(1)} style={[styles.navBtn, { borderColor: colors.borderDivider }]}>
-          <Icon name="chevronRight" size={16} color={colors.textPrimary} />
+        <Pressable
+          onPress={() => onShiftMonth(1)}
+          accessibilityRole="button"
+          accessibilityLabel="다음 달"
+          style={[styles.navBtn, styles.navRight]}
+        >
+          <Icon name="chevronRight" size={20} color={colors.textPrimary} />
         </Pressable>
       </View>
 
       <View style={styles.legendRow}>
-        <Legend color={alpha(brand.peach, 0.32)} label="생리" colors={colors} />
-        <Legend color={alpha(brand.lavender, 0.28)} label="가임기" colors={colors} />
-        <Legend color="transparent" borderColor={brand.lavender} label="배란일" colors={colors} />
+        <Legend fill={PERIOD_FILL} label="생리" colors={colors} />
+        <Legend fill={FERTILE_FILL} label="가임기" colors={colors} />
+        <Legend ring={OVULATION_RING} label="배란일" colors={colors} />
       </View>
 
       <View style={styles.weekHeader}>
@@ -58,23 +76,25 @@ export default function PeriodCalendar({ year, month, onShiftMonth, selected, on
           const isSelected = key === selected;
           const day = Number(key.slice(-2));
           return (
-            <Pressable key={key} onPress={() => onSelect(key)} style={styles.cell}>
+            <Pressable
+              key={key}
+              onPress={() => onSelect(key)}
+              accessibilityRole="button"
+              accessibilityState={{ selected: isSelected }}
+              accessibilityLabel={`${month}월 ${day}일${dayType === 'period' ? ' 생리' : dayType === 'fertile' ? ' 가임기' : dayType === 'ovulation' ? ' 배란일' : ''}`}
+              style={styles.cell}
+            >
               <View
                 style={[
-                  styles.dayBox,
-                  dayType === 'period' && { backgroundColor: alpha(brand.peach, 0.32) },
-                  dayType === 'fertile' && { backgroundColor: alpha(brand.lavender, 0.28) },
-                  dayType === 'ovulation' && { borderWidth: 1, borderColor: brand.lavender },
-                  isSelected && styles.selectedBox,
+                  styles.dayCircle,
+                  dayType === 'period' && { backgroundColor: PERIOD_FILL },
+                  dayType === 'fertile' && { backgroundColor: FERTILE_FILL },
+                  dayType === 'ovulation' && { borderWidth: 1.5, borderColor: OVULATION_RING },
+                  // 배란일이 선택되면 파란 테두리가 라벤더 테두리를 대신한다.
+                  isSelected && { borderWidth: 2, borderColor: themeBrand.blue },
                 ]}
               >
-                {isSelected ? (
-                  <View style={[styles.selectedFill, { backgroundColor: themeBrand.blue }]}>
-                    <Text style={styles.selectedText}>{day}</Text>
-                  </View>
-                ) : (
-                  <Text style={[styles.dayText, { color: colors.textPrimary }]}>{day}</Text>
-                )}
+                <Text style={[styles.dayText, { color: colors.textPrimary }, isSelected && weight(700)]}>{day}</Text>
               </View>
             </Pressable>
           );
@@ -84,20 +104,16 @@ export default function PeriodCalendar({ year, month, onShiftMonth, selected, on
   );
 }
 
-function Legend({
-  color,
-  borderColor,
-  label,
-  colors,
-}: {
-  color: string;
-  borderColor?: string;
-  label: string;
-  colors: any;
-}) {
+function Legend({ fill, ring, label, colors }: { fill?: string; ring?: string; label: string; colors: any }) {
   return (
     <View style={styles.legendItem}>
-      <View style={[styles.legendDot, { backgroundColor: color, borderColor: borderColor ?? 'transparent', borderWidth: borderColor ? 1 : 0 }]} />
+      <View
+        style={[
+          styles.legendDot,
+          fill ? { backgroundColor: fill } : null,
+          ring ? { borderWidth: 1.5, borderColor: ring } : null,
+        ]}
+      />
       <Text style={[styles.legendLabel, { color: colors.textSecondary }]}>{label}</Text>
     </View>
   );
@@ -112,26 +128,27 @@ const styles = StyleSheet.create({
   navRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 16,
+    justifyContent: 'space-between',
+    height: 36,
   },
   navBtn: {
-    width: 28,
-    height: 28,
-    borderRadius: 10,
-    borderWidth: 1,
+    width: 44,
+    height: 44,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  monthLabel: {
-    ...typography.itemTitle,
-    minWidth: 100,
-    textAlign: 'center',
+  navLeft: {
+    marginLeft: -12,
   },
+  navRight: {
+    marginRight: -12,
+  },
+  monthLabel: typography.cardTitle,
   legendRow: {
     flexDirection: 'row',
     gap: 14,
-    marginTop: 12,
+    marginTop: 6,
+    marginBottom: 12,
     justifyContent: 'center',
   },
   legendItem: {
@@ -142,53 +159,42 @@ const styles = StyleSheet.create({
   legendDot: {
     width: 9,
     height: 9,
-    borderRadius: 4.5,
+    borderRadius: 5,
   },
-  legendLabel: typography.captionSm,
+  legendLabel: {
+    fontSize: 12,
+    ...weight(500),
+  },
   weekHeader: {
     flexDirection: 'row',
-    marginTop: 16,
   },
   weekLabel: {
-    ...typography.captionSm,
+    fontSize: 12,
+    ...weight(600),
     width: CELL,
     textAlign: 'center',
   },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginTop: 6,
+    rowGap: 2,
   },
+  // 칸 높이 38에 원 36. 누르는 영역은 칸 전체(폭 약 44 × 38)라 한 줄에 7칸을 넣으려면 이 이상 키울 수 없다.
   cell: {
     width: CELL,
-    aspectRatio: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 2,
-  },
-  dayBox: {
-    width: 38,
     height: 38,
-    maxWidth: '100%',
-    maxHeight: '100%',
-    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  selectedBox: {
-    // 선택된 날짜의 페이지 배경(생리/가임기 색)은 파랑 그라데이션 아래로 덮인다.
-    padding: 0,
-  },
-  selectedFill: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 10,
+  dayCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  dayText: typography.body,
-  selectedText: {
-    ...typography.value,
-    color: '#fff',
+  dayText: {
+    fontSize: 14,
+    ...weight(500),
   },
 });

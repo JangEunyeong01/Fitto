@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import ScreenBackground from '../../components/ScreenBackground';
-import GlassCard from '../../components/GlassCard';
 import FittoCharacter from '../../components/FittoCharacter';
 import DetailHeader from '../detail/DetailHeader';
 import PeriodCalendar from './PeriodCalendar';
@@ -12,7 +11,6 @@ import { useAppStore } from '../../store/useAppStore';
 import { personaCopy } from '../../copy/persona';
 import { dateKey } from '../../utils/timeOfDay';
 import { getCycleDayNumber, parseDateKey, shiftYearMonth } from '../../utils/periodCycle';
-import { typography } from '../../theme/tokens';
 
 export default function PeriodDetailScreen() {
   const insets = useSafeAreaInsets();
@@ -53,13 +51,11 @@ export default function PeriodDetailScreen() {
 
         <ConditionCard dateKey={selected} label={selectedLabel} />
 
-        <GlassCard style={styles.card}>
-          <View style={styles.characterRow}>
-            {/* README의 hue-rotate 필터는 RN에서 못 쓰므로 캐릭터는 기본 상태로 두고 문구로 맥락을 준다. */}
-            <FittoCharacter current={3} goal={5} size={52} variant="face" glow={false} />
-            <Text style={[styles.comment, { color: colors.textPrimary }]}>{comment}</Text>
-          </View>
-        </GlassCard>
+        {/* 피또 한마디는 카드 없이 한 줄로(시안 10). 카드를 씌우면 입력 카드와 무게가 같아진다. */}
+        <View style={styles.characterRow}>
+          <FittoCharacter current={3} goal={5} size={52} variant="face" glow={false} />
+          <Text style={[styles.comment, { color: colors.textPrimary }]}>{comment}</Text>
+        </View>
       </ScrollView>
     </ScreenBackground>
   );
@@ -72,16 +68,17 @@ const styles = StyleSheet.create({
   content: {
     paddingHorizontal: 16,
   },
-  card: {
-    marginBottom: 12,
-  },
   characterRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
+    paddingTop: 4,
+    paddingHorizontal: 2,
+    paddingBottom: 12,
   },
   comment: {
-    ...typography.body,
+    fontSize: 14,
+    lineHeight: 21,
     flex: 1,
   },
 });
