@@ -1,28 +1,32 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import ScreenBackground from '../../components/ScreenBackground';
 import GlassCard from '../../components/GlassCard';
 import TextField from '../../components/TextField';
+import Icon from '../../components/Icon';
 import DetailHeader from '../detail/DetailHeader';
 import SelectChip from '../../components/SelectChip';
-import OptionRow from '../onboarding/OptionRow';
-import TagPicker from '../onboarding/TagPicker';
+import { ChoiceSheet, TagSheet } from './ProfileSheets';
 import { useTheme } from '../../theme/useTheme';
 import { useAppStore } from '../../store/useAppStore';
-import { ACTIVITY_OPTIONS, AVOID_TAGS, DISEASE_TAGS, GENDERS, GOAL_OPTIONS } from '../../constants/codes';
+import {
+  ACTIVITY_OPTIONS,
+  AVOID_TAGS,
+  DISEASE_TAGS,
+  GENDERS,
+  GOAL_OPTIONS,
+  labelOf,
+  labelsOf,
+} from '../../constants/codes';
 import BirthDateFields, { type BirthDateValue } from '../../components/BirthDateFields';
 import { INPUT_LIMITS, birthYearLimits } from '../../utils/goals';
-import { typography } from '../../theme/tokens';
+import { typography, weight } from '../../theme/tokens';
 
 type NumKey = 'height' | 'weight' | 'targetWeight';
+type SheetKey = 'goal' | 'activity' | 'conditions' | 'allergies';
 
-/** 태그 하나를 켜고 끈다. 목록(코드)과 직접 입력(문자열) 둘 다 같은 방식이라 한 군데로 모았다. */
-function toggle(list: string[], value: string): string[] {
-  return list.includes(value) ? list.filter((v) => v !== value) : [...list, value];
-}
-
-// README 9. 프로필: 언제든 수정 가능한 필드들 — 저장 버튼 없이 값이 바뀌는 대로 스토어에 반영한다.
+// 프로필(시안 17). 기본 정보는 값이 바뀌는 대로 저장하고, 목표·활동량·건강은 시트에서 골라 "저장"으로 반영한다.
 // 숫자 입력만 blur 시점에 클램프해서 커밋한다(타이핑 중간값이 범위를 벗어나도 막지 않기 위해).
 // 성별·생년월일·키·체중·활동량·목표가 바뀌면 스토어가 목표 칼로리를 다시 계산한다(명세 F-040·F-041).
 export default function ProfileScreen() {
@@ -41,6 +45,7 @@ export default function ProfileScreen() {
   const [height, setHeight] = useState(profile.height ? String(profile.height) : '');
   const [weight, setWeight] = useState(profile.weight ? String(profile.weight) : '');
   const [targetWeight, setTargetWeight] = useState(profile.targetWeight ? String(profile.targetWeight) : '');
+  const [sheet, setSheet] = useState<SheetKey | null>(null);
 
   // 다른 화면(온보딩 다시 보기 등)에서 profile이 바뀌면 입력값도 같이 갱신한다.
   useEffect(() => setNickname(profile.nickname), [profile.nickname]);
@@ -87,7 +92,9 @@ export default function ProfileScreen() {
       >
         <DetailHeader title="프로필" />
 
+        {/* 기본 정보는 한 장에 펼쳐 둔다(시안 17). 자주 고치는 값이라 한 번 더 들어가게 하지 않는다. */}
         <GlassCard style={styles.card}>
+          <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>기본 정보</Text>
           <Text style={[styles.label, { color: colors.textSecondary }]}>닉네임</Text>
           <TextField
             value={nickname}
@@ -99,7 +106,7 @@ export default function ProfileScreen() {
             maxLength={20}
           />
 
-          <Text style={[styles.label, { color: colors.textSecondary, marginTop: 14 }]}>생년월일</Text>
+          <Text style={[styles.label, { color: colors.textSecondary }]}>생년월일</Text>
           <BirthDateFields value={birth} onChange={(p) => setBirth((b) => ({ ...b, ...p }))} onCommit={commitBirth} />
           {/* 연도가 없는 건 연도가 생기기 전에 가입한 사람이다. 한 번 채우면 나이를 따로 고칠 일이 없다. */}
           <Text
@@ -112,9 +119,9 @@ export default function ProfileScreen() {
                 : `만 ${profile.age}세 · 월·일을 넣으면 생일에 피또가 축하해 드려요`}
           </Text>
 
-          <Text style={[styles.label, { color: colors.textSecondary, marginTop: 14 }]}>성별</Text>
+          <Text style={[styles.label, { color: colors.textSecondary }]}>성별</Text>
           {/* 안 고른 상태가 있을 수 있어서 붙은 세그먼트 대신 떨어진 칩(시안 규칙 13). */}
-          <View style={[styles.gap10, styles.genderRow]}>
+          <View style={styles.genderRow}>
             {GENDERS.map((g) => (
               <SelectChip
                 key={g.code}
@@ -125,9 +132,7 @@ export default function ProfileScreen() {
               />
             ))}
           </View>
-        </GlassCard>
 
-        <GlassCard style={styles.card}>
           <View style={styles.numRow}>
             <NumField label="키 (cm)" value={height} onChangeText={setHeight} onCommit={() => commitNum(height, setHeight, 'height')} colors={colors} />
             <NumField label="체중 (kg)" value={weight} onChangeText={setWeight} onCommit={() => commitNum(weight, setWeight, 'weight')} colors={colors} />
@@ -144,67 +149,125 @@ export default function ProfileScreen() {
           </Text>
         </GlassCard>
 
-        <GlassCard style={styles.card}>
-          <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>목표</Text>
-          <View style={styles.gap10}>
-            {GOAL_OPTIONS.map((o) => (
-              <OptionRow
-                key={o.code}
-                title={o.label}
-                desc={o.desc}
-                selected={profile.goalType === o.code}
-                onPress={() => setProfile({ goalType: o.code })}
-              />
-            ))}
-          </View>
+        {/* 가끔 바꾸는 값은 요약 줄로 접고 시트에서 고른다(시안 17). 펼쳐 두면 화면이 목록으로만 길어진다. */}
+        <GlassCard style={styles.card} noPadding>
+          <Text style={[styles.cardTitle, styles.listTitle, { color: colors.textPrimary }]}>목표와 활동량</Text>
+          <SummaryRow
+            label="목표"
+            value={labelOf(GOAL_OPTIONS, profile.goalType) || '고르기'}
+            onPress={() => setSheet('goal')}
+            colors={colors}
+          />
+          <View style={[styles.rowDivider, { backgroundColor: colors.borderDivider }]} />
+          <SummaryRow
+            label="활동량"
+            value={labelOf(ACTIVITY_OPTIONS, profile.activity) || '고르기'}
+            onPress={() => setSheet('activity')}
+            colors={colors}
+          />
         </GlassCard>
 
-        <GlassCard style={styles.card}>
-          <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>활동량</Text>
-          <View style={styles.gap10}>
-            {ACTIVITY_OPTIONS.map((o) => (
-              <OptionRow
-                key={o.code}
-                title={o.label}
-                desc={o.desc}
-                selected={profile.activity === o.code}
-                onPress={() => setProfile({ activity: o.code })}
-              />
-            ))}
-          </View>
-        </GlassCard>
-
-        <GlassCard style={styles.card}>
-          <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>건강 상태</Text>
-          <View style={styles.gap10}>
-            <TagPicker
-              tags={DISEASE_TAGS}
-              value={{ codes: profile.conditions, custom: profile.customConditions }}
-              onToggle={(v) => setProfile({ conditions: toggle(profile.conditions, v) })}
-              onToggleCustom={(v) => setProfile({ customConditions: toggle(profile.customConditions, v) })}
-              onClear={() => setProfile({ conditions: [], customConditions: [] })}
-              placeholder="기타 질환을 입력하세요"
-              noneLabel="해당사항 없음"
-            />
-          </View>
-        </GlassCard>
-
-        <GlassCard style={styles.card}>
-          <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>알레르기</Text>
-          <View style={styles.gap10}>
-            <TagPicker
-              tags={AVOID_TAGS}
-              value={{ codes: profile.allergies, custom: profile.customAllergies }}
-              onToggle={(v) => setProfile({ allergies: toggle(profile.allergies, v) })}
-              onToggleCustom={(v) => setProfile({ customAllergies: toggle(profile.customAllergies, v) })}
-              onClear={() => setProfile({ allergies: [], customAllergies: [] })}
-              placeholder="기타 알레르기를 입력하세요"
-              noneLabel="해당사항 없음"
-            />
-          </View>
+        <GlassCard style={styles.card} noPadding>
+          <Text style={[styles.cardTitle, styles.listTitle, { color: colors.textPrimary }]}>건강</Text>
+          <TagRow
+            label="건강 상태"
+            items={[...labelsOf(DISEASE_TAGS, profile.conditions), ...profile.customConditions]}
+            onPress={() => setSheet('conditions')}
+            colors={colors}
+          />
+          <View style={[styles.rowDivider, styles.rowDividerBoth, { backgroundColor: colors.borderDivider }]} />
+          <TagRow
+            label="알레르기"
+            items={[...labelsOf(AVOID_TAGS, profile.allergies), ...profile.customAllergies]}
+            onPress={() => setSheet('allergies')}
+            colors={colors}
+          />
         </GlassCard>
       </ScrollView>
+
+      <ChoiceSheet
+        visible={sheet === 'goal'}
+        title="목표"
+        options={GOAL_OPTIONS}
+        value={profile.goalType}
+        onSave={(v) => setProfile({ goalType: v })}
+        onClose={() => setSheet(null)}
+      />
+      <ChoiceSheet
+        visible={sheet === 'activity'}
+        title="활동량"
+        options={ACTIVITY_OPTIONS}
+        value={profile.activity}
+        onSave={(v) => setProfile({ activity: v })}
+        onClose={() => setSheet(null)}
+      />
+      <TagSheet
+        visible={sheet === 'conditions'}
+        title="건강 상태"
+        tags={DISEASE_TAGS}
+        value={{ codes: profile.conditions, custom: profile.customConditions }}
+        placeholder="기타 질환을 입력하세요"
+        onSave={(v) => setProfile({ conditions: v.codes, customConditions: v.custom })}
+        onClose={() => setSheet(null)}
+      />
+      <TagSheet
+        visible={sheet === 'allergies'}
+        title="알레르기"
+        tags={AVOID_TAGS}
+        value={{ codes: profile.allergies, custom: profile.customAllergies }}
+        placeholder="기타 알레르기를 입력하세요"
+        onSave={(v) => setProfile({ allergies: v.codes, customAllergies: v.custom })}
+        onClose={() => setSheet(null)}
+      />
     </ScreenBackground>
+  );
+}
+
+/** 요약 줄: 이름 · 지금 값(회색) · 이동 화살표. */
+function SummaryRow({ label, value, onPress, colors }: { label: string; value: string; onPress: () => void; colors: any }) {
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={`${label}, ${value}`}
+      style={({ pressed }) => [styles.summaryRow, pressed && { backgroundColor: colors.fillMuted }]}
+    >
+      <Text style={[styles.rowLabel, { color: colors.textPrimary }]}>{label}</Text>
+      <View style={styles.rowRight}>
+        <Text style={[styles.rowValue, { color: colors.textSecondary }]} numberOfLines={1}>
+          {value}
+        </Text>
+        <Icon name="chevronRight" size={16} color={colors.textSecondary} />
+      </View>
+    </Pressable>
+  );
+}
+
+/** 태그 요약 줄: 고른 항목을 누를 수 없는 작은 회색 태그로 보여 준다. 없으면 "없음". */
+function TagRow({ label, items, onPress, colors }: { label: string; items: string[]; onPress: () => void; colors: any }) {
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={`${label}, ${items.length > 0 ? items.join(', ') : '없음'}`}
+      style={({ pressed }) => [styles.tagRow, pressed && { backgroundColor: colors.fillMuted }]}
+    >
+      <View style={styles.tagCol}>
+        <Text style={[styles.rowLabel, { color: colors.textPrimary }]}>{label}</Text>
+        {items.length > 0 ? (
+          <View style={styles.tagWrap}>
+            {items.map((t) => (
+              <View key={t} style={[styles.tag, { backgroundColor: colors.fillMuted }]}>
+                <Text style={[styles.tagText, { color: colors.textPrimary }]}>{t}</Text>
+              </View>
+            ))}
+          </View>
+        ) : (
+          <Text style={[styles.none, { color: colors.textSecondary }]}>없음</Text>
+        )}
+      </View>
+      <Icon name="chevronRight" size={16} color={colors.textSecondary} />
+    </Pressable>
   );
 }
 
@@ -246,33 +309,103 @@ const styles = StyleSheet.create({
   card: {
     marginBottom: 12,
   },
-  cardTitle: typography.sectionTitle,
+  cardTitle: typography.cardTitle,
   genderRow: {
     flexDirection: 'row',
     gap: 8,
   },
-  gap10: {
-    marginTop: 10,
-  },
   label: {
     ...typography.label,
-    marginBottom: 8,
+    marginTop: 14,
+    marginBottom: 6,
   },
   birthNote: {
-    ...typography.caption,
+    fontSize: 12,
+    ...weight(400),
+    lineHeight: 18,
     marginTop: 6,
   },
   numRow: {
     flexDirection: 'row',
     gap: 8,
+    marginTop: 14,
   },
   numCol: {
     flex: 1,
+    minWidth: 0,
     gap: 6,
   },
   numLabel: typography.label,
   goalNote: {
-    ...typography.caption,
+    fontSize: 12,
+    ...weight(400),
+    lineHeight: 18,
     marginTop: 12,
+  },
+  listTitle: {
+    paddingTop: 18,
+    paddingHorizontal: 18,
+    paddingBottom: 4,
+  },
+  summaryRow: {
+    minHeight: 52,
+    paddingHorizontal: 18,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  rowLabel: {
+    fontSize: 15,
+    ...weight(600),
+  },
+  rowRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    flexShrink: 1,
+  },
+  rowValue: {
+    fontSize: 14,
+    ...weight(400),
+    flexShrink: 1,
+  },
+  rowDivider: {
+    height: StyleSheet.hairlineWidth,
+    marginLeft: 18,
+  },
+  rowDividerBoth: {
+    marginRight: 18,
+  },
+  tagRow: {
+    paddingVertical: 14,
+    paddingHorizontal: 18,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  tagCol: {
+    flex: 1,
+    minWidth: 0,
+  },
+  tagWrap: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginTop: 8,
+  },
+  tag: {
+    height: 28,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+    justifyContent: 'center',
+  },
+  tagText: {
+    fontSize: 13,
+    ...weight(600),
+  },
+  none: {
+    fontSize: 13,
+    marginTop: 4,
   },
 });
