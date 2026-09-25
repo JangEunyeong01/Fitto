@@ -4,9 +4,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import ScreenBackground from '../../components/ScreenBackground';
 import GlassCard from '../../components/GlassCard';
-import PrimaryButton from '../../components/PrimaryButton';
 import ProgressBar from '../../components/ProgressBar';
-import Badge from '../../components/Badge';
+import Icon from '../../components/Icon';
 import FittoCharacter from '../../components/FittoCharacter';
 import DateNavigator from '../../components/DateNavigator';
 import MealSlotCard from './MealSlotCard';
@@ -18,7 +17,8 @@ import { useFoodSearchStore } from '../../store/useFoodSearchStore';
 import { dateKey } from '../../utils/timeOfDay';
 import { usePastRecord } from '../../hooks/usePastRecord';
 import { sumMealKcal } from '../../utils/health';
-import { brand, typography } from '../../theme/tokens';
+import { brand, typography, weight } from '../../theme/tokens';
+import { slotLabel } from '../../utils/meal';
 
 const SLOTS: MealSlot[] = MEAL_SLOTS.map((s) => s.code);
 
@@ -43,6 +43,10 @@ export default function DietScreen() {
   const isEmpty = totalKcal === 0;
   const over = totalKcal > goal;
 
+  // 기록된 끼니만 카드로 만들고, 빈 끼니는 한 줄 글씨 버튼으로 모은다(시안 규칙 11).
+  const filledSlots = SLOTS.filter((slot) => meals[slot].length > 0);
+  const emptySlots = SLOTS.filter((slot) => meals[slot].length === 0);
+
   return (
     <ScreenBackground showTimeGradient={false}>
       <ScrollView
@@ -53,7 +57,15 @@ export default function DietScreen() {
       >
         <View style={styles.headerRow}>
           <Text style={[typography.screenTitle, { color: colors.textPrimary }]}>식단</Text>
-          <PrimaryButton small label="+ 음식 기록" onPress={openSearchForDate} style={styles.recordBtn} />
+          {/* 탭 화면의 기록 버튼은 진한 글씨 + 아이콘(시안 규칙 1). */}
+          <Pressable
+            onPress={openSearchForDate}
+            accessibilityRole="button"
+            style={({ pressed }) => [styles.recordBtn, { opacity: pressed ? 0.6 : 1 }]}
+          >
+            <Icon name="plus" size={20} color={colors.textPrimary} strokeWidth={2} />
+            <Text style={[styles.recordBtnLabel, { color: colors.textPrimary }]}>음식 기록</Text>
+          </Pressable>
         </View>
 
         <DateNavigator date={date} onChange={setDate} />
@@ -69,63 +81,83 @@ export default function DietScreen() {
                 {loading ? '기록을 불러오는 중이에요' : isToday ? '오늘 뭐 드셨나요?' : '이날 뭐 드셨나요?'}
               </Text>
               {!loading && (
-                <>
-                  <Text style={[styles.emptyDesc, { color: colors.textSecondary }]}>
-                    먹은 음식을 한 개만 추가해도 피또가 상태를 알려줄 수 있어요.
-                  </Text>
-                  <PrimaryButton label="첫 기록 시작하기" onPress={openSearchForDate} style={styles.emptyBtn} />
-                </>
+                <Text style={[styles.emptyDesc, { color: colors.textSecondary }]}>
+                  먹은 음식을 한 개만 추가해도 피또가 상태를 알려줄 수 있어요.
+                </Text>
               )}
             </View>
           </GlassCard>
         ) : (
-          <>
-            {/* 명세 F-021: 총 섭취 칼로리와 목표 대비 진행 바, 넘으면 "목표 초과!" */}
-            <GlassCard style={styles.card}>
-              <View style={styles.summaryTop}>
-                <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>{isToday ? '오늘 섭취' : '이날 섭취'}</Text>
-                {over && <Badge label="조금 넘었어요" tone="warn" />}
-              </View>
-              <Text style={[styles.summaryNum, { color: colors.textPrimary }]}>
-                {totalKcal.toLocaleString()}
-                <Text style={[styles.summaryGoal, { color: colors.textSecondary }]}> / {goal.toLocaleString()} kcal</Text>
-              </Text>
-              <View style={styles.summaryBar}>
-                <ProgressBar progress={totalKcal / goal} height={8} radius={5} color={over ? brand.peach : brand.blue} />
-              </View>
-            </GlassCard>
+          // 명세 F-021: 총 섭취 칼로리와 목표 대비 진행 바.
+          <GlassCard style={styles.card}>
+            <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>
+              {isToday ? '오늘 섭취' : '이날 섭취'}
+              {/* 넘쳐도 빨강·배지로 몰아세우지 않는다. 회색 글씨 한 마디(기준서 표기 원칙). */}
+              {over ? ' · 조금 넘었어요' : ''}
+            </Text>
+            <View style={styles.summaryNumRow}>
+              <Text style={[styles.summaryNum, { color: colors.textPrimary }]}>{totalKcal.toLocaleString()}</Text>
+              <Text style={[styles.summaryGoal, { color: colors.textSecondary }]}>/ {goal.toLocaleString()} kcal</Text>
+            </View>
+            <View style={styles.summaryBar}>
+              <ProgressBar progress={totalKcal / goal} height={6} radius={3} color={over ? brand.peach : brand.blue} />
+            </View>
+          </GlassCard>
+        )}
 
-            {SLOTS.map((slot) => (
-              <MealSlotCard
+        {filledSlots.map((slot) => (
+          <MealSlotCard
+            key={slot}
+            date={date}
+            slot={slot}
+            items={meals[slot]}
+            memo={record?.mealMemos?.[slot]}
+            onAdd={openSearchForSlot}
+          />
+        ))}
+
+        {emptySlots.length > 0 && !loading && (
+          <View style={styles.otherSlots}>
+            <Text style={[styles.otherLabel, { color: colors.textSecondary }]}>
+              {filledSlots.length > 0 ? '다른 끼니' : '끼니 추가'}
+            </Text>
+            {emptySlots.map((slot) => (
+              <Pressable
                 key={slot}
-                date={date}
-                slot={slot}
-                items={meals[slot]}
-                memo={record?.mealMemos?.[slot]}
-                onAdd={openSearchForSlot}
-              />
+                onPress={() => openSearchForSlot(slot)}
+                accessibilityRole="button"
+                accessibilityLabel={`${slotLabel(slot)}에 음식 추가`}
+                style={({ pressed }) => [styles.slotBtn, { opacity: pressed ? 0.6 : 1 }]}
+              >
+                <Icon name="plus" size={16} color={colors.textPrimary} strokeWidth={2} />
+                <Text style={[styles.slotBtnLabel, { color: colors.textPrimary }]}>{slotLabel(slot)}</Text>
+              </Pressable>
             ))}
-          </>
+          </View>
         )}
 
         <RecommendCard />
 
-        <View style={styles.bottomRow}>
-          <Pressable
-            onPress={() => navigation.navigate('Recipe')}
-            style={[styles.bottomBtn, { borderColor: colors.borderDivider, backgroundColor: colors.surfaceSubtle }]}
-          >
-            <Text style={[styles.bottomLabel, { color: colors.textPrimary }]}>나만의 레시피</Text>
-          </Pressable>
-          <Pressable
-            onPress={() => navigation.navigate('DietAnalysis')}
-            style={[styles.bottomBtn, { borderColor: colors.borderDivider, backgroundColor: colors.surfaceSubtle }]}
-          >
-            <Text style={[styles.bottomLabel, { color: colors.textPrimary }]}>식단 분석</Text>
-          </Pressable>
-        </View>
+        {/* 다른 화면으로 가는 문 두 개. 박스 버튼 둘 대신 카드 한 장에 줄 두 개(시안 04). */}
+        <GlassCard style={styles.card} noPadding>
+          <LinkRow label="나만의 레시피" onPress={() => navigation.navigate('Recipe')} colors={colors} />
+          <LinkRow label="식단 분석" onPress={() => navigation.navigate('DietAnalysis')} colors={colors} divider />
+        </GlassCard>
       </ScrollView>
     </ScreenBackground>
+  );
+}
+
+function LinkRow({ label, onPress, colors, divider }: { label: string; onPress: () => void; colors: any; divider?: boolean }) {
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      style={[styles.linkRow, divider && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.borderDivider }]}
+    >
+      <Text style={[styles.linkLabel, { color: colors.textPrimary }]}>{label}</Text>
+      <Icon name="chevronRight" size={16} color={colors.textSecondary} />
+    </Pressable>
   );
 }
 
@@ -140,11 +172,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 16,
+    minHeight: 40,
+    marginBottom: 12,
   },
   recordBtn: {
-    height: 36,
-    paddingHorizontal: 14,
+    height: 44,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+  recordBtnLabel: {
+    fontSize: 15,
+    ...weight(600),
   },
   card: {
     marginBottom: 12,
@@ -165,36 +204,54 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 6,
   },
-  emptyBtn: {
-    alignSelf: 'stretch',
-    marginTop: 16,
-  },
-  summaryTop: {
+  summaryLabel: typography.unit,
+  summaryNumRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'baseline',
+    gap: 4,
+    marginTop: 8,
   },
-  summaryLabel: typography.label,
+  // 시안은 30인데 글자 단계에 없어 28(display-lg)로 맞췄다.
   summaryNum: {
-    ...typography.midNumber,
-    marginTop: 6,
+    ...typography.bigNumber,
+    lineHeight: 28 * 1.1,
   },
-  summaryGoal: typography.unit,
+  summaryGoal: {
+    fontSize: 14,
+    ...weight(600),
+  },
   summaryBar: {
-    marginTop: 12,
+    marginTop: 14,
   },
-  bottomRow: {
+  otherSlots: {
     flexDirection: 'row',
-    gap: 10,
-    marginTop: 4,
-  },
-  bottomBtn: {
-    flex: 1,
-    height: 48,
-    borderRadius: 14,
-    borderWidth: 1,
     alignItems: 'center',
-    justifyContent: 'center',
+    flexWrap: 'wrap',
+    columnGap: 18,
+    paddingHorizontal: 4,
+    marginTop: -2,
+    marginBottom: 10,
   },
-  bottomLabel: typography.rowLabel,
+  otherLabel: typography.unit,
+  slotBtn: {
+    height: 44,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  slotBtnLabel: {
+    fontSize: 14,
+    ...weight(600),
+  },
+  linkRow: {
+    height: 52,
+    paddingHorizontal: 18,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  linkLabel: {
+    fontSize: 15,
+    ...weight(600),
+  },
 });

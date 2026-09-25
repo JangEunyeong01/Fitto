@@ -1,10 +1,9 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import GlassCard from '../../components/GlassCard';
-import Badge from '../../components/Badge';
 import Icon from '../../components/Icon';
 import { useTheme } from '../../theme/useTheme';
-import { alpha, brand, typography } from '../../theme/tokens';
+import { typography, weight } from '../../theme/tokens';
 import { RECOMMENDED_MEALS, findAllergyHit } from '../../data/foods';
 import { AVOID_TAGS, DISEASE_TAGS, labelOf, labelsOf } from '../../constants/codes';
 import { cautionReason, findCautionHit } from '../../utils/foodCaution';
@@ -39,19 +38,18 @@ export default function RecommendCard() {
     <GlassCard style={styles.card}>
       <View style={styles.headerRow}>
         <Text style={[styles.title, { color: colors.textPrimary }]}>퍼스널 추천 식단</Text>
-        <Badge
-          label={badge}
-          color={alpha(brand.lavender, 0.28)}
-          textColor={colors.textPrimary}
-          style={styles.badge}
-        />
+        {/* 칠한 배지 대신 회색 글씨(시안 규칙 2). */}
+        <Text style={[styles.badge, { color: colors.textSecondary }]} numberOfLines={1}>
+          {badge}
+        </Text>
       </View>
 
       <View style={styles.list}>
-        {meals.map(({ meal: m, caution }) => (
-          <View key={m.id} style={styles.row}>
+        {meals.map(({ meal: m, caution }, i) => (
+          // 줄 사이는 얇은 선(시안 규칙 5). 첫 줄 위에는 긋지 않는다.
+          <View key={m.id} style={[styles.row, i > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.borderDivider }]}>
             {/* 실제 음식 사진이 준비되면 이 자리를 Image로 바꾼다. */}
-            <View style={[styles.thumb, { backgroundColor: colors.fillMuted, borderColor: colors.borderDivider }]}>
+            <View style={[styles.thumb, { backgroundColor: colors.fillMuted }]}>
               <Icon name="diet" size={20} color={colors.textSecondary} />
             </View>
             <View style={styles.rowText}>
@@ -82,24 +80,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
   },
-  title: typography.sectionTitle,
+  title: typography.cardTitle,
   badge: {
+    ...typography.micro,
     maxWidth: '55%',
   },
   list: {
-    marginTop: 12,
-    gap: 10,
+    marginTop: 6,
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 12,
+    minHeight: 56,
   },
   thumb: {
-    width: 46,
-    height: 46,
-    borderRadius: 14,
-    borderWidth: 1,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -107,8 +105,14 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: 2,
   },
-  name: typography.rowLabel,
+  name: {
+    fontSize: 14,
+    ...weight(600),
+  },
   amount: typography.caption,
-  kcal: typography.sectionTitle,
+  kcal: {
+    fontSize: 14,
+    ...weight(600),
+  },
   empty: typography.bodySm,
 });

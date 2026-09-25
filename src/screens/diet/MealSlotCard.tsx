@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { View, Text, Pressable, TextInput, Platform, StyleSheet, type TextStyle } from 'react-native';
 import GlassCard from '../../components/GlassCard';
 import Icon from '../../components/Icon';
-import TextField from '../../components/TextField';
 import { useTheme } from '../../theme/useTheme';
 import { useAppStore, type MealItem, type MealSlot } from '../../store/useAppStore';
+import { useToastStore } from '../../store/useToastStore';
 import { formatAmount, slotLabel } from '../../utils/meal';
-import { typography } from '../../theme/tokens';
+import { typography, weight } from '../../theme/tokens';
 
 interface MealSlotCardProps {
   /** 이 카드가 보여주는 날짜(dateKey). 식단 탭에서 날짜를 넘기면 삭제·메모도 그 날 기록에 한다. */
@@ -17,12 +17,18 @@ interface MealSlotCardProps {
   onAdd: (slot: MealSlot) => void;
 }
 
-// README: 카드마다 제목 + 합계 kcal, 항목 행(이름 / 양 / kcal), 비어 있으면 점선 `+ {슬롯} 추가`.
-// 명세 F-022: 항목 ✕ 삭제, 카드 오른쪽 위 + 로 이 끼니에 음식 추가, 끼니별 메모.
+/**
+ * 기록된 끼니 한 장(시안 04). 비어 있는 끼니는 카드로 만들지 않는다 — 식단 화면이 "다른 끼니" 한 줄로 모은다(시안 규칙 11).
+ *
+ * 명세 F-022: 항목 ✕ 삭제, 오른쪽 위 + 로 이 끼니에 음식 추가, 끼니별 메모.
+ * 삭제는 묻지 않고 바로 지우고 토스트에서 되살린다(시안 규칙 24).
+ */
 export default function MealSlotCard({ date, slot, items, memo, onAdd }: MealSlotCardProps) {
   const { colors } = useTheme();
+  const addMealItem = useAppStore((s) => s.addMealItem);
   const removeMealItem = useAppStore((s) => s.removeMealItem);
   const setMealMemo = useAppStore((s) => s.setMealMemo);
+  const showToast = useToastStore((s) => s.show);
   const total = items.reduce((a, i) => a + i.kcal, 0);
 
   const label = slotLabel(slot);
@@ -36,6 +42,14 @@ export default function MealSlotCard({ date, slot, items, memo, onAdd }: MealSlo
     if (draft.trim() !== (memo ?? '')) setMealMemo(date, slot, draft);
   };
 
+  const remove = (item: MealItem) => {
+    removeMealItem(date, slot, item.id);
+    showToast(`${item.name} 기록을 지웠어요`, {
+      label: '실행 취소',
+      onPress: () => addMealItem(date, slot, item),
+    });
+  };
+
   return (
     <GlassCard style={styles.card}>
       <View style={styles.headerRow}>
@@ -44,54 +58,53 @@ export default function MealSlotCard({ date, slot, items, memo, onAdd }: MealSlo
           <Text style={[styles.total, { color: colors.textSecondary }]}>{total.toLocaleString()} kcal</Text>
           <Pressable
             onPress={() => onAdd(slot)}
-            // 보이는 크기 26에 사방 9씩 더해 누르는 영역 44를 맞춘다.
-            hitSlop={9}
-            style={[styles.plusBtn, { borderColor: colors.borderDivider }]}
+            // 상자 없이 + 만. 보이는 36에 사방 4씩 더해 누르는 영역 44.
+            hitSlop={4}
+            style={styles.plusBtn}
             accessibilityRole="button"
             accessibilityLabel={`${label}에 음식 추가`}
           >
-            <Icon name="plus" size={16} color={colors.textPrimary} />
+            <Icon name="plus" size={20} color={colors.textPrimary} />
           </Pressable>
         </View>
       </View>
 
-      {items.length === 0 ? (
-        <Pressable onPress={() => onAdd(slot)} style={[styles.emptyBtn, { borderColor: colors.borderInput }]}>
-          <Text style={[styles.emptyLabel, { color: colors.textSecondary }]}>+ {label} 추가</Text>
-        </Pressable>
-      ) : (
-        <View style={styles.list}>
-          {items.map((item) => (
-            <View key={item.id} style={styles.itemRow}>
-              <Text style={[styles.itemName, { color: colors.textPrimary }]} numberOfLines={1}>
-                {item.name}
-              </Text>
-              <Text style={[styles.itemAmount, { color: colors.textSecondary }]}>{formatAmount(item)}</Text>
-              <Text style={[styles.itemKcal, { color: colors.textPrimary }]}>{item.kcal}</Text>
-              <Pressable
-                onPress={() => removeMealItem(date, slot, item.id)}
-                // 아이콘 15px에 예전 여유 8을 더하면 31이었다. 44가 되게 넓힌다.
-                hitSlop={15}
-                accessibilityRole="button"
-                accessibilityLabel={`${item.name} 삭제`}
-              >
-                <Icon name="close" size={16} color={colors.textSecondary} />
-              </Pressable>
-            </View>
-          ))}
-        </View>
-      )}
+      <View style={styles.list}>
+        {items.map((item) => (
+          <View key={item.id} style={styles.itemRow}>
+            <Text style={[styles.itemName, { color: colors.textPrimary }]} numberOfLines={1}>
+              {item.name}
+            </Text>
+            <Text style={[styles.itemAmount, { color: colors.textSecondary }]}>{formatAmount(item)}</Text>
+            <Text style={[styles.itemKcal, { color: colors.textPrimary }]}>{item.kcal}</Text>
+            <Pressable
+              onPress={() => remove(item)}
+              accessibilityRole="button"
+              accessibilityLabel={`${item.name} 삭제`}
+              style={styles.removeBtn}
+            >
+              <Icon name="close" size={16} color={colors.textSecondary} />
+            </Pressable>
+          </View>
+        ))}
+      </View>
 
-      <TextField
-        size="sm"
-        clearable
+      {/* 메모는 칸 없이 얇은 선 아래 한 줄로. 쓰는 사람이 적어서 입력칸이 카드마다 떠 있으면 무겁다. */}
+      <TextInput
         value={draft}
         onChangeText={setDraft}
         onEndEditing={commitMemo}
         onBlur={commitMemo}
         placeholder="메모 추가"
+        placeholderTextColor={colors.textPlaceholder}
         maxLength={80}
-        style={styles.memo}
+        accessibilityLabel={`${label} 메모`}
+        style={[
+          styles.memo,
+          { color: colors.textPrimary, borderTopColor: colors.borderDivider },
+          // 웹 브라우저 기본 포커스 테두리를 끈다(입력칸과 같은 처리).
+          Platform.OS === 'web' && ({ outlineStyle: 'none' } as unknown as TextStyle),
+        ]}
       />
     </GlassCard>
   );
@@ -105,51 +118,58 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    minHeight: 22,
   },
   headerRight: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 4,
   },
-  title: typography.sectionTitle,
-  total: typography.label,
+  title: typography.cardTitle,
+  total: typography.unit,
   plusBtn: {
-    width: 26,
-    height: 26,
-    borderRadius: 10,
-    borderWidth: 1,
+    width: 36,
+    height: 36,
+    marginRight: -8,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  emptyBtn: {
-    marginTop: 12,
-    height: 42,
-    borderRadius: 14,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  emptyLabel: typography.unit,
   list: {
-    marginTop: 10,
-    gap: 8,
+    marginTop: 6,
   },
   itemRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 10,
+    minHeight: 44,
   },
   itemName: {
-    ...typography.rowLabel,
+    fontSize: 14,
+    ...weight(600),
     flex: 1,
   },
-  itemAmount: typography.caption,
+  itemAmount: {
+    fontSize: 13,
+    ...weight(400),
+  },
   itemKcal: {
-    ...typography.value,
-    minWidth: 34,
+    fontSize: 14,
+    ...weight(600),
+    minWidth: 40,
     textAlign: 'right',
   },
+  removeBtn: {
+    width: 44,
+    height: 44,
+    marginRight: -14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   memo: {
-    marginTop: 12,
+    ...typography.bodySm,
+    marginTop: 8,
+    height: 44,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: 0,
   },
 });
