@@ -33,6 +33,9 @@ fitto:
     secret: test-secret-key-for-integration-tests-32bytes
     access-ttl: 30m
     refresh-ttl: 14d
+  mail:
+    # 메일을 실제로 보내지 않고 로그에 찍는다. 코드를 확인해야 하는 테스트는 MailSender를 바꿔 끼운다.
+    log-codes: true
 
 logging:
   level:

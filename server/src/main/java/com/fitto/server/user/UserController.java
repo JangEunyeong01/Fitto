@@ -12,6 +12,7 @@ import com.fitto.server.auth.AuthService;
 import com.fitto.server.auth.AuthenticatedUser;
 import com.fitto.server.auth.dto.TokenResponse;
 import com.fitto.server.user.dto.AccountDeleteRequest;
+import com.fitto.server.user.dto.EmailCodeConfirmRequest;
 import com.fitto.server.user.dto.ImportRequest;
 import com.fitto.server.user.dto.ImportResult;
 import com.fitto.server.user.dto.PasswordChangeRequest;
@@ -51,6 +52,18 @@ public class UserController {
 	public TokenResponse changePassword(@Valid @RequestBody PasswordChangeRequest request) {
 		return authService.changePassword(AuthenticatedUser.requireId(), request.currentPassword(),
 				request.newPassword());
+	}
+
+	/** 이메일 인증 코드 보내기(명세 5-4). 이미 인증된 계정이면 아무것도 보내지 않고 204. */
+	@PostMapping("/users/me/email/verification")
+	public ResponseEntity<Void> sendEmailVerification() {
+		authService.sendEmailVerification(AuthenticatedUser.requireId());
+		return ResponseEntity.noContent().build();
+	}
+
+	@PostMapping("/users/me/email/verification/confirm")
+	public UserResponse confirmEmailVerification(@Valid @RequestBody EmailCodeConfirmRequest request) {
+		return authService.confirmEmailVerification(AuthenticatedUser.requireId(), request.code());
 	}
 
 	@DeleteMapping("/users/me")

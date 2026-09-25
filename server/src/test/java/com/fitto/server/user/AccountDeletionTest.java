@@ -120,6 +120,12 @@ class AccountDeletionTest {
 
 		assertEquals(200, imported.getResponse().getStatus());
 
+		// 가져오기에 안 들어가는 표. 이메일 인증 코드를 한 번 받아 둔다(테스트 설정은 메일 대신 로그에 찍는다).
+		MvcResult verification = mvc.perform(post("/users/me/email/verification")
+				.header("Authorization", "Bearer " + accessToken))
+				.andReturn();
+		assertEquals(204, verification.getResponse().getStatus());
+
 		// 정말로 들어갔는지 확인하고 시작한다. 비어 있는 상태로 지우면 테스트가 통과해도 의미가 없다.
 		for (String table : userTables()) {
 			assertTrue(rowsOf(table) > 0, table + "에 기록이 안 들어갔다. 이 표는 탈퇴 검증에서 빠진다");

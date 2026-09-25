@@ -38,6 +38,8 @@ export default function AccountScreen() {
 
   const authStatus = useAuthStore((s) => s.status);
   const authEmail = useAuthStore((s) => s.email);
+  // null은 "아직 모름"이라 경고하지 않는다. 서버에서 false를 받은 경우에만 알린다.
+  const emailUnverified = useAuthStore((s) => s.emailVerified) === false;
   const signOut = useAuthStore((s) => s.signOut);
   const showToast = useToastStore((s) => s.show);
 
@@ -106,6 +108,25 @@ export default function AccountScreen() {
                 onClear={handleClearFailed}
               />
             </GlassCard>
+
+            {/* 오타 난 주소로 가입했으면 비밀번호를 찾을 수 없다. 인증 전에는 계정 설정보다 먼저 보여준다. */}
+            {emailUnverified && (
+              <GlassCard style={styles.card}>
+                <Pressable
+                  onPress={() => navigation.navigate('EmailVerify')}
+                  accessibilityRole="button"
+                  style={styles.row}
+                >
+                  <View style={styles.rowTextCol}>
+                    <Text style={[styles.rowLabel, { color: colors.textPrimary }]}>이메일 인증이 필요해요</Text>
+                    <Text style={[styles.rowDesc, { color: colors.textSecondary }]}>
+                      인증해 두면 비밀번호를 잊어도 이 주소로 찾을 수 있어요
+                    </Text>
+                  </View>
+                  <Text style={[styles.rowAction, { color: colors.textAccent }]}>인증하기</Text>
+                </Pressable>
+              </GlassCard>
+            )}
 
             <GlassCard style={styles.card}>
               <NavRow label="비밀번호 변경" onPress={() => navigation.navigate('PasswordChange')} colors={colors} />

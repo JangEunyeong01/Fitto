@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -43,6 +44,12 @@ public class User {
 
 	@Column(nullable = false, unique = true, length = 254)
 	private String email;
+
+	/** 이 주소로 코드를 받아 맞힌 적이 있는지. 비밀번호 찾기로 재설정해도 인증된 것으로 본다(메일함을 연 것이므로). */
+	// 기본값을 DB에도 둔다. 이미 계정이 있는 표에 not null 컬럼을 기본값 없이 붙이면 Postgres가 거절한다.
+	@ColumnDefault("false")
+	@Column(nullable = false)
+	private boolean emailVerified;
 
 	/** BCrypt 해시. 평문은 어디에도 남기지 않는다. */
 	@Column(nullable = false)
@@ -146,6 +153,11 @@ public class User {
 		user.periodEnabled = false;
 		user.startedAt = Instant.now();
 		return user;
+	}
+
+	/** 코드를 받아 맞혀 봤으면 true. 가입 직후엔 false라 오타 난 이메일로 가입했는지 알 수 있다(명세 5-4). */
+	public void markEmailVerified() {
+		this.emailVerified = true;
 	}
 
 	/** 이미 BCrypt로 해시된 값만 받는다. 평문이 들어오면 로그인이 영영 안 된다. */

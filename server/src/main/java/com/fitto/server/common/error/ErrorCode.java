@@ -23,6 +23,9 @@ public enum ErrorCode {
 	UNIT_CHANGE_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "단위를 바꾸려면 기록을 지우고 다시 추가해 주세요."),
 	PERIOD_NOT_SET(HttpStatus.NOT_FOUND, "생리 주기 정보가 아직 없어요."),
 	EMAIL_DUPLICATED(HttpStatus.CONFLICT, "이미 가입된 이메일이에요."),
+	// 틀린 코드·만료된 코드·없는 계정을 구분하지 않는다. 구분하면 비밀번호 찾기로 가입 여부를 떠볼 수 있다.
+	CODE_INVALID(HttpStatus.BAD_REQUEST, "코드가 맞지 않거나 만료됐어요. 새 코드를 받아 주세요."),
+	MAIL_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE, "지금은 메일을 보낼 수 없어요. 잠시 후 다시 시도해 주세요."),
 	ID_CONFLICT(HttpStatus.CONFLICT, "다른 곳에서 쓰고 있는 기록이에요."),
 	PAYLOAD_TOO_LARGE(HttpStatus.PAYLOAD_TOO_LARGE, "보낸 데이터가 너무 커요."),
 	// 아래 둘은 앱이 정상 동작하면 나오지 않는다. 잘못 부른 요청을 500으로 돌려주지 않으려고 둔다.

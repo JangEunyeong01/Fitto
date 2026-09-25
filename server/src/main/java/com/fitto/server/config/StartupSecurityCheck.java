@@ -66,6 +66,11 @@ public class StartupSecurityCheck implements ApplicationListener<ApplicationEnvi
 		if (isProd) {
 			checkProdOrigins(env.getProperty("fitto.cors.allowed-origins", ""));
 		}
+
+		// 코드를 로그로 찍는 건 로컬 개발용이다. 운영에서 켜지면 로그를 볼 수 있는 누구나 남의 비밀번호를 바꿀 수 있다.
+		if (isProd && Boolean.parseBoolean(env.getProperty("fitto.mail.log-codes", "false"))) {
+			fail("운영 환경에서 fitto.mail.log-codes를 켤 수 없습니다. 메일 코드가 로그에 남습니다.");
+		}
 	}
 
 	/**

@@ -10,6 +10,8 @@ import SignupScreen from '../screens/settings/SignupScreen';
 import LoginScreen from '../screens/settings/LoginScreen';
 import PasswordChangeScreen from '../screens/settings/PasswordChangeScreen';
 import DeleteAccountScreen from '../screens/settings/DeleteAccountScreen';
+import ForgotPasswordScreen from '../screens/settings/ForgotPasswordScreen';
+import EmailVerifyScreen from '../screens/settings/EmailVerifyScreen';
 
 export type SettingsStackParamList = {
   SettingsMain: undefined;
@@ -18,9 +20,11 @@ export type SettingsStackParamList = {
   Notifications: undefined;
   PeriodSettings: undefined;
   Signup: undefined;
-  Login: undefined;
+  Login: { email?: string } | undefined;
   PasswordChange: undefined;
   DeleteAccount: undefined;
+  ForgotPassword: { email?: string } | undefined;
+  EmailVerify: undefined;
 };
 
 const Stack = createNativeStackNavigator<SettingsStackParamList>();
@@ -38,6 +42,8 @@ export default function SettingsStack() {
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="PasswordChange" component={PasswordChangeScreen} />
       <Stack.Screen name="DeleteAccount" component={DeleteAccountScreen} />
+      <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+      <Stack.Screen name="EmailVerify" component={EmailVerifyScreen} />
     </Stack.Navigator>
   );
 }

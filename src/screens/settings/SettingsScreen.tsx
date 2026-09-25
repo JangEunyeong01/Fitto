@@ -54,6 +54,7 @@ export default function SettingsScreen() {
 
   const authStatus = useAuthStore((s) => s.status);
   const authEmail = useAuthStore((s) => s.email);
+  const emailUnverified = useAuthStore((s) => s.emailVerified) === false;
 
   // 계정 줄에 띄울 경고. 실패한 기록은 폰을 바꾸면 사라져서, 계정 화면에 들어가야 아는 건 늦다.
   const failedCount = useOutboxStore((s) => s.failed.length);
@@ -136,7 +137,11 @@ export default function SettingsScreen() {
           {/* 못 올린 기록이 있으면 들어가 보기 전에 알려준다. 계정 화면에 들어가야 아는 건 늦다. */}
           <NavRow
             label="계정"
-            desc={authStatus === 'member' ? failedNotice ?? authEmail : '게스트로 쓰는 중 · 기록은 이 기기에만'}
+            desc={
+              authStatus === 'member'
+                ? failedNotice ?? (emailUnverified ? `${authEmail} · 인증 필요` : authEmail)
+                : '게스트로 쓰는 중 · 기록은 이 기기에만'
+            }
             descTone={failedNotice ? 'danger' : 'normal'}
             onPress={() => navigation.navigate('Account')}
             colors={colors}
