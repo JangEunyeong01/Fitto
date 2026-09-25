@@ -8,6 +8,7 @@ import GlassCard from '../../components/GlassCard';
 import ToggleSwitch from '../../components/ToggleSwitch';
 import Icon from '../../components/Icon';
 import SegmentedControl from '../../components/SegmentedControl';
+import SettingsRow, { RowDivider, ROW_PAD } from './SettingsRow';
 import { useTheme } from '../../theme/useTheme';
 import { useAppStore, ThemeMode } from '../../store/useAppStore';
 import { useCardOrderSheetStore } from '../../store/useCardOrderSheetStore';
@@ -31,8 +32,7 @@ const THEME_OPTIONS: { value: ThemeMode; label: string }[] = [
   { value: 'system', label: '시스템' },
 ];
 
-/** 카드 안 줄의 좌우 여백. 구분선도 이만큼 들여 긋는다(시안 06). */
-const PAD = 18;
+const PAD = ROW_PAD;
 const MENU_WIDTH = 196;
 const MENU_ITEM = 44;
 const MENU_HEIGHT = MENU_ITEM * THEME_OPTIONS.length + 12;
@@ -170,10 +170,10 @@ export default function SettingsScreen() {
             <Icon name="chevronRight" size={16} color={colors.textSecondary} />
           </Pressable>
 
-          <Divider colors={colors} />
+          <RowDivider />
 
           {/* 못 올린 기록이 있으면 들어가 보기 전에 알려준다. 계정 화면에 들어가야 아는 건 늦다. */}
-          <Row
+          <SettingsRow
             label="계정"
             desc={
               authStatus === 'member'
@@ -183,7 +183,7 @@ export default function SettingsScreen() {
             descTone={failedNotice ? 'danger' : 'normal'}
             onPress={() => navigation.navigate('Account')}
             chevron
-            colors={colors}
+           
           />
         </GlassCard>
 
@@ -202,45 +202,43 @@ export default function SettingsScreen() {
         {/* 글씨 크기 조절은 아직 없는 기능이라 줄을 숨겼다. 눌러도 반응 없는 줄은 고장처럼 보인다. */}
         <GlassCard style={styles.card} noPadding>
           <View ref={themeRowRef} collapsable={false}>
-            <Row
+            <SettingsRow
               label="화면 모드"
               value={themeLabel}
               onPress={openThemeMenu}
               chevron
-              colors={colors}
               a11yHint="누르면 라이트·다크·시스템 중에서 고를 수 있어요"
             />
           </View>
-          <Divider colors={colors} />
-          <Row label="홈 카드 순서" value="변경" onPress={showCardOrderSheet} chevron colors={colors} />
-          <Divider colors={colors} />
-          <Row label="생리 주기 기능" colors={colors} right={<ToggleSwitch value={periodOn} onChange={setPeriodOn} />} />
+          <RowDivider />
+          <SettingsRow label="홈 카드 순서" value="변경" onPress={showCardOrderSheet} chevron />
+          <RowDivider />
+          <SettingsRow label="생리 주기 기능" right={<ToggleSwitch value={periodOn} onChange={setPeriodOn} />} />
           {/* 명세 F-044: 생리 기능이 켜져 있을 때만 주기 설정을 보여준다. */}
           {periodOn && (
             <>
-              <Divider colors={colors} />
-              <Row label="생리 주기 설정" onPress={() => navigation.navigate('PeriodSettings')} chevron colors={colors} />
+              <RowDivider />
+              <SettingsRow label="생리 주기 설정" onPress={() => navigation.navigate('PeriodSettings')} chevron />
             </>
           )}
-          <Divider colors={colors} />
-          <Row label="알림" onPress={() => navigation.navigate('Notifications')} chevron colors={colors} />
-          <Divider colors={colors} />
+          <RowDivider />
+          <SettingsRow label="알림" onPress={() => navigation.navigate('Notifications')} chevron />
+          <RowDivider />
           {SCREEN_LOCK_SUPPORTED ? (
-            <Row
+            <SettingsRow
               label="화면 잠금"
               desc="앱을 열 때 지문·얼굴·폰 비밀번호로 확인해요"
-              colors={colors}
               right={<ToggleSwitch value={screenLock} onChange={toggleScreenLock} />}
             />
           ) : (
             // 웹 미리보기에는 생체 인증이 없다. 기능이 있다는 건 보여주고 토글만 막는다.
-            <Row label="화면 잠금" desc="휴대폰 앱에서 켤 수 있어요" value="앱 전용" colors={colors} />
+            <SettingsRow label="화면 잠금" desc="휴대폰 앱에서 켤 수 있어요" value="앱 전용" />
           )}
         </GlassCard>
 
         {/* 매일 쓰는 게 아니라 "다시 보고 싶을 때" 찾는 것들. 아래로 모은다. */}
         <GlassCard style={styles.card} noPadding>
-          <Row
+          <SettingsRow
             label="튜토리얼 다시 보기"
             value="실행"
             onPress={() => {
@@ -249,15 +247,14 @@ export default function SettingsScreen() {
               startTutorial();
             }}
             chevron
-            colors={colors}
+           
           />
-          <Divider colors={colors} />
-          <Row label="온보딩 다시 보기" value="실행" onPress={resetOnboarding} chevron colors={colors} />
-          <Divider colors={colors} />
-          <Row
+          <RowDivider />
+          <SettingsRow label="온보딩 다시 보기" value="실행" onPress={resetOnboarding} chevron />
+          <RowDivider />
+          <SettingsRow
             label="생일 축하 메시지"
             desc="생일 당일 홈에서 피또가 깜짝 축하해요"
-            colors={colors}
             right={
               // 박스 버튼 대신 강조색 글씨 버튼(시안 규칙 2). 줄 높이를 채워 누르는 영역 44를 넘긴다.
               <Pressable
@@ -272,10 +269,10 @@ export default function SettingsScreen() {
         </GlassCard>
 
         <GlassCard style={styles.card} noPadding>
-          <Row label="앱 버전" value={appConfig.expo.version} colors={colors} />
-          <Divider colors={colors} />
+          <SettingsRow label="앱 버전" value={appConfig.expo.version} />
+          <RowDivider />
           {resetStep === 0 ? (
-            <Row label="데이터 초기화" danger onPress={() => setResetStep(1)} colors={colors} />
+            <SettingsRow label="데이터 초기화" danger onPress={() => setResetStep(1)} />
           ) : (
             <View style={styles.resetBox}>
               <Text style={[styles.rowLabel, { color: colors.textPrimary }]}>
@@ -348,71 +345,6 @@ export default function SettingsScreen() {
   );
 }
 
-/**
- * 설정 한 줄. 오른쪽은 셋 중 하나: 값 글씨(+ ›), 스위치 같은 컨트롤(right), 아무것도 없음.
- * onPress가 있으면 줄 전체가 버튼이다.
- */
-function Row({
-  label,
-  desc,
-  descTone = 'normal',
-  value,
-  chevron,
-  right,
-  danger,
-  onPress,
-  a11yHint,
-  colors,
-}: {
-  label: string;
-  /** 줄 아래 한 줄 더. 들어가 보기 전에 알아야 하는 값만 적는다. */
-  desc?: string | null;
-  descTone?: 'normal' | 'danger';
-  value?: string;
-  chevron?: boolean;
-  right?: React.ReactNode;
-  danger?: boolean;
-  onPress?: () => void;
-  a11yHint?: string;
-  colors: any;
-}) {
-  const body = (
-    <>
-      <View style={styles.rowTextCol}>
-        <Text style={[styles.rowLabel, { color: danger ? colors.textDanger : colors.textPrimary }]}>{label}</Text>
-        {desc ? (
-          <Text
-            style={[styles.rowDesc, { color: descTone === 'danger' ? colors.textDanger : colors.textSecondary }]}
-            numberOfLines={1}
-          >
-            {desc}
-          </Text>
-        ) : null}
-      </View>
-      {value != null && <Text style={[styles.rowValue, { color: colors.textSecondary }]}>{value}</Text>}
-      {right}
-      {chevron && <Icon name="chevronRight" size={16} color={colors.textSecondary} />}
-    </>
-  );
-
-  const rowStyle = [styles.row, desc ? styles.rowTall : null];
-  if (!onPress) return <View style={rowStyle}>{body}</View>;
-  return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityHint={a11yHint}
-      style={({ pressed }) => [rowStyle, pressed && { backgroundColor: colors.fillMuted }]}
-    >
-      {body}
-    </Pressable>
-  );
-}
-
-function Divider({ colors }: { colors: any }) {
-  return <View style={[styles.divider, { backgroundColor: colors.borderDivider }]} />;
-}
-
 const styles = StyleSheet.create({
   scroll: {
     flex: 1,
@@ -467,32 +399,9 @@ const styles = StyleSheet.create({
   flex: {
     flex: 1,
   },
-  divider: {
-    height: StyleSheet.hairlineWidth,
-    marginLeft: PAD,
-  },
-  row: {
-    minHeight: 52,
-    paddingHorizontal: PAD,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  rowTall: {
-    minHeight: 64,
-    paddingVertical: 10,
-  },
   rowLabel: {
     fontSize: 15,
     ...weight(600),
-  },
-  rowValue: {
-    fontSize: 14,
-    ...weight(400),
-  },
-  rowTextCol: {
-    flex: 1,
-    gap: 3,
   },
   rowDesc: typography.caption,
   textBtn: {

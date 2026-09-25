@@ -4,11 +4,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import GlassCard from '../../components/GlassCard';
 import ScreenBackground from '../../components/ScreenBackground';
-import PrimaryButton from '../../components/PrimaryButton';
-import Icon from '../../components/Icon';
 import DetailHeader from '../detail/DetailHeader';
+import SettingsRow, { RowDivider } from './SettingsRow';
 import { useTheme } from '../../theme/useTheme';
-import { semantic, typography } from '../../theme/tokens';
+import { typography, weight } from '../../theme/tokens';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useOutboxStore, type FailedItem } from '../../store/useOutboxStore';
 import { useToastStore } from '../../store/useToastStore';
@@ -96,84 +95,66 @@ export default function AccountScreen() {
       >
         <DetailHeader title="계정" />
 
+        {/* 상태 설명은 카드 없이 머리글처럼 둔다(시안 18). 카드로 싸면 아래 동작 줄과 무게가 같아진다. */}
         {authStatus === 'member' ? (
           <>
-            <GlassCard style={styles.card}>
-              <Text style={[styles.email, { color: colors.textPrimary }]}>{authEmail}</Text>
-              <Text style={[styles.syncText, { color: colors.textSecondary }]}>{syncLabel}</Text>
-              <FailedRecords
-                items={failedItems}
-                colors={colors}
-                onRetry={handleRetryFailed}
-                onClear={handleClearFailed}
-              />
-            </GlassCard>
+            <View style={styles.intro}>
+              <Text style={[styles.introTitle, { color: colors.textPrimary }]} numberOfLines={1}>
+                {authEmail}
+              </Text>
+              <Text style={[styles.introSub, { color: colors.textSecondary }]}>{syncLabel}</Text>
+            </View>
+
+            <FailedRecords items={failedItems} colors={colors} onRetry={handleRetryFailed} onClear={handleClearFailed} />
 
             {/* 오타 난 주소로 가입했으면 비밀번호를 찾을 수 없다. 인증 전에는 계정 설정보다 먼저 보여준다. */}
             {emailUnverified && (
-              <GlassCard style={styles.card}>
-                <Pressable
+              <GlassCard style={styles.card} noPadding>
+                <SettingsRow
+                  label="이메일 인증이 필요해요"
+                  desc="인증해 두면 비밀번호를 잊어도 이 주소로 찾을 수 있어요"
                   onPress={() => navigation.navigate('EmailVerify')}
-                  accessibilityRole="button"
-                  style={styles.row}
-                >
-                  <View style={styles.rowTextCol}>
-                    <Text style={[styles.rowLabel, { color: colors.textPrimary }]}>이메일 인증이 필요해요</Text>
-                    <Text style={[styles.rowDesc, { color: colors.textSecondary }]}>
-                      인증해 두면 비밀번호를 잊어도 이 주소로 찾을 수 있어요
-                    </Text>
-                  </View>
-                  <Text style={[styles.rowAction, { color: colors.textAccent }]}>인증하기</Text>
-                </Pressable>
+                  right={<Text style={[styles.rowAction, { color: colors.textAccent }]}>인증하기</Text>}
+                />
               </GlassCard>
             )}
 
-            <GlassCard style={styles.card}>
-              <NavRow label="비밀번호 변경" onPress={() => navigation.navigate('PasswordChange')} colors={colors} />
-              <Divider colors={colors} />
-              <NavRow label="로그아웃" actionLabel="실행" onPress={handleLogout} colors={colors} />
+            <GlassCard style={styles.card} noPadding>
+              <SettingsRow label="비밀번호 변경" onPress={() => navigation.navigate('PasswordChange')} chevron />
+              <RowDivider />
+              <SettingsRow label="로그아웃" onPress={handleLogout} />
             </GlassCard>
 
             {/* 되돌릴 수 없는 동작이라 카드를 따로 뗀다. 확인은 탈퇴 화면에서 받는다. */}
-            <GlassCard style={styles.card}>
-              <Pressable
+            <GlassCard style={styles.card} noPadding>
+              <SettingsRow
+                label="회원 탈퇴"
+                desc="계정과 서버에 올린 기록이 모두 지워져요"
+                danger
+                chevron
                 onPress={() => navigation.navigate('DeleteAccount')}
-                accessibilityRole="button"
-                style={styles.row}
-              >
-                <View style={styles.rowTextCol}>
-                  <Text style={[styles.rowLabel, { color: colors.textDanger }]}>회원 탈퇴</Text>
-                  <Text style={[styles.rowDesc, { color: colors.textSecondary }]}>
-                    계정과 서버에 올린 기록이 모두 지워져요
-                  </Text>
-                </View>
-                <Icon name="chevronRight" size={16} color={colors.textDanger} />
-              </Pressable>
+              />
             </GlassCard>
           </>
         ) : (
           <>
             {/* 명세 3-2: 가입 유도는 여기와 온보딩 끝에서만. 기능을 막고 가입을 요구하지 않는다. */}
-            <GlassCard style={styles.card}>
-              <Text style={[styles.desc, { color: colors.textPrimary }]}>
+            <View style={styles.intro}>
+              <Text style={[styles.introLead, { color: colors.textPrimary }]}>
                 계정을 만들면 기록을 백업하고 다른 기기에서도 이어서 볼 수 있어요.
               </Text>
-              <Text style={[styles.syncText, { color: colors.textSecondary }]}>
+              <Text style={[styles.introSub, { color: colors.textSecondary }]}>
                 지금 쓰는 기록은 그대로 두고 계정에 옮겨 담아요.
               </Text>
-              {/* 로그인이 풀린 뒤에도 못 올린 기록은 보여야 한다. 안 보이면 있는 줄도 모른다. */}
-              <FailedRecords
-                items={failedItems}
-                colors={colors}
-                onRetry={handleRetryFailed}
-                onClear={handleClearFailed}
-              />
-            </GlassCard>
+            </View>
 
-            <GlassCard style={styles.card}>
-              <NavRow label="계정 만들기" onPress={() => navigation.navigate('Signup')} colors={colors} />
-              <Divider colors={colors} />
-              <NavRow label="로그인" onPress={() => navigation.navigate('Login')} colors={colors} />
+            {/* 로그인이 풀린 뒤에도 못 올린 기록은 보여야 한다. 안 보이면 있는 줄도 모른다. */}
+            <FailedRecords items={failedItems} colors={colors} onRetry={handleRetryFailed} onClear={handleClearFailed} />
+
+            <GlassCard style={styles.card} noPadding>
+              <SettingsRow label="계정 만들기" onPress={() => navigation.navigate('Signup')} chevron />
+              <RowDivider />
+              <SettingsRow label="로그인" onPress={() => navigation.navigate('Login')} chevron />
             </GlassCard>
           </>
         )}
@@ -199,8 +180,9 @@ function FailedRecords({
 }) {
   if (items.length === 0) return null;
 
+  // 빨간 테두리 상자 대신 카드 한 장: 제목만 오류색, 버튼은 글씨로(시안 규칙: 상자 테두리 없음).
   return (
-    <View style={[styles.failedBox, { borderColor: semantic.danger }]}>
+    <GlassCard style={styles.card}>
       <Text style={[styles.failedTitle, { color: colors.textDanger }]}>올리지 못한 기록 {items.length}건</Text>
       {items.slice(0, 3).map((item) => (
         <Text key={item.id} style={[styles.failedRow, { color: colors.textSecondary }]} numberOfLines={1}>
@@ -209,38 +191,15 @@ function FailedRecords({
       ))}
       {items.length > 3 && <Text style={[styles.failedRow, { color: colors.textSecondary }]}>· 외 {items.length - 3}건</Text>}
       <View style={styles.failedButtons}>
-        <PrimaryButton label="다시 시도" variant="secondary" size="md" style={styles.flex} onPress={onRetry} />
-        <PrimaryButton label="목록 비우기" variant="text" size="md" style={styles.flex} onPress={onClear} />
+        <Pressable onPress={onClear} accessibilityRole="button" style={styles.textBtn}>
+          <Text style={[styles.rowAction, { color: colors.textSecondary }]}>목록 비우기</Text>
+        </Pressable>
+        <Pressable onPress={onRetry} accessibilityRole="button" style={styles.textBtn}>
+          <Text style={[styles.rowAction, { color: colors.textAccent }]}>다시 시도</Text>
+        </Pressable>
       </View>
-    </View>
+    </GlassCard>
   );
-}
-
-function NavRow({
-  label,
-  actionLabel,
-  onPress,
-  colors,
-}: {
-  label: string;
-  actionLabel?: string;
-  onPress: () => void;
-  colors: any;
-}) {
-  return (
-    <Pressable onPress={onPress} accessibilityRole="button" style={styles.row}>
-      <Text style={[styles.rowLabel, { color: colors.textPrimary }]}>{label}</Text>
-      {actionLabel ? (
-        <Text style={[styles.rowAction, { color: colors.textSecondary }]}>{actionLabel}</Text>
-      ) : (
-        <Icon name="chevronRight" size={16} color={colors.textSecondary} />
-      )}
-    </Pressable>
-  );
-}
-
-function Divider({ colors }: { colors: any }) {
-  return <View style={[styles.divider, { borderTopColor: colors.borderDivider }]} />;
 }
 
 const styles = StyleSheet.create({
@@ -253,46 +212,47 @@ const styles = StyleSheet.create({
   card: {
     marginBottom: 12,
   },
-  email: typography.itemTitle,
-  desc: typography.body,
-  syncText: {
+  intro: {
+    paddingTop: 4,
+    paddingHorizontal: 4,
+    paddingBottom: 16,
+  },
+  introTitle: {
+    fontSize: 17,
+    ...weight(700),
+  },
+  introLead: {
+    fontSize: 15,
+    ...weight(600),
+    lineHeight: 15 * 1.5,
+  },
+  introSub: {
+    fontSize: 13,
+    ...weight(400),
+    lineHeight: 13 * 1.5,
+    marginTop: 6,
+  },
+  failedTitle: {
+    ...typography.cardTitle,
+    marginBottom: 6,
+  },
+  failedRow: {
     ...typography.caption,
-    marginTop: 4,
+    marginTop: 2,
   },
-  failedBox: {
-    marginTop: 12,
-    borderWidth: 1,
-    borderRadius: 10,
-    padding: 12,
-    gap: 4,
-  },
-  failedTitle: typography.label,
-  failedRow: typography.caption,
   failedButtons: {
     flexDirection: 'row',
-    gap: 8,
-    marginTop: 8,
+    justifyContent: 'flex-end',
+    gap: 20,
+    marginTop: 4,
+    marginBottom: -10,
   },
-  flex: {
-    flex: 1,
-  },
-  divider: {
-    borderTopWidth: StyleSheet.hairlineWidth,
-    marginVertical: 12,
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 8,
-    // 한 줄짜리 행도 누르는 높이 44를 채운다.
+  textBtn: {
     minHeight: 44,
+    justifyContent: 'center',
   },
-  rowTextCol: {
-    flex: 1,
-    gap: 3,
+  rowAction: {
+    fontSize: 14,
+    ...weight(600),
   },
-  rowLabel: typography.rowLabel,
-  rowAction: typography.unit,
-  rowDesc: typography.caption,
 });
