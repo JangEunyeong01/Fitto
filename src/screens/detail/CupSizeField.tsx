@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, Pressable, StyleSheet } from 'react-native';
 import GlassCard from '../../components/GlassCard';
-import PrimaryButton from '../../components/PrimaryButton';
 import SelectChip from '../../components/SelectChip';
 import TextField from '../../components/TextField';
 import { useTheme } from '../../theme/useTheme';
-import { typography } from '../../theme/tokens';
+import { typography, weight } from '../../theme/tokens';
 
 const PRESETS = [100, 200, 250, 330, 500];
 
@@ -54,7 +53,14 @@ export default function CupSizeField({ value, onChange }: CupSizeFieldProps) {
             keyboardType="numeric"
             style={styles.input}
           />
-          <PrimaryButton small label="설정" onPress={commitCustom} style={styles.setBtn} />
+          {/* 칠한 버튼은 화면에 하나만(시안 규칙 1). 설정은 강조색 글씨 버튼으로. */}
+          <Pressable
+            onPress={commitCustom}
+            accessibilityRole="button"
+            style={({ pressed }) => [styles.setBtn, { opacity: pressed ? 0.6 : 1 }]}
+          >
+            <Text style={[styles.setLabel, { color: colors.textAccent }]}>설정</Text>
+          </Pressable>
         </View>
       )}
     </GlassCard>
@@ -65,15 +71,16 @@ const styles = StyleSheet.create({
   card: {
     marginBottom: 12,
   },
-  title: typography.sectionTitle,
+  title: typography.cardTitle,
   chipRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
-    marginTop: 10,
+    marginTop: 12,
   },
   customRow: {
     flexDirection: 'row',
+    alignItems: 'center',
     gap: 8,
     marginTop: 10,
   },
@@ -81,6 +88,14 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   setBtn: {
-    width: 72,
+    minWidth: 44,
+    height: 44,
+    paddingHorizontal: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  setLabel: {
+    fontSize: 15,
+    ...weight(600),
   },
 });

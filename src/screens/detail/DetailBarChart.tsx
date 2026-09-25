@@ -1,91 +1,79 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import GlassCard from '../../components/GlassCard';
 import { useTheme } from '../../theme/useTheme';
-import { typography } from '../../theme/tokens';
-
-const BAR_MAX_HEIGHT = 88;
+import { weight } from '../../theme/tokens';
 
 interface DetailBarChartProps {
   labels: string[];
   values: number[];
   /** 오늘/이번 달처럼 강조할 막대의 인덱스. */
   highlightIndex?: number;
-  /** 보여줄 기록이 없을 때 막대 대신 띄울 문구. 없으면 값이 전부 0인 차트를 그대로 그린다. */
-  emptyMessage?: string;
+  /** 막대가 가장 길 때의 높이. 요약 카드 안은 88, 활동 카드는 72(시안 07·09). */
+  maxHeight?: number;
 }
 
-// README: 막대 차트. 최대값 기준 스케일, 값 위에 라벨.
-export default function DetailBarChart({ labels, values, highlightIndex, emptyMessage }: DetailBarChartProps) {
+/** 값이 다 0이면 차트를 그리지 않는다. 바닥에 붙은 막대만 늘어서면 "0을 기록했다"로 읽힌다. */
+export function hasChartData(values: number[]): boolean {
+  return values.some((v) => v > 0);
+}
+
+/**
+ * 막대 차트. 카드는 부르는 쪽이 감싼다 — 요약 카드 안에 붙기도 하고 제목 있는 카드에 들어가기도 한다.
+ * 기록 없는 날은 막대와 숫자를 비운다. 강조 막대만 파랑, 나머지는 옅은 회색(규칙: 강조는 하나).
+ */
+export default function DetailBarChart({ labels, values, highlightIndex, maxHeight = 88 }: DetailBarChartProps) {
   const { colors, brand } = useTheme();
   const maxVal = Math.max(...values, 1);
 
-  // 기록이 하나도 없으면 바닥에 붙은 막대만 늘어선다. 그건 "0을 기록했다"로 읽혀서 문구로 바꾼다.
-  if (emptyMessage && values.every((v) => v === 0)) {
-    return (
-      <GlassCard style={styles.card}>
-        <Text style={[styles.empty, { color: colors.textSecondary }]}>{emptyMessage}</Text>
-      </GlassCard>
-    );
-  }
-
   return (
-    <GlassCard style={styles.card}>
-      <View style={styles.row}>
-        {values.map((v, i) => {
-          const h = Math.max(4, (v / maxVal) * BAR_MAX_HEIGHT);
-          const highlight = i === highlightIndex;
-          return (
-            <View key={i} style={styles.col}>
-              <Text style={[styles.value, { color: colors.textSecondary }]} numberOfLines={1}>
-                {v >= 1000 ? `${(v / 1000).toFixed(1)}천` : v.toLocaleString()}
-              </Text>
-              <View style={[styles.track, { height: BAR_MAX_HEIGHT }]}>
-                {highlight ? (
-                  <LinearGradient colors={[brand.blue, brand.blueDeep]} style={[styles.bar, { height: h }]} />
-                ) : (
-                  <View style={[styles.bar, { height: h, backgroundColor: colors.fillMuted }]} />
-                )}
-              </View>
-              <Text style={[styles.label, { color: colors.textSecondary }]} numberOfLines={1}>
-                {labels[i]}
-              </Text>
+    <View style={styles.row}>
+      {values.map((v, i) => {
+        const h = Math.max(4, (v / maxVal) * maxHeight);
+        const on = i === highlightIndex;
+        const textStyle = { color: on ? colors.textPrimary : colors.textSecondary, ...weight(on ? 700 : 500) };
+        return (
+          <View key={i} style={styles.col}>
+            <Text style={[styles.text, styles.value, textStyle]} numberOfLines={1}>
+              {v === 0 ? '' : v >= 1000 ? `${(v / 1000).toFixed(1)}천` : v.toLocaleString()}
+            </Text>
+            <View style={[styles.track, { height: maxHeight }]}>
+              {v > 0 && (
+                <View style={[styles.bar, { height: h, backgroundColor: on ? brand.blue : colors.fillStrong }]} />
+              )}
             </View>
-          );
-        })}
-      </View>
-    </GlassCard>
+            <Text style={[styles.text, textStyle]} numberOfLines={1}>
+              {labels[i]}
+            </Text>
+          </View>
+        );
+      })}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  card: {
-    marginBottom: 12,
-  },
   row: {
     flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: 6,
+    gap: 4,
   },
   col: {
     flex: 1,
     alignItems: 'center',
-    gap: 4,
+    gap: 6,
   },
-  value: typography.micro,
+  text: {
+    fontSize: 12,
+  },
+  value: {
+    height: 16,
+  },
   track: {
     width: '100%',
+    alignItems: 'center',
     justifyContent: 'flex-end',
   },
   bar: {
-    width: '100%',
+    width: 18,
     borderRadius: 5,
-  },
-  label: typography.captionSm,
-  empty: {
-    ...typography.bodySm,
-    textAlign: 'center',
-    paddingVertical: 24,
   },
 });

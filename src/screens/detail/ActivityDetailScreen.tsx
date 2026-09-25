@@ -4,14 +4,15 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import ScreenBackground from '../../components/ScreenBackground';
 import GlassCard from '../../components/GlassCard';
 import DetailHeader from './DetailHeader';
-import DetailBarChart from './DetailBarChart';
+import DetailBarChart, { hasChartData } from './DetailBarChart';
 import GoalField from './GoalField';
 import { useTheme } from '../../theme/useTheme';
 import { useAppStore } from '../../store/useAppStore';
 import { dateKey } from '../../utils/timeOfDay';
 import { addDays } from '../../utils/periodCycle';
 import { getBurnedKcal } from '../../utils/health';
-import { typography } from '../../theme/tokens';
+import { recentDays } from '../../utils/history';
+import { typography, weight } from '../../theme/tokens';
 
 const WEEKDAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
 const DAYS = 7;
@@ -23,7 +24,7 @@ const DAYS = 7;
  */
 export default function ActivityDetailScreen() {
   const insets = useSafeAreaInsets();
-  const { colors, brand } = useTheme();
+  const { colors } = useTheme();
   const records = useAppStore((s) => s.dailyRecords);
   const stepsGoal = useAppStore((s) => s.goals.steps);
   const setGoals = useAppStore((s) => s.setGoals);
@@ -37,6 +38,7 @@ export default function ActivityDetailScreen() {
   const exercises = todayRecord?.exercises ?? [];
   const minutes = exercises.reduce((a, e) => a + e.minutes, 0);
   const weekAvg = Math.round(burnedByDay.reduce((a, v) => a + v, 0) / DAYS);
+  const stepsConnected = recentDays(records, 'steps').values.some((v) => v > 0);
 
   return (
     <ScreenBackground showTimeGradient={false}>
@@ -50,14 +52,33 @@ export default function ActivityDetailScreen() {
         <GlassCard style={styles.card}>
           <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>오늘</Text>
           <View style={styles.statRow}>
-            <Stat label="걸음수" value={(todayRecord?.steps ?? 0).toLocaleString()} unit="보" colors={colors} />
+            {/* 걸음은 폰 건강 데이터에서만 들어온다. 한 번도 안 들어왔으면 0보가 아니라 "연결 전"(홈 활동 카드와 같은 기준). */}
+            <Stat
+              label="걸음수"
+              value={stepsConnected ? (todayRecord?.steps ?? 0).toLocaleString() : '연결 전'}
+              unit={stepsConnected ? '보' : ''}
+              muted={!stepsConnected}
+              colors={colors}
+            />
             <Stat label="운동 시간" value={`${minutes}`} unit="분" colors={colors} />
             <Stat label="소모" value={burnedByDay[DAYS - 1].toLocaleString()} unit="kcal" colors={colors} />
           </View>
         </GlassCard>
 
-        <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>최근 7일 소모 칼로리 · 하루 평균 {weekAvg.toLocaleString()}kcal</Text>
-        <DetailBarChart labels={labels} values={burnedByDay} highlightIndex={DAYS - 1} />
+        {/* 차트 제목과 평균을 카드 안으로 넣었다. 카드 밖 회색 글씨는 어느 카드 얘기인지 흐려진다(시안 09). */}
+        <GlassCard style={styles.card}>
+          <View style={styles.titleRow}>
+            <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>최근 7일 소모 칼로리</Text>
+            <Text style={[styles.titleSide, { color: colors.textSecondary }]}>하루 평균 {weekAvg.toLocaleString()}kcal</Text>
+          </View>
+          {hasChartData(burnedByDay) ? (
+            <View style={styles.chartWrap}>
+              <DetailBarChart labels={labels} values={burnedByDay} highlightIndex={DAYS - 1} maxHeight={72} />
+            </View>
+          ) : (
+            <Text style={[styles.empty, { color: colors.textSecondary }]}>최근 7일 운동 기록이 없어요.</Text>
+          )}
+        </GlassCard>
 
         <GlassCard style={styles.card}>
           <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>오늘 운동</Text>
@@ -65,10 +86,17 @@ export default function ActivityDetailScreen() {
             <Text style={[styles.empty, { color: colors.textSecondary }]}>오늘 운동 기록이 없어요.</Text>
           ) : (
             <View style={styles.list}>
-              {exercises.map((e) => (
-                <View key={e.id} style={styles.row}>
-                  <View style={[styles.dot, { backgroundColor: brand.mint }]} />
-                  <Text style={[styles.name, { color: colors.textPrimary }]}>{e.name}</Text>
+              {exercises.map((e, i) => (
+                <View
+                  key={e.id}
+                  style={[
+                    styles.row,
+                    i > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.borderDivider },
+                  ]}
+                >
+                  <Text style={[styles.name, { color: colors.textPrimary }]} numberOfLines={1}>
+                    {e.name}
+                  </Text>
                   <Text style={[styles.detail, { color: colors.textSecondary }]}>
                     {e.minutes}분 · {e.kcal}kcal
                   </Text>
@@ -84,13 +112,25 @@ export default function ActivityDetailScreen() {
   );
 }
 
-function Stat({ label, value, unit, colors }: { label: string; value: string; unit: string; colors: any }) {
+function Stat({
+  label,
+  value,
+  unit,
+  muted,
+  colors,
+}: {
+  label: string;
+  value: string;
+  unit: string;
+  muted?: boolean;
+  colors: any;
+}) {
   return (
     <View style={styles.statCol}>
       <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{label}</Text>
       <View style={styles.statValueRow}>
-        <Text style={[styles.statValue, { color: colors.textPrimary }]}>{value}</Text>
-        <Text style={[styles.statUnit, { color: colors.textSecondary }]}>{unit}</Text>
+        <Text style={[styles.statValue, { color: muted ? colors.textSecondary : colors.textPrimary }]}>{value}</Text>
+        {!!unit && <Text style={[styles.statUnit, { color: colors.textSecondary }]}>{unit}</Text>}
       </View>
     </View>
   );
@@ -106,48 +146,68 @@ const styles = StyleSheet.create({
   card: {
     marginBottom: 12,
   },
-  cardTitle: typography.sectionTitle,
-  sectionLabel: {
-    ...typography.label,
-    marginBottom: 8,
+  cardTitle: typography.cardTitle,
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+    minHeight: 22,
+  },
+  titleSide: {
+    fontSize: 12,
+    ...weight(600),
+  },
+  chartWrap: {
+    marginTop: 14,
   },
   statRow: {
     flexDirection: 'row',
-    marginTop: 12,
+    marginTop: 14,
   },
   statCol: {
     flex: 1,
     gap: 4,
   },
-  statLabel: typography.label,
+  statLabel: {
+    fontSize: 12,
+    ...weight(600),
+  },
   statValueRow: {
     flexDirection: 'row',
     alignItems: 'baseline',
     gap: 3,
   },
-  statValue: typography.itemTitle,
-  statUnit: typography.caption,
+  statValue: {
+    fontSize: 18,
+    ...weight(700),
+  },
+  statUnit: {
+    fontSize: 12,
+    ...weight(500),
+  },
   empty: {
-    ...typography.body,
+    ...typography.bodySm,
     marginTop: 10,
   },
+  // 마지막 줄 높이(44)가 아래 여백 몫을 해서 카드 바닥 여백을 10 줄인다(시안 09: 아래 8).
   list: {
-    marginTop: 10,
-    gap: 8,
+    marginTop: 4,
+    marginBottom: -10,
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-  },
-  dot: {
-    width: 7,
-    height: 7,
-    borderRadius: 3.5,
+    gap: 10,
+    height: 44,
   },
   name: {
-    ...typography.rowLabel,
+    fontSize: 14,
+    ...weight(600),
     flex: 1,
   },
-  detail: typography.caption,
+  detail: {
+    fontSize: 13,
+    ...weight(400),
+  },
 });

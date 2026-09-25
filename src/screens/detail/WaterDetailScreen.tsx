@@ -6,7 +6,7 @@ import DetailHeader from './DetailHeader';
 import PeriodChips, { Period } from './PeriodChips';
 import PeriodBar, { MonthPreset } from './PeriodBar';
 import DetailSummaryCard from './DetailSummaryCard';
-import DetailBarChart from './DetailBarChart';
+import DetailBarChart, { hasChartData } from './DetailBarChart';
 import GoalField from './GoalField';
 import CupSizeField from './CupSizeField';
 import { useAppStore } from '../../store/useAppStore';
@@ -113,13 +113,17 @@ export default function WaterDetailScreen() {
           />
         )}
 
-        <DetailSummaryCard value={summaryValue} unit="ml" goal={goal} periodDesc={summaryDesc} />
-        <DetailBarChart
-          labels={chartLabels}
-          values={chartValues}
-          highlightIndex={highlightIndex}
-          emptyMessage={emptyMessage}
-        />
+        <DetailSummaryCard
+          value={summaryValue}
+          unit="ml"
+          goal={goal}
+          periodDesc={summaryDesc}
+          note={hasChartData(chartValues) ? undefined : emptyMessage}
+        >
+          {hasChartData(chartValues) && (
+            <DetailBarChart labels={chartLabels} values={chartValues} highlightIndex={highlightIndex} />
+          )}
+        </DetailSummaryCard>
 
         <GoalField
           title="물 목표"

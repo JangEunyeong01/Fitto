@@ -29,6 +29,8 @@ export interface ThemeColors {
   surfaceMuted: string;
   /** 게이지·막대의 빈 칸, 장식 원. 정보를 담지 않는다. */
   fillMuted: string;
+  /** 강조 안 한 차트 막대. fillMuted로는 카드 면에 묻혀서 한 단계 진하게(시안 07). */
+  fillStrong: string;
 
   /** 제목·본문·수치. */
   textPrimary: string;
@@ -66,6 +68,7 @@ export const lightColors: ThemeColors = {
   surfaceSolid: '#FFFFFF',
   surfaceMuted: '#EEF3F6',
   fillMuted: 'rgba(44,62,80,.06)',
+  fillStrong: 'rgba(44,62,80,.10)',
 
   textPrimary: '#2C3E50', // 10.3:1
   textSecondary: '#5C7282', // 4.7:1 (예전 #8FA3B1은 2.4:1)
@@ -93,6 +96,7 @@ export const darkColors: ThemeColors = {
   surfaceSolid: '#16202A',
   surfaceMuted: 'rgba(255,255,255,.05)',
   fillMuted: 'rgba(255,255,255,.07)',
+  fillStrong: 'rgba(255,255,255,.12)',
 
   textPrimary: '#E7F1F6', // 16.0:1
   textSecondary: '#8098A8', // 6.1:1

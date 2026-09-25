@@ -1,14 +1,13 @@
 import React from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
-import { useTheme } from '../../theme/useTheme';
-import { radius, selection, typography, weight } from '../../theme/tokens';
+import { View, StyleSheet } from 'react-native';
+import SegmentedControl from '../../components/SegmentedControl';
 
 export type Period = 'day' | 'week' | 'month';
 
-const OPTIONS: { key: Period; label: string }[] = [
-  { key: 'day', label: '일간' },
-  { key: 'week', label: '주간' },
-  { key: 'month', label: '월간' },
+const OPTIONS: { value: Period; label: string }[] = [
+  { value: 'day', label: '일간' },
+  { value: 'week', label: '주간' },
+  { value: 'month', label: '월간' },
 ];
 
 interface PeriodChipsProps {
@@ -16,47 +15,17 @@ interface PeriodChipsProps {
   onChange: (p: Period) => void;
 }
 
-// README: 기간 칩 3개(일간/주간/월간).
+// 일간/주간/월간. 늘 하나가 골라져 있어서 떨어진 칩 대신 붙은 세그먼트(시안 07·08).
 export default function PeriodChips({ value, onChange }: PeriodChipsProps) {
-  const { colors } = useTheme();
-
   return (
-    <View style={styles.row}>
-      {OPTIONS.map((o) => {
-        const on = o.key === value;
-        return (
-          <Pressable
-            key={o.key}
-            onPress={() => onChange(o.key)}
-            style={[
-              styles.chip,
-              {
-                backgroundColor: on ? selection.bg : colors.surface,
-                borderColor: on ? selection.border : colors.borderGlass,
-              },
-            ]}
-          >
-            <Text style={[styles.label, { color: colors.textPrimary }, weight(on ? 700 : 500)]}>{o.label}</Text>
-          </Pressable>
-        );
-      })}
+    <View style={styles.wrap}>
+      <SegmentedControl options={OPTIONS} value={value} onChange={onChange} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    gap: 8,
-    marginBottom: 16,
+  wrap: {
+    marginBottom: 12,
   },
-  chip: {
-    flex: 1,
-    height: 38,
-    borderRadius: radius.chip,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  label: typography.body,
 });

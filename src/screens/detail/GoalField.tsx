@@ -3,7 +3,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import GlassCard from '../../components/GlassCard';
 import TextField from '../../components/TextField';
 import { useTheme } from '../../theme/useTheme';
-import { typography } from '../../theme/tokens';
+import { typography, weight } from '../../theme/tokens';
 
 interface GoalFieldProps {
   title: string;
@@ -15,6 +15,7 @@ interface GoalFieldProps {
 }
 
 // README: 목표량 직접 설정. 입력 중엔 자유롭게 두고, 포커스를 벗어날 때 범위로 clamp해 커밋한다.
+// 시안 07: 칸은 140 폭으로 고정하고 단위를 바로 옆에 붙인다. 카드 전체로 늘리면 네 자리 숫자에 너무 길다.
 export default function GoalField({ title, value, min, max, unit, onCommit }: GoalFieldProps) {
   const { colors } = useTheme();
   const [text, setText] = useState(String(value));
@@ -41,6 +42,7 @@ export default function GoalField({ title, value, min, max, unit, onCommit }: Go
           onEndEditing={commit}
           onBlur={commit}
           keyboardType="numeric"
+          accessibilityLabel={title}
           style={styles.input}
         />
         <Text style={[styles.unit, { color: colors.textSecondary }]}>{unit}</Text>
@@ -57,21 +59,24 @@ const styles = StyleSheet.create({
   card: {
     marginBottom: 12,
   },
-  title: typography.sectionTitle,
+  title: typography.cardTitle,
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    marginTop: 10,
+    marginTop: 12,
   },
   input: {
-    // 목표 숫자는 이 카드의 주인공이라 입력 안 글자만 크게 쓴다.
-    ...typography.buttonLabel,
-    flex: 1,
+    width: 140,
   },
-  unit: typography.rowLabel,
+  unit: {
+    fontSize: 14,
+    ...weight(600),
+  },
   range: {
-    ...typography.caption,
+    fontSize: 12,
+    ...weight(400),
+    lineHeight: 18,
     marginTop: 8,
   },
 });

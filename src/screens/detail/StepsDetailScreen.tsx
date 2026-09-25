@@ -6,7 +6,7 @@ import DetailHeader from './DetailHeader';
 import PeriodChips, { Period } from './PeriodChips';
 import PeriodBar, { MonthPreset } from './PeriodBar';
 import DetailSummaryCard from './DetailSummaryCard';
-import DetailBarChart from './DetailBarChart';
+import DetailBarChart, { hasChartData } from './DetailBarChart';
 import GoalField from './GoalField';
 import { useAppStore } from '../../store/useAppStore';
 import { dateKey } from '../../utils/timeOfDay';
@@ -26,7 +26,7 @@ export default function StepsDetailScreen() {
   const today = records[dateKey()]?.steps ?? 0;
 
   // 걸음 수는 폰의 건강 데이터에서 와야 한다. 연결 전에는 모든 기간이 0이므로 차트 대신 안내를 띄운다.
-  const NOT_CONNECTED = '폰의 건강 데이터를 연결하면 걸음 수가 기록돼요. 목표는 미리 정해둘 수 있어요.';
+  const NOT_CONNECTED = '폰의 건강 데이터를 연결하면 걸음 수가 기록돼요.\n목표는 미리 정해둘 수 있어요.';
 
   const [period, setPeriod] = useState<Period>('day');
   const [preset, setPreset] = useState<MonthPreset>('1m');
@@ -110,13 +110,17 @@ export default function StepsDetailScreen() {
           />
         )}
 
-        <DetailSummaryCard value={summaryValue} unit="" goal={goal} periodDesc={summaryDesc} />
-        <DetailBarChart
-          labels={chartLabels}
-          values={chartValues}
-          highlightIndex={highlightIndex}
-          emptyMessage={emptyMessage}
-        />
+        <DetailSummaryCard
+          value={summaryValue}
+          unit=""
+          goal={goal}
+          periodDesc={summaryDesc}
+          note={hasChartData(chartValues) ? undefined : emptyMessage}
+        >
+          {hasChartData(chartValues) && (
+            <DetailBarChart labels={chartLabels} values={chartValues} highlightIndex={highlightIndex} />
+          )}
+        </DetailSummaryCard>
 
         <GoalField title="걸음 목표" value={goal} min={3000} max={20000} unit="보" onCommit={(v) => setGoals({ steps: v })} />
       </ScrollView>
