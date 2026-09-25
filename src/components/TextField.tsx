@@ -18,6 +18,11 @@ interface TextFieldProps extends Omit<TextInputProps, 'style' | 'placeholderText
   /** 값이 있을 때 오른쪽에 X를 띄워 한 번에 지운다(명세 F-003·F-040 이름 입력). */
   clearable?: boolean;
   /**
+   * 비밀번호 칸 안 오른쪽에 "보기" 버튼(눈 아이콘)을 둔다. secureTextEntry와 함께 쓴다.
+   * 폰 자판은 오타가 잦은데 가려진 채로는 확인할 방법이 없어, 로그인 실패의 상당수가 오타다.
+   */
+  revealable?: boolean;
+  /**
    * 오류 문구. 있으면 테두리를 바꾸고 **칸 아래에 문구를 함께 띄운다.**
    * 테두리 색만 바꾸면 색 구분이 어려운 사용자에게는 오류가 전달되지 않는다(UI 기준서 5-2).
    */
@@ -43,6 +48,7 @@ export default function TextField({
   center,
   onBackground,
   clearable,
+  revealable,
   error,
   helper,
   style,
@@ -54,6 +60,7 @@ export default function TextField({
   const { colors } = useTheme();
   const inputRef = useRef<TextInput>(null);
   const [focused, setFocused] = useState(false);
+  const [revealed, setRevealed] = useState(false);
 
   const lineColor = !editable
     ? colors.borderDivider
@@ -94,10 +101,11 @@ export default function TextField({
           paddingTop: lineWidth - 1,
           color: editable ? colors.textPrimary : colors.textDisabled,
         },
-        clearable && styles.clearablePad,
+        (clearable || revealable) && styles.clearablePad,
         style,
       ]}
       {...rest}
+      secureTextEntry={rest.secureTextEntry && !revealed}
     />
   );
 
@@ -105,11 +113,23 @@ export default function TextField({
 
   // 문구도 X도 없으면 감싸지 않는다. 한 줄에 여러 칸을 놓는 곳(키·몸무게, 탄단지)은
   // 호출부가 style={{ flex: 1 }}을 입력칸에 직접 주므로, View로 감싸면 폭이 무너진다.
-  if (!message && !clearable) return input;
+  if (!message && !clearable && !revealable) return input;
 
   return (
     <View>
-      {clearable ? (
+      {revealable ? (
+        <View>
+          {input}
+          <Pressable
+            onPress={() => setRevealed((v) => !v)}
+            style={styles.clearBtn}
+            accessibilityRole="button"
+            accessibilityLabel={revealed ? '비밀번호 가리기' : '비밀번호 보기'}
+          >
+            <Icon name={revealed ? 'eyeOff' : 'eye'} size={20} color={colors.textSecondary} />
+          </Pressable>
+        </View>
+      ) : clearable ? (
         <View>
           {input}
           {!!rest.value && editable && (

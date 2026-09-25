@@ -1,15 +1,12 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import ScreenBackground from '../../components/ScreenBackground';
-import GlassCard from '../../components/GlassCard';
 import TextLink from '../../components/TextLink';
 import TextField from '../../components/TextField';
 import PrimaryButton from '../../components/PrimaryButton';
-import DetailHeader from '../detail/DetailHeader';
+import AuthSheetLayout from './AuthSheetLayout';
 import { useTheme } from '../../theme/useTheme';
-import { typography } from '../../theme/tokens';
+import { typography, weight } from '../../theme/tokens';
 import { useAppStore } from '../../store/useAppStore';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useToastStore } from '../../store/useToastStore';
@@ -25,7 +22,6 @@ import { useWakeNotice } from '../../hooks/useWakeNotice';
  * 가입에 성공하면 기기에 쌓아둔 기록을 서버로 올린다.
  */
 export default function SignupScreen() {
-  const insets = useSafeAreaInsets();
   const navigation = useNavigation<any>();
   const { colors } = useTheme();
 
@@ -137,92 +133,83 @@ export default function SignupScreen() {
   };
 
   return (
-    <ScreenBackground showTimeGradient={false}>
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={[styles.content, { paddingTop: insets.top + 14, paddingBottom: insets.bottom + 40 }]}
-        showsVerticalScrollIndicator={false}
-      >
-        <DetailHeader title="계정 만들기" />
+    <AuthSheetLayout
+      title={'피또랑\n계속 기록해요'}
+      subtitle="지금까지 기록한 내용은 계정으로 함께 옮겨져요."
+      onBack={navigation.canGoBack() ? () => navigation.goBack() : undefined}
+    >
+      <Text style={[styles.label, styles.firstLabel, { color: colors.textSecondary }]}>이메일</Text>
+      <TextField
+        value={email}
+        onChangeText={(v) => {
+          setEmail(v);
+          // 다시 입력을 시작하면 오류를 걷는다. 치는 동안 빨간 칸이 계속 떠 있으면 압박이 된다.
+          if (fieldErrors.email) setFieldErrors((prev) => ({ ...prev, email: undefined }));
+        }}
+        placeholder="fitto@example.com"
+        autoCapitalize="none"
+        keyboardType="email-address"
+        maxLength={254}
+        error={fieldErrors.email}
+      />
 
-        <GlassCard style={styles.card}>
-          <Text style={[styles.desc, { color: colors.textSecondary }]}>
-            지금까지 기록한 내용은 계정으로 함께 옮겨져요. 다른 기기에서도 이어서 볼 수 있어요.
-          </Text>
+      <Text style={[styles.label, { color: colors.textSecondary }]}>비밀번호</Text>
+      {/*
+        비밀번호 조건은 한 번만 말한다(시안 규칙 18). 시안은 칸 안 안내 글씨였는데, 치기 시작하면 사라지고
+        안내 글씨 색도 대비가 모자라서 칸 아래 도움말로 옮겼다.
+      */}
+      <TextField
+        value={password}
+        onChangeText={(v) => {
+          setPassword(v);
+          if (fieldErrors.password) setFieldErrors((prev) => ({ ...prev, password: undefined }));
+        }}
+        autoCapitalize="none"
+        secureTextEntry
+        revealable
+        maxLength={64}
+        error={fieldErrors.password}
+        helper="영문과 숫자를 섞어 8자 이상"
+      />
 
-          <Text style={[styles.label, { color: colors.textSecondary }]}>이메일</Text>
-          <TextField
-            value={email}
-            onChangeText={(v) => {
-              setEmail(v);
-              // 다시 입력을 시작하면 오류를 걷는다. 치는 동안 빨간 칸이 계속 떠 있으면 압박이 된다.
-              if (fieldErrors.email) setFieldErrors((prev) => ({ ...prev, email: undefined }));
-            }}
-            placeholder="fitto@example.com"
-            autoCapitalize="none"
-            keyboardType="email-address"
-            maxLength={254}
-            error={fieldErrors.email}
-          />
+      <View style={styles.buttonWrap}>
+        <PrimaryButton
+          label="계정 만들기"
+          onPress={handleSignup}
+          loading={busy}
+          inactive={!email.trim() || password.length < 8}
+        />
+      </View>
 
-          <Text style={[styles.label, { color: colors.textSecondary }]}>비밀번호</Text>
-          <TextField
-            value={password}
-            onChangeText={(v) => {
-              setPassword(v);
-              if (fieldErrors.password) setFieldErrors((prev) => ({ ...prev, password: undefined }));
-            }}
-            placeholder="영문과 숫자를 섞어 8자 이상"
-            autoCapitalize="none"
-            secureTextEntry
-            maxLength={64}
-            error={fieldErrors.password}
-            helper="영문과 숫자를 모두 포함해 8자 이상"
-          />
+      {wakeNotice && <Text style={[styles.wakeNotice, { color: colors.textSecondary }]}>{wakeNotice}</Text>}
 
-          <View style={styles.buttonWrap}>
-            <PrimaryButton
-              label="계정 만들기"
-              onPress={handleSignup}
-              loading={busy}
-              inactive={!email.trim() || password.length < 8}
-            />
-          </View>
+      <View style={styles.linkRow}>
+        <Text style={[styles.link, { color: colors.textSecondary }]}>이미 계정이 있나요?</Text>
+        <TextLink label="로그인" onPress={() => navigation.navigate('Login')} />
+      </View>
 
-          {wakeNotice && <Text style={[styles.wakeNotice, { color: colors.textSecondary }]}>{wakeNotice}</Text>}
+      {/* 가입은 선택이라는 걸 분명히 한다. 막다른 길처럼 보이지 않게 빠져나가는 길을 둔다. */}
+      {navigation.canGoBack() && (
+        <Pressable onPress={() => navigation.goBack()} accessibilityRole="button" style={styles.laterBtn}>
+          <Text style={[styles.laterLabel, { color: colors.textSecondary }]}>나중에 하기</Text>
+        </Pressable>
+      )}
 
-          <View style={styles.linkRow}>
-            <Text style={[styles.link, { color: colors.textSecondary }]}>이미 계정이 있나요?</Text>
-            <TextLink label="로그인" onPress={() => navigation.navigate('Login')} />
-          </View>
-        </GlassCard>
-
-        <Text style={[styles.note, { color: colors.textSecondary }]}>
-          계정이 없어도 앱의 모든 기능을 쓸 수 있어요. 계정은 기록을 백업하고 기기를 옮길 때 필요해요.
-        </Text>
-      </ScrollView>
-    </ScreenBackground>
+      <Text style={[styles.note, { color: colors.textSecondary }]}>
+        계정이 없어도 앱의 모든 기능을 쓸 수 있어요. 계정은 기록을 백업하고 기기를 옮길 때 필요해요.
+      </Text>
+    </AuthSheetLayout>
   );
 }
 
 const styles = StyleSheet.create({
-  scroll: {
-    flex: 1,
-  },
-  content: {
-    paddingHorizontal: 16,
-  },
-  card: {
-    marginBottom: 12,
-  },
-  desc: {
-    ...typography.bodySm,
-    marginBottom: 4,
-  },
   label: {
     ...typography.label,
-    marginTop: 16,
-    marginBottom: 8,
+    marginTop: 14,
+    marginBottom: 6,
+  },
+  firstLabel: {
+    marginTop: 0,
   },
   buttonWrap: {
     marginTop: 20,
@@ -234,15 +221,27 @@ const styles = StyleSheet.create({
   },
   linkRow: {
     height: 44,
+    marginTop: 8,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
   },
-  link: typography.label,
+  link: typography.body,
+  laterBtn: {
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  laterLabel: {
+    ...typography.body,
+    ...weight(600),
+  },
   note: {
     ...typography.caption,
-    lineHeight: 11 * 1.6,
-    paddingHorizontal: 4,
+    lineHeight: 12 * 1.5,
+    marginTop: 6,
+    paddingHorizontal: 8,
+    textAlign: 'center',
   },
 });
