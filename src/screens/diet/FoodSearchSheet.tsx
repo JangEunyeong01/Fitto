@@ -1,14 +1,14 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, Pressable, TextInput, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Badge from '../../components/Badge';
 import HighlightText from '../../components/HighlightText';
 import Icon from '../../components/Icon';
 import SelectChip from '../../components/SelectChip';
+import SegmentedControl from '../../components/SegmentedControl';
 import TextField from '../../components/TextField';
 import PrimaryButton from '../../components/PrimaryButton';
 import { useTheme } from '../../theme/useTheme';
-import { alpha, brand, overlay, radius, selection, typography } from '../../theme/tokens';
+import { overlay, typography, weight } from '../../theme/tokens';
 import { FOODS, findAllergyHit, gramsPerServing, type Food } from '../../data/foods';
 import { useAppStore, type MealSlot } from '../../store/useAppStore';
 import { AVOID_TAGS, DISEASE_TAGS, MEAL_SLOTS, labelOf, type MealUnit } from '../../constants/codes';
@@ -22,6 +22,8 @@ import { searchByName } from '../../utils/hangul';
 
 const MAX_SERVINGS = 10;
 const MAX_GRAMS = 2000;
+/** 시트 좌우 여백. 카드 안쪽 여백(18)과 맞춘다(시안 14~16). */
+const SHEET_PAD = 18;
 
 /** 끼니를 정하지 않고 열었을 때 기본값. 지금 시각에 가장 가까운 식사로 둔다. */
 function guessSlot(now = new Date()): MealSlot {
@@ -45,7 +47,7 @@ export default function FoodSearchSheet() {
 
 function FoodSearchForm() {
   const { hide, recent, addRecent, date: targetDate, slot: targetSlot } = useFoodSearchStore();
-  const { colors, radius: r, spacing } = useTheme();
+  const { colors, radius: r } = useTheme();
   const insets = useSafeAreaInsets();
   // 식단 탭에서 지난 날짜를 보다가 열었으면 그 날에, 빠른 기록처럼 날짜 없이 열었으면 오늘에 넣는다.
   const date = targetDate ?? dateKey();
@@ -131,7 +133,7 @@ function FoodSearchForm() {
           styles.sheet,
           {
             backgroundColor: colors.surfaceSolid,
-            paddingHorizontal: spacing.screenX,
+            paddingHorizontal: SHEET_PAD,
             paddingBottom: insets.bottom + 16,
             borderTopLeftRadius: r.sheetTop,
             borderTopRightRadius: r.sheetTop,
@@ -140,142 +142,138 @@ function FoodSearchForm() {
       >
         <View style={[styles.grabber, { backgroundColor: colors.borderDivider }]} />
         <View style={styles.headerRow}>
-          <Text style={[styles.title, { color: colors.textPrimary }]}>{picked ? picked.name : '음식 추가'}</Text>
-          <Pressable onPress={hide} hitSlop={8} accessibilityRole="button" accessibilityLabel="닫기">
+          <Text style={[styles.title, { color: colors.textPrimary }]} numberOfLines={1}>
+            {picked ? picked.name : '음식 추가'}
+          </Text>
+          <Pressable onPress={hide} accessibilityRole="button" accessibilityLabel="닫기" style={styles.closeBtn}>
             <Icon name="close" size={20} color={colors.textSecondary} />
           </Pressable>
         </View>
 
         {picked ? (
           <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-            <Text style={[styles.meta, { color: colors.textSecondary }]}>
+            <Text style={[styles.pickedMeta, { color: colors.textSecondary }]}>
               {picked.amount} 기준 {picked.kcal}kcal{picked.note ? ` · ${picked.note}` : ''}
             </Text>
 
+            {/* 끼니는 늘 하나가 골라져 있어서 붙은 세그먼트(시안 15). */}
             <Text style={[styles.label, { color: colors.textSecondary }]}>끼니</Text>
-            <View style={styles.chipRow}>
-              {MEAL_SLOTS.map((s) => (
-                <SelectChip
-                  key={s.code}
-                  label={s.label}
-                  selected={slot === s.code}
-                  onPress={() => setSlot(s.code)}
-                  size="sm"
-                  fill
-                />
-              ))}
-            </View>
+            <SegmentedControl
+              options={MEAL_SLOTS.map((s) => ({ value: s.code, label: s.label }))}
+              value={slot}
+              onChange={setSlot}
+            />
 
             <Text style={[styles.label, { color: colors.textSecondary }]}>양</Text>
             <View style={styles.amountRow}>
               <TextField
-                size="sm"
                 value={amount}
                 onChangeText={(t) => setAmount(t.replace(/[^0-9.]/g, ''))}
                 keyboardType="decimal-pad"
+                accessibilityLabel={unit === 'serving' ? '양(인분)' : '양(g)'}
                 center
                 style={styles.amountInput}
               />
-              {/* 그램 정보가 없는 음식(1인분·1장)은 g로 바꿀 수 없다. */}
-              <SelectChip label="인분" selected={unit === 'serving'} onPress={() => switchUnit('serving')} size="sm" />
-              {grams != null && (
-                <SelectChip label="g" selected={unit === 'g'} onPress={() => switchUnit('g')} size="sm" />
+              {/* 숫자 칸과 높이(48)를 맞춘다. 그램 정보가 없는 음식(1인분·1장)은 g로 바꿀 수 없어 글씨만 둔다. */}
+              {grams != null ? (
+                <View style={styles.unitSeg}>
+                  <SegmentedControl
+                    options={[
+                      { value: 'serving' as MealUnit, label: '인분' },
+                      { value: 'g' as MealUnit, label: 'g' },
+                    ]}
+                    value={unit}
+                    onChange={switchUnit}
+                    height={48}
+                  />
+                </View>
+              ) : (
+                <Text style={[styles.unitText, { color: colors.textSecondary }]}>인분</Text>
               )}
               <Text style={[styles.kcalPreview, { color: colors.textPrimary }]}>{kcal > 0 ? `${kcal}kcal` : ''}</Text>
             </View>
 
             <PrimaryButton label="기록하기" onPress={save} inactive={!validQty} style={styles.saveBtn} />
-            <Pressable onPress={() => setPicked(null)} style={styles.backLink} hitSlop={8}>
+            <Pressable onPress={() => setPicked(null)} accessibilityRole="button" style={styles.backLink}>
               <Text style={[styles.backLabel, { color: colors.textSecondary }]}>다른 음식 고르기</Text>
             </Pressable>
           </ScrollView>
         ) : (
           <>
-            <View style={[styles.searchRow, { borderColor: colors.borderGlass, backgroundColor: colors.surface }]}>
-              <Icon name="search" size={16} color={colors.textSecondary} />
-              <TextInput
+            {/* 초성 예시는 뺐다. 초성 검색은 그대로 되고, 안내가 길면 칸이 설명서처럼 보인다(시안 14). */}
+            <View style={styles.searchWrap}>
+              <TextField
+                leftIcon="search"
+                clearable
                 value={query}
                 onChangeText={setQuery}
-                placeholder="음식 이름 또는 초성 (예: ㄱㅊ)"
-                placeholderTextColor={colors.textSecondary}
-                style={[styles.searchInput, { color: colors.textPrimary }]}
+                placeholder="음식 검색"
+                accessibilityLabel="음식 검색"
               />
-              {query.length > 0 && (
-                <Pressable onPress={() => setQuery('')} style={[styles.clearBtn, { backgroundColor: colors.fillMuted }]}>
-                  <Icon name="close" size={16} color={colors.textSecondary} />
-                </Pressable>
-              )}
             </View>
 
             {recent.length > 0 && (
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
                 style={styles.recentScroll}
                 contentContainerStyle={styles.recentRow}
               >
                 {recent.map((k) => (
-                  <Pressable
-                    key={k}
-                    onPress={() => pickRecent(k)}
-                    style={[styles.recentChip, { borderColor: colors.borderDivider, backgroundColor: colors.surfaceSubtle }]}
-                  >
-                    <Text style={[styles.recentText, { color: colors.textSecondary }]}>{k}</Text>
-                  </Pressable>
+                  <SelectChip key={k} label={k} selected={false} onPress={() => pickRecent(k)} />
                 ))}
               </ScrollView>
             )}
 
-            <ScrollView style={styles.results} keyboardShouldPersistTaps="handled">
+            <ScrollView style={styles.results} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
               {results.length === 0 && (
                 <Text style={[styles.empty, { color: colors.textSecondary }]}>검색 결과가 없어요.</Text>
               )}
-              {results.map(({ item: food, match }) => {
+              {results.map(({ item: food, match }, i) => {
                 const hit = findAllergyHit(food, avoid);
                 const caution = hit ? null : findCautionHit(food, conditions);
+                // 배지 대신 설명 줄 끝에 한 마디. 알레르기는 오류색 굵은 글씨, 질환 주의는 주의색(시안 14).
+                const flag = hit
+                  ? { text: `${labelOf(AVOID_TAGS, hit)} 포함`, color: colors.textDanger }
+                  : caution
+                    ? { text: `${labelOf(DISEASE_TAGS, caution)} 주의`, color: colors.textWarn }
+                    : null;
                 return (
-                  <View
+                  <Pressable
                     key={food.id}
-                    style={[
+                    onPress={() => pick(food)}
+                    accessibilityRole="button"
+                    accessibilityLabel={hit ? `${food.name}, ${flag?.text}, 제외` : `${food.name} ${food.kcal}kcal 추가`}
+                    style={({ pressed }) => [
                       styles.row,
-                      { borderColor: colors.borderDivider },
-                      hit && { backgroundColor: alpha(brand.peach, 0.14), opacity: 0.75 },
+                      i > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.borderDivider },
+                      { opacity: hit ? 0.6 : pressed ? 0.7 : 1 },
                     ]}
                   >
                     <View style={styles.rowText}>
-                      <View style={styles.nameRow}>
-                        <HighlightText text={food.name} match={match} style={[styles.name, { color: colors.textPrimary }]} />
-                        <Badge
-                          label={
-                            hit
-                              ? labelOf(AVOID_TAGS, hit)
-                              : caution
-                                ? `${labelOf(DISEASE_TAGS, caution)} 주의`
-                                : '가능'
-                          }
-                          tone={hit ? 'danger' : caution ? 'warn' : 'good'}
-                        />
-                      </View>
-                      <Text style={[styles.meta, { color: colors.textSecondary }]}>
+                      <HighlightText
+                        text={food.name}
+                        match={match}
+                        style={[styles.name, { color: colors.textPrimary }]}
+                        numberOfLines={1}
+                      />
+                      <Text style={[styles.meta, { color: colors.textSecondary }]} numberOfLines={2}>
                         {food.amount}
-                        {caution ? ` · ${cautionReason(caution)}` : food.note ? ` · ${food.note}` : ''}
+                        {caution ? ` · ${cautionReason(caution)}` : !hit && food.note ? ` · ${food.note}` : ''}
+                        {flag && (
+                          <>
+                            {' · '}
+                            <Text style={[styles.flag, { color: flag.color }]}>{flag.text}</Text>
+                          </>
+                        )}
                       </Text>
                     </View>
                     <Text style={[styles.kcal, { color: colors.textPrimary }]}>{food.kcal}</Text>
-                    <Pressable
-                      onPress={() => pick(food)}
-                      style={[
-                        styles.addBtn,
-                        hit
-                          ? { backgroundColor: colors.fillMuted }
-                          : { backgroundColor: selection.bg, borderColor: selection.border, borderWidth: 1 },
-                      ]}
-                    >
-                      <Text style={[styles.addLabel, { color: hit ? colors.textSecondary : colors.textPrimary }]}>
-                        {hit ? '제외' : '추가'}
-                      </Text>
-                    </Pressable>
-                  </View>
+                    <Text style={[styles.addLabel, { color: hit ? colors.textSecondary : colors.textAccent }]}>
+                      {hit ? '제외' : '추가'}
+                    </Text>
+                  </Pressable>
                 );
               })}
             </ScrollView>
@@ -315,52 +313,39 @@ const styles = StyleSheet.create({
     width: 36,
     height: 4,
     borderRadius: 2,
-    marginBottom: 14,
+    marginBottom: 10,
   },
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
-  },
-  title: typography.sheetTitle,
-  searchRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    height: 46,
-    borderRadius: 14,
-    borderWidth: 1,
-    paddingHorizontal: 12,
     gap: 8,
+    height: 44,
   },
-  searchInput: {
-    ...typography.input,
+  title: {
+    ...typography.sheetTitle,
     flex: 1,
   },
-  clearBtn: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+  closeBtn: {
+    width: 44,
+    height: 44,
+    marginRight: -12,
     alignItems: 'center',
     justifyContent: 'center',
   },
+  searchWrap: {
+    marginTop: 6,
+    marginBottom: 6,
+  },
   recentScroll: {
-    marginTop: 12,
+    marginTop: 6,
     flexGrow: 0,
   },
   recentRow: {
     gap: 8,
   },
-  recentChip: {
-    height: 30,
-    paddingHorizontal: 12,
-    borderRadius: radius.chip,
-    borderWidth: 1,
-    justifyContent: 'center',
-  },
-  recentText: typography.label,
   results: {
-    marginTop: 12,
+    marginTop: 6,
   },
   empty: {
     ...typography.body,
@@ -370,51 +355,61 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    paddingVertical: 12,
-    paddingHorizontal: 10,
-    borderRadius: 14,
-    borderBottomWidth: StyleSheet.hairlineWidth,
+    gap: 12,
+    minHeight: 60,
+    paddingVertical: 8,
   },
   rowText: {
     flex: 1,
-    gap: 3,
+    minWidth: 0,
   },
-  nameRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
+  name: {
+    fontSize: 15,
+    ...weight(600),
   },
-  name: typography.rowLabel,
-  meta: typography.caption,
-  kcal: typography.sectionTitle,
-  addBtn: {
-    height: 32,
-    paddingHorizontal: 14,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
+  meta: {
+    fontSize: 12,
+    marginTop: 3,
   },
-  addLabel: typography.value,
+  flag: weight(700),
+  kcal: {
+    fontSize: 15,
+    ...weight(700),
+  },
+  // 줄 전체가 누르는 영역이라 글씨만 둔다. 줄 높이 60이 44를 넘는다.
+  addLabel: {
+    fontSize: 14,
+    ...weight(600),
+  },
+  pickedMeta: {
+    fontSize: 13,
+    ...weight(400),
+    lineHeight: 13 * 1.5,
+    marginTop: -2,
+  },
   label: {
     ...typography.label,
-    marginTop: 16,
-    marginBottom: 8,
-  },
-  chipRow: {
-    flexDirection: 'row',
-    gap: 8,
+    marginTop: 14,
+    marginBottom: 6,
   },
   amountRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 10,
   },
   amountInput: {
     width: 80,
   },
+  unitSeg: {
+    width: 140,
+  },
+  unitText: {
+    fontSize: 15,
+    ...weight(600),
+  },
   kcalPreview: {
-    ...typography.value,
+    fontSize: 17,
+    ...weight(700),
     flex: 1,
     textAlign: 'right',
   },
@@ -423,7 +418,12 @@ const styles = StyleSheet.create({
   },
   backLink: {
     alignSelf: 'center',
-    paddingVertical: 12,
+    minHeight: 44,
+    justifyContent: 'center',
+    marginTop: 4,
   },
-  backLabel: typography.label,
+  backLabel: {
+    fontSize: 14,
+    ...weight(600),
+  },
 });
