@@ -18,13 +18,6 @@ import { FITTO_FACE } from '../../theme/assets';
 const WATER_INTERVALS = [1, 2, 3, 4];
 const MOVE_THRESHOLDS = [30, 45, 60, 90];
 
-// 갤러리에서 단계를 누르면 그 단계로 보일 수 있는 값 중 가운데 값을 골라 오늘 물 섭취량에 반영한다.
-// getWaterStageIndex(v, goal) = floor((v/goal)*5) 이므로 stage i의 범위는 [goal*i/5, goal*(i+1)/5).
-function targetWaterForStage(stage: number, goal: number): number {
-  const mid = (goal * (stage + 0.5)) / 5;
-  return Math.round(mid / 50) * 50;
-}
-
 export default function NotificationsScreen() {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
@@ -33,7 +26,6 @@ export default function NotificationsScreen() {
   const persona = useAppStore((s) => s.persona);
   const goal = useAppStore((s) => s.goals.water);
   const today = useAppStore((s) => s.dailyRecords[dateKey()]?.water ?? 0);
-  const addWater = useAppStore((s) => s.addWater);
 
   // 갤러리에서 마지막으로 눌러본 단계. 안 눌러봤으면 오늘 실제 단계를 보여준다.
   const [previewStage, setPreviewStage] = useState<number | null>(null);
@@ -45,11 +37,8 @@ export default function NotificationsScreen() {
   const activeStage = previewStage ?? Math.min(4, Math.floor((today / goal) * 5));
   const stageComment = personaCopy.waterStage[persona][activeStage];
 
-  const pickStage = (i: number) => {
-    const target = targetWaterForStage(i, goal);
-    addWater(dateKey(), target - today);
-    setPreviewStage(i);
-  };
+  // 표정만 미리 본다. 예전에는 오늘 물 기록을 그 단계에 맞게 바꿨는데, 미리보기를 누르다 실제 기록이 바뀌면 안 된다.
+  const pickStage = (i: number) => setPreviewStage(i);
 
   return (
     <ScreenBackground showTimeGradient={false}>
