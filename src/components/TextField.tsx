@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { TextInput, View, Text, Pressable, StyleSheet, StyleProp, TextStyle, TextInputProps } from 'react-native';
+import { TextInput, View, Text, Pressable, Platform, StyleSheet, StyleProp, TextStyle, TextInputProps } from 'react-native';
 import Icon from './Icon';
 import { useTheme } from '../theme/useTheme';
 import { radius, typography } from '../theme/tokens';
@@ -35,9 +35,8 @@ interface TextFieldProps extends Omit<TextInputProps, 'style' | 'placeholderText
 /**
  * 앱의 모든 텍스트 입력.
  *
- * 모양(시안 규칙 14 + 접근성 보완): **옅은 회색 면 + 아래쪽 선 하나.**
- * 시안은 테두리 없는 면만이었는데, 흰 카드 위에서 칸 경계가 1.1:1이라 어디까지가 칸인지 흐렸다.
- * 사방 테두리 대신 아래 선 하나(3.2:1)만 남겨 시안의 가벼운 인상은 두고 경계는 분명하게 했다.
+ * 모양(시안 규칙 14): **테두리 없는 옅은 회색 면.** 선은 입력할 때만 아래쪽에 나타난다.
+ * 가만히 있을 때는 선이 없고, 누르면 아래에 파란 선 2px, 오류면 오류색 선 2px + 칸 아래 문구.
  *
  * 상태: default → focus(아래 선 2px focusRing) → filled / error(아래 선 2px 오류색 + 칸 아래 문구·아이콘).
  * 오류는 입력하는 중에는 띄우지 않는다 — 호출부가 칸을 벗어날 때나 제출할 때 error를 넘긴다.
@@ -62,15 +61,9 @@ export default function TextField({
   const [focused, setFocused] = useState(false);
   const [revealed, setRevealed] = useState(false);
 
-  const lineColor = !editable
-    ? colors.borderDivider
-    : error
-      ? colors.textDanger
-      : focused
-        ? colors.focusRing
-        : colors.borderInput;
-  // 포커스·오류는 두께도 바꾼다. 색만 바뀌면 알아채기 어렵다.
-  const lineWidth = editable && (error || focused) ? 2 : 1;
+  // 선은 입력 중이거나 오류일 때만. 두께는 늘 2로 두고 색만 바꿔서, 선이 생길 때 글씨가 밀리지 않게 한다.
+  const showLine = editable && (!!error || focused);
+  const lineColor = !showLine ? 'transparent' : error ? colors.textDanger : colors.focusRing;
 
   const input = (
     <TextInput
@@ -96,11 +89,14 @@ export default function TextField({
           // 그라데이션 바탕(온보딩) 위에서는 회색 면이 묻혀서 반투명 흰 면을 쓴다.
           backgroundColor: !editable ? colors.surfaceMuted : onBackground ? colors.surface : colors.fillMuted,
           borderBottomColor: lineColor,
-          borderBottomWidth: lineWidth,
-          // 아래 선이 두꺼워질 때 글씨가 0.5px 올라가지 않게 위 여백으로 맞춘다.
-          paddingTop: lineWidth - 1,
+          borderBottomWidth: 2,
+          // 선이 보일 때만 아래 모서리를 편다. 둥근 채로 두면 선 끝이 휘어 보인다.
+          borderBottomLeftRadius: showLine ? 0 : radius.button,
+          borderBottomRightRadius: showLine ? 0 : radius.button,
           color: editable ? colors.textPrimary : colors.textDisabled,
         },
+        // 웹 브라우저가 입력칸에 그리는 기본 포커스 테두리(주황)를 끈다. 포커스는 위의 파란 선이 알린다.
+        Platform.OS === 'web' && ({ outlineStyle: 'none' } as unknown as TextStyle),
         (clearable || revealable) && styles.clearablePad,
         style,
       ]}
@@ -203,7 +199,7 @@ const styles = StyleSheet.create({
 
 /**
  * 높이는 UI 기준서 7-2 기준. 폼 입력 48, 좁은 자리 44. 예전 46·42는 44 미달이 있었다.
- * 아래 선이 있어서 위 모서리만 둥글린다. 아래까지 둥글리면 선 끝이 휘어 보인다.
+ * 아래 모서리는 선이 있을 때만 펴므로 위에서 따로 정한다.
  */
 const sizeStyles = {
   md: {

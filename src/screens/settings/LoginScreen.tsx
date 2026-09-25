@@ -117,6 +117,7 @@ export default function LoginScreen() {
 
   return (
     <AuthSheetLayout
+      heading="로그인"
       title={'다시 만나서\n반가워요'}
       subtitle="로그인하면 기록을 이어서 볼 수 있어요."
       onBack={navigation.canGoBack() ? () => navigation.goBack() : undefined}

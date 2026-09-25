@@ -134,6 +134,7 @@ export default function SignupScreen() {
 
   return (
     <AuthSheetLayout
+      heading="계정 만들기"
       title={'피또랑\n계속 기록해요'}
       subtitle="지금까지 기록한 내용은 계정으로 함께 옮겨져요."
       onBack={navigation.canGoBack() ? () => navigation.goBack() : undefined}
@@ -154,22 +155,19 @@ export default function SignupScreen() {
       />
 
       <Text style={[styles.label, { color: colors.textSecondary }]}>비밀번호</Text>
-      {/*
-        비밀번호 조건은 한 번만 말한다(시안 규칙 18). 시안은 칸 안 안내 글씨였는데, 치기 시작하면 사라지고
-        안내 글씨 색도 대비가 모자라서 칸 아래 도움말로 옮겼다.
-      */}
+      {/* 비밀번호 조건은 칸 안 안내 글씨로 한 번만 말한다(시안 규칙 18). 조건을 못 채우면 누를 때 칸 아래 오류로 다시 알린다. */}
       <TextField
         value={password}
         onChangeText={(v) => {
           setPassword(v);
           if (fieldErrors.password) setFieldErrors((prev) => ({ ...prev, password: undefined }));
         }}
+        placeholder="영문과 숫자를 섞어 8자 이상"
         autoCapitalize="none"
         secureTextEntry
         revealable
         maxLength={64}
         error={fieldErrors.password}
-        helper="영문과 숫자를 섞어 8자 이상"
       />
 
       <View style={styles.buttonWrap}>

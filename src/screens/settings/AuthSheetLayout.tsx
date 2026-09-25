@@ -31,13 +31,18 @@ const FITTO_W = 128;
 const FITTO_H = Math.round((FITTO_W * 731) / 578);
 
 interface AuthSheetLayoutProps {
+  /**
+   * 화면 이름("로그인", "계정 만들기"). 뒤로가기 옆에 둔다.
+   * 시안엔 없었는데, 큰 인사("다시 만나서 반가워요")만으로는 무슨 화면인지 한눈에 알기 어려웠다.
+   */
+  heading: string;
   title: string;
   subtitle: string;
   onBack?: () => void;
   children: React.ReactNode;
 }
 
-export default function AuthSheetLayout({ title, subtitle, onBack, children }: AuthSheetLayoutProps) {
+export default function AuthSheetLayout({ heading, title, subtitle, onBack, children }: AuthSheetLayoutProps) {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
 
@@ -57,16 +62,24 @@ export default function AuthSheetLayout({ title, subtitle, onBack, children }: A
         showsVerticalScrollIndicator={false}
       >
         <View style={{ height: insets.top + HEADER_BODY }}>
-          {onBack && (
-            <Pressable
-              onPress={onBack}
-              accessibilityRole="button"
-              accessibilityLabel="뒤로"
-              style={[styles.back, { top: insets.top + 8 }]}
-            >
-              <Icon name="chevronLeft" size={24} color={HEADER_TITLE} />
-            </Pressable>
-          )}
+          {/* 상세 화면과 같은 머리줄: 뒤로가기 화살표 + 화면 이름(시안 규칙 15). */}
+          <View style={[styles.headerRow, { top: insets.top + 8 }]}>
+            {onBack ? (
+              <Pressable
+                onPress={onBack}
+                accessibilityRole="button"
+                accessibilityLabel="뒤로"
+                style={styles.back}
+              >
+                <Icon name="chevronLeft" size={24} color={HEADER_TITLE} />
+              </Pressable>
+            ) : (
+              <View style={styles.backSpacer} />
+            )}
+            <Text style={[styles.heading, { color: HEADER_TITLE }]} accessibilityRole="header">
+              {heading}
+            </Text>
+          </View>
 
           <View style={[styles.hello, { top: insets.top + 84 }]}>
             <Text style={[styles.title, { color: HEADER_TITLE }]}>{title}</Text>
@@ -108,14 +121,25 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
   },
-  back: {
+  headerRow: {
     position: 'absolute',
     left: 6,
+    right: 16,
+    height: 44,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  back: {
     width: 44,
     height: 44,
     alignItems: 'center',
     justifyContent: 'center',
   },
+  // 뒤로가기가 없을 때(첫 화면)도 제목 자리는 같게 둔다.
+  backSpacer: {
+    width: 18,
+  },
+  heading: typography.subScreenTitle,
   hello: {
     position: 'absolute',
     left: 24,
