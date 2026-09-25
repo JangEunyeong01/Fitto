@@ -427,10 +427,12 @@ export const useAppStore = create<AppState>()(
       // 기록과 프로필 체중을 항상 같이 움직인다. 따로 두면 프로필엔 옛날 값이,
       // 추이 그래프엔 최신 값이 남아 같은 화면에서 숫자가 어긋난다.
       logWeight: (dateKey, kg) => {
-        set((s) => ({
-          weightLog: { ...s.weightLog, [dateKey]: kg },
-          profile: { ...s.profile, weight: kg },
-        }));
+        set((s) => {
+          const weightLog = { ...s.weightLog, [dateKey]: kg };
+          // 가장 최근 날짜일 때만 프로필 체중이 따라간다. 지운 옛 기록을 되살릴 때(실행 취소) 현재 체중이 과거 값으로 돌아가면 안 된다.
+          const latest = Object.keys(weightLog).sort().pop();
+          return { weightLog, profile: latest === dateKey ? { ...s.profile, weight: kg } : s.profile };
+        });
         // 가장 최근 기록이면 서버가 목표를 다시 계산해 돌려준다(명세 2-6). 그 값은 동기화할 때 받아 반영한다.
         enqueueSync({ kind: 'weight.put', date: dateKey });
       },

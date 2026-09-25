@@ -9,7 +9,7 @@ import Icon from '../../components/Icon';
 import DetailHeader from '../detail/DetailHeader';
 import WeightChart from './WeightChart';
 import { useTheme } from '../../theme/useTheme';
-import { semantic, typography } from '../../theme/tokens';
+import { typography, weight } from '../../theme/tokens';
 import { useAppStore } from '../../store/useAppStore';
 import { useToastStore } from '../../store/useToastStore';
 import { dateKey } from '../../utils/timeOfDay';
@@ -48,6 +48,12 @@ export default function WeightScreen() {
     showToast(alreadyToday ? '오늘 기록을 수정했어요' : '체중을 기록했어요');
   };
 
+  // 지우고 바로 되살릴 수 있게 토스트에 실행 취소를 단다(시안 규칙 24). 묻는 창보다 빠르다.
+  const remove = (date: string, kg: number) => {
+    removeWeight(date);
+    showToast(`${formatDate(date)} 기록을 지웠어요`, { label: '실행 취소', onPress: () => logWeight(date, kg) });
+  };
+
   return (
     <ScreenBackground showTimeGradient={false}>
       <ScrollView
@@ -70,7 +76,8 @@ export default function WeightScreen() {
               style={styles.input}
             />
             <Text style={[styles.unit, { color: colors.textSecondary }]}>kg</Text>
-            <PrimaryButton small label="기록" onPress={save} style={styles.saveBtn} />
+            {/* 이 화면에서 칠한 버튼은 이것 하나. 옆 입력칸과 높이(48)를 맞춘다(시안 11). */}
+            <PrimaryButton label="기록" onPress={save} style={styles.saveBtn} />
           </View>
           {alreadyToday && (
             <Text style={[styles.hint, { color: colors.textSecondary }]}>
@@ -83,33 +90,23 @@ export default function WeightScreen() {
           <>
             <GlassCard style={styles.card}>
               <View style={styles.summaryRow}>
-                <View style={styles.summaryCol}>
-                  <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>현재</Text>
-                  <Text style={[styles.bigNum, { color: colors.textPrimary }]}>
-                    {summary.latest.kg}
-                    <Text style={[styles.bigUnit, { color: colors.textSecondary }]}>kg</Text>
-                  </Text>
-                </View>
-
-                <View style={styles.summaryCol}>
-                  <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>직전 대비</Text>
-                  <Text style={[styles.midNum, { color: changeColor(summary, colors.textPrimary, colors.textSecondary) }]}>
-                    {summary.change == null
-                      ? '—'
-                      : `${summary.change > 0 ? '+' : ''}${summary.change}kg`}
-                  </Text>
-                </View>
-
-                <View style={styles.summaryCol}>
-                  <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>목표까지</Text>
-                  <Text style={[styles.midNum, { color: colors.textPrimary }]}>
-                    {summary.toTarget == null
-                      ? '—'
-                      : summary.reachedTarget
-                        ? '달성'
-                        : `${Math.abs(summary.toTarget)}kg`}
-                  </Text>
-                </View>
+                <Stat label="현재" value={`${summary.latest.kg}`} unit="kg" big colors={colors} />
+                <Stat
+                  label="직전 대비"
+                  value={summary.change == null ? '—' : `${summary.change > 0 ? '+' : ''}${summary.change}`}
+                  unit={summary.change == null ? '' : 'kg'}
+                  color={changeColor(summary, colors)}
+                  colors={colors}
+                />
+                <Stat
+                  label="목표까지"
+                  value={
+                    summary.toTarget == null ? '—' : summary.reachedTarget ? '달성' : `${Math.abs(summary.toTarget)}`
+                  }
+                  unit={summary.toTarget == null || summary.reachedTarget ? '' : 'kg'}
+                  color={summary.toTarget == null ? colors.textSecondary : colors.textPrimary}
+                  colors={colors}
+                />
               </View>
 
               {profile.targetWeight == null && (
@@ -130,11 +127,22 @@ export default function WeightScreen() {
               <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>기록 {points.length}개</Text>
               <View style={styles.list}>
                 {/* 최근 기록이 위로 오게 뒤집는다. */}
-                {[...points].reverse().map((p) => (
-                  <View key={p.date} style={styles.row}>
+                {[...points].reverse().map((p, i) => (
+                  <View
+                    key={p.date}
+                    style={[
+                      styles.row,
+                      i > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.borderDivider },
+                    ]}
+                  >
                     <Text style={[styles.rowDate, { color: colors.textSecondary }]}>{formatDate(p.date)}</Text>
                     <Text style={[styles.rowKg, { color: colors.textPrimary }]}>{p.kg}kg</Text>
-                    <Pressable onPress={() => removeWeight(p.date)} hitSlop={8}>
+                    <Pressable
+                      onPress={() => remove(p.date, p.kg)}
+                      accessibilityRole="button"
+                      accessibilityLabel={`${formatDate(p.date)} 기록 삭제`}
+                      style={styles.removeBtn}
+                    >
                       <Icon name="close" size={16} color={colors.textSecondary} />
                     </Pressable>
                   </View>
@@ -158,11 +166,38 @@ export default function WeightScreen() {
 /**
  * 증감 색. "줄었으니 좋다"로 칠하면 증량이 목표인 사람에게 반대로 읽힌다.
  * 목표가 있을 때만 목표 쪽으로 갔는지로 칠하고, 목표가 없으면 색을 쓰지 않는다.
+ * 글씨라서 면 색(semantic) 말고 대비를 맞춘 글씨 색을 쓴다.
  */
-function changeColor(summary: WeightSummary, txt: string, sub: string): string {
-  if (summary.change == null) return sub;
-  if (summary.movingToTarget == null) return txt;
-  return summary.movingToTarget ? semantic.good : semantic.warn;
+function changeColor(summary: WeightSummary, colors: any): string {
+  if (summary.change == null) return colors.textSecondary;
+  if (summary.movingToTarget == null) return colors.textPrimary;
+  return summary.movingToTarget ? colors.textGood : colors.textWarn;
+}
+
+function Stat({
+  label,
+  value,
+  unit,
+  big,
+  color,
+  colors,
+}: {
+  label: string;
+  value: string;
+  unit: string;
+  big?: boolean;
+  color?: string;
+  colors: any;
+}) {
+  return (
+    <View style={styles.summaryCol}>
+      <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>{label}</Text>
+      <View style={styles.statValueRow}>
+        <Text style={[big ? styles.bigNum : styles.midNum, { color: color ?? colors.textPrimary }]}>{value}</Text>
+        {!!unit && <Text style={[styles.statUnit, { color: colors.textSecondary }]}>{unit}</Text>}
+      </View>
+    </View>
+  );
 }
 
 // 2026-09-08 → 9월 8일
@@ -181,22 +216,28 @@ const styles = StyleSheet.create({
   card: {
     marginBottom: 12,
   },
-  cardTitle: typography.sectionTitle,
+  cardTitle: typography.cardTitle,
   inputRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    marginTop: 10,
+    marginTop: 12,
   },
   input: {
     flex: 1,
   },
-  unit: typography.rowLabel,
+  unit: {
+    fontSize: 14,
+    ...weight(600),
+  },
   saveBtn: {
     width: 72,
+    height: 48,
   },
   hint: {
-    ...typography.caption,
+    fontSize: 12,
+    ...weight(400),
+    lineHeight: 18,
     marginTop: 8,
   },
   summaryRow: {
@@ -206,27 +247,56 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: 4,
   },
-  summaryLabel: typography.label,
-  bigNum: typography.bigNumber,
-  bigUnit: typography.unit,
-  midNum: typography.midNumber,
+  summaryLabel: {
+    fontSize: 12,
+    ...weight(600),
+  },
+  statValueRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 2,
+  },
+  bigNum: {
+    fontSize: 28,
+    ...weight(700),
+  },
+  midNum: {
+    fontSize: 20,
+    ...weight(700),
+  },
+  statUnit: {
+    fontSize: 12,
+    ...weight(500),
+  },
   chartWrap: {
     marginTop: 12,
   },
+  // 마지막 줄 높이(44)가 아래 여백 몫을 해서 카드 바닥 여백을 10 줄인다(시안 11: 아래 8).
   list: {
-    marginTop: 10,
+    marginTop: 4,
+    marginBottom: -10,
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    paddingVertical: 11,
+    height: 44,
   },
   rowDate: {
-    ...typography.bodySm,
+    fontSize: 13,
     flex: 1,
   },
-  rowKg: typography.value,
+  rowKg: {
+    fontSize: 14,
+    ...weight(700),
+  },
+  removeBtn: {
+    width: 44,
+    height: 44,
+    marginRight: -14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   emptyTitle: typography.itemTitle,
   empty: {
     ...typography.bodySm,
