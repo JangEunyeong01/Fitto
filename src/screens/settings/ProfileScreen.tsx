@@ -11,10 +11,11 @@ import TagPicker from '../onboarding/TagPicker';
 import { useTheme } from '../../theme/useTheme';
 import { useAppStore } from '../../store/useAppStore';
 import { ACTIVITY_OPTIONS, AVOID_TAGS, DISEASE_TAGS, GENDERS, GOAL_OPTIONS } from '../../constants/codes';
-import { INPUT_LIMITS } from '../../utils/goals';
+import BirthDateFields, { type BirthDateValue } from '../../components/BirthDateFields';
+import { INPUT_LIMITS, birthYearLimits } from '../../utils/goals';
 import { typography } from '../../theme/tokens';
 
-type NumKey = 'age' | 'height' | 'weight' | 'targetWeight';
+type NumKey = 'height' | 'weight' | 'targetWeight';
 
 /** 태그 하나를 켜고 끈다. 목록(코드)과 직접 입력(문자열) 둘 다 같은 방식이라 한 군데로 모았다. */
 function toggle(list: string[], value: string): string[] {
@@ -23,7 +24,7 @@ function toggle(list: string[], value: string): string[] {
 
 // README 9. 프로필: 언제든 수정 가능한 필드들 — 저장 버튼 없이 값이 바뀌는 대로 스토어에 반영한다.
 // 숫자 입력만 blur 시점에 클램프해서 커밋한다(타이핑 중간값이 범위를 벗어나도 막지 않기 위해).
-// 성별·나이·키·체중·활동량·목표가 바뀌면 스토어가 목표 칼로리를 다시 계산한다(명세 F-040·F-041).
+// 성별·생년월일·키·체중·활동량·목표가 바뀌면 스토어가 목표 칼로리를 다시 계산한다(명세 F-040·F-041).
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
@@ -32,9 +33,11 @@ export default function ProfileScreen() {
   const setProfile = useAppStore((s) => s.setProfile);
 
   const [nickname, setNickname] = useState(profile.nickname);
-  const [birthMonth, setBirthMonth] = useState(profile.birthdayMonth ? String(profile.birthdayMonth) : '');
-  const [birthDay, setBirthDay] = useState(profile.birthdayDay ? String(profile.birthdayDay) : '');
-  const [age, setAge] = useState(profile.age ? String(profile.age) : '');
+  const [birth, setBirth] = useState<BirthDateValue>({
+    year: profile.birthYear ? String(profile.birthYear) : '',
+    month: profile.birthdayMonth ? String(profile.birthdayMonth) : '',
+    day: profile.birthdayDay ? String(profile.birthdayDay) : '',
+  });
   const [height, setHeight] = useState(profile.height ? String(profile.height) : '');
   const [weight, setWeight] = useState(profile.weight ? String(profile.weight) : '');
   const [targetWeight, setTargetWeight] = useState(profile.targetWeight ? String(profile.targetWeight) : '');
@@ -42,17 +45,21 @@ export default function ProfileScreen() {
   // 다른 화면(온보딩 다시 보기 등)에서 profile이 바뀌면 입력값도 같이 갱신한다.
   useEffect(() => setNickname(profile.nickname), [profile.nickname]);
 
-  const commitBirthMonth = () => {
-    const n = parseInt(birthMonth, 10);
-    const clamped = Number.isFinite(n) ? Math.min(12, Math.max(1, n)) : null;
-    setBirthMonth(clamped ? String(clamped) : '');
-    setProfile({ birthdayMonth: clamped });
-  };
-  const commitBirthDay = () => {
-    const n = parseInt(birthDay, 10);
-    const clamped = Number.isFinite(n) ? Math.min(31, Math.max(1, n)) : null;
-    setBirthDay(clamped ? String(clamped) : '');
-    setProfile({ birthdayDay: clamped });
+  // 세 칸을 한 번에 범위로 자르고 저장한다. 나이는 스토어가 생년월일로 다시 계산한다.
+  // 연도를 비우면 저장된 연도로 되돌린다 — 나이가 목표 계산에 쓰여서 비워둘 수 없다.
+  const commitBirth = () => {
+    const clampText = (text: string, min: number, max: number) => {
+      const n = parseInt(text, 10);
+      return Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : null;
+    };
+    const limits = birthYearLimits();
+    const year = clampText(birth.year, limits.min, limits.max) ?? profile.birthYear;
+    const month = clampText(birth.month, 1, 12);
+    const day = clampText(birth.day, 1, 31);
+    setBirth({ year: year ? String(year) : '', month: month ? String(month) : '', day: day ? String(day) : '' });
+    if (year !== profile.birthYear || month !== profile.birthdayMonth || day !== profile.birthdayDay) {
+      setProfile({ birthYear: year, birthdayMonth: month, birthdayDay: day });
+    }
   };
   // 비운 채로 나가면 원래 이름으로 되돌린다. 입력창도 같이 되돌려야 빈 칸으로 남지 않는다.
   const commitNickname = () => {
@@ -62,14 +69,9 @@ export default function ProfileScreen() {
   };
   // 온보딩과 같은 범위로 자른다(utils/goals의 INPUT_LIMITS). 목표 체중도 몸무게와 같은 범위를 쓴다.
   const commitNum = (text: string, setText: (t: string) => void, key: NumKey) => {
-    const limit = key === 'age' ? INPUT_LIMITS.age : key === 'height' ? INPUT_LIMITS.height : INPUT_LIMITS.weight;
+    const limit = key === 'height' ? INPUT_LIMITS.height : INPUT_LIMITS.weight;
     const n = parseInt(text, 10);
     const clamped = Number.isFinite(n) && n > 0 ? Math.min(limit.max, Math.max(limit.min, n)) : null;
-    // 나이는 온보딩 필수값이라 비우면 원래 값으로 되돌린다.
-    if (key === 'age' && clamped == null) {
-      setText(profile.age ? String(profile.age) : '');
-      return;
-    }
     setText(clamped ? String(clamped) : '');
     // 값이 그대로면 스토어를 건드리지 않는다. 포커스만 옮겨도 재계산이 돌지 않게.
     if (clamped !== profile[key]) setProfile({ [key]: clamped });
@@ -97,29 +99,18 @@ export default function ProfileScreen() {
             maxLength={20}
           />
 
-          <Text style={[styles.label, { color: colors.textSecondary, marginTop: 14 }]}>생일</Text>
-          <View style={styles.birthRow}>
-            <TextField
-              value={birthMonth}
-              onChangeText={(t) => setBirthMonth(t.replace(/[^0-9]/g, ''))}
-              onEndEditing={commitBirthMonth}
-              onBlur={commitBirthMonth}
-              placeholder="월"
-              keyboardType="numeric"
-              center
-              style={styles.birthInput}
-            />
-            <TextField
-              value={birthDay}
-              onChangeText={(t) => setBirthDay(t.replace(/[^0-9]/g, ''))}
-              onEndEditing={commitBirthDay}
-              onBlur={commitBirthDay}
-              placeholder="일"
-              keyboardType="numeric"
-              center
-              style={styles.birthInput}
-            />
-          </View>
+          <Text style={[styles.label, { color: colors.textSecondary, marginTop: 14 }]}>생년월일</Text>
+          <BirthDateFields value={birth} onChange={(p) => setBirth((b) => ({ ...b, ...p }))} onCommit={commitBirth} />
+          {/* 연도가 없는 건 연도가 생기기 전에 가입한 사람이다. 한 번 채우면 나이를 따로 고칠 일이 없다. */}
+          <Text
+            style={[styles.birthNote, { color: profile.birthYear ? colors.textSecondary : colors.textAccent }]}
+          >
+            {!profile.birthYear
+              ? '태어난 연도를 넣어 주세요. 나이를 알아서 계산해요'
+              : profile.birthdayMonth && profile.birthdayDay
+                ? `만 ${profile.age}세 · 생일 당일에는 피또가 축하해 드려요`
+                : `만 ${profile.age}세 · 월·일을 넣으면 생일에 피또가 축하해 드려요`}
+          </Text>
 
           <Text style={[styles.label, { color: colors.textSecondary, marginTop: 14 }]}>성별</Text>
           {/* 안 고른 상태가 있을 수 있어서 붙은 세그먼트 대신 떨어진 칩(시안 규칙 13). */}
@@ -138,11 +129,8 @@ export default function ProfileScreen() {
 
         <GlassCard style={styles.card}>
           <View style={styles.numRow}>
-            <NumField label="나이" value={age} onChangeText={setAge} onCommit={() => commitNum(age, setAge, 'age')} colors={colors} />
             <NumField label="키 (cm)" value={height} onChangeText={setHeight} onCommit={() => commitNum(height, setHeight, 'height')} colors={colors} />
             <NumField label="체중 (kg)" value={weight} onChangeText={setWeight} onCommit={() => commitNum(weight, setWeight, 'weight')} colors={colors} />
-          </View>
-          <View style={[styles.numRow, styles.numRowGap]}>
             <NumField
               label="목표 체중 (kg)"
               value={targetWeight}
@@ -150,9 +138,6 @@ export default function ProfileScreen() {
               onCommit={() => commitNum(targetWeight, setTargetWeight, 'targetWeight')}
               colors={colors}
             />
-            {/* 윗줄과 칸 너비를 맞추려고 빈 칸 두 개를 둔다. */}
-            <View style={styles.numCol} />
-            <View style={styles.numCol} />
           </View>
           <Text style={[styles.goalNote, { color: colors.textSecondary }]}>
             목표 칼로리 {kcalGoal.toLocaleString()}kcal · 성별·나이·키·체중·활동량·목표를 바꾸면 다시 계산돼요.
@@ -273,19 +258,13 @@ const styles = StyleSheet.create({
     ...typography.label,
     marginBottom: 8,
   },
-  birthRow: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  birthInput: {
-    flex: 1,
+  birthNote: {
+    ...typography.caption,
+    marginTop: 6,
   },
   numRow: {
     flexDirection: 'row',
     gap: 8,
-  },
-  numRowGap: {
-    marginTop: 12,
   },
   numCol: {
     flex: 1,

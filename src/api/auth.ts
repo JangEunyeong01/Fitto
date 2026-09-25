@@ -22,6 +22,9 @@ export interface SignupProfile {
   allergies: string[];
   customAllergies: string[];
   personality: string;
+  birthYear: number | null;
+  birthdayMonth: number | null;
+  birthdayDay: number | null;
 }
 
 export interface AuthResult extends AuthTokens {

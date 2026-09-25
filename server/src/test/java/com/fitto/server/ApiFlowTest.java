@@ -282,4 +282,28 @@ class ApiFlowTest {
 		assertEquals(2000, back.get("waterGoal").asInt());
 		assertTrue(!back.get("waterGoalCustom").asBoolean());
 	}
+
+	@Test
+	@Order(11)
+	void 생년월일은_연도까지_한_묶음으로_저장된다() throws Exception {
+		MvcResult result = mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+				.patch("/users/me")
+				.header("Authorization", "Bearer " + accessToken)
+				.contentType(MediaType.APPLICATION_JSON)
+				.content("{ \"birthday\": { \"year\": 1998, \"month\": 3, \"day\": 14 } }"))
+				.andReturn();
+
+		JsonNode birthday = body(result).get("birthday");
+		assertEquals(1998, birthday.get("year").asInt());
+		assertEquals(3, birthday.get("month").asInt());
+		assertEquals(14, birthday.get("day").asInt());
+
+		// 말이 안 되는 연도는 막는다.
+		assertEquals(400, mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+				.patch("/users/me")
+				.header("Authorization", "Bearer " + accessToken)
+				.contentType(MediaType.APPLICATION_JSON)
+				.content("{ \"birthday\": { \"year\": 1800, \"month\": 3, \"day\": 14 } }"))
+				.andReturn().getResponse().getStatus());
+	}
 }

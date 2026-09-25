@@ -519,7 +519,10 @@ fertileEnd    = ovulation
     "customPreferredFoods": [],
     "allergies": ["nuts"],
     "customAllergies": ["오이"],
-    "personality": "friendly"
+    "personality": "friendly",
+    "birthYear": 2000,
+    "birthdayMonth": 3,
+    "birthdayDay": 14
   },
   "startedAt": "2026-08-01T09:00:00Z"
 }
@@ -532,6 +535,8 @@ fertileEnd    = ovulation
 | profile.name | 필수, 1~20자 |
 | profile.gender, age, height, weight, activityLevel, goal, personality | 필수 |
 | profile.targetWeight | 선택, 25~250 |
+| profile.birthYear | 선택, 1900~2100. `age`는 앱이 생년월일로 계산해 함께 보낸다 |
+| profile.birthdayMonth, birthdayDay | 선택 |
 | custom* 배열 | 항목당 1~20자, 최대 10개 |
 | startedAt | 선택. 게스트로 앱을 처음 쓴 시각(피또 친근해지기 기준). 없으면 가입 시각 |
 
@@ -689,7 +694,7 @@ accessToken은 서버에 상태가 없어 만료까지 유효하다. 요청으�
   "height": 165.0,
   "weight": 55.0,
   "targetWeight": 52.0,
-  "birthday": { "month": 3, "day": 14 },
+  "birthday": { "year": 2000, "month": 3, "day": 14 },
   "activityLevel": "light",
   "goal": "lose_weight",
   "diseases": ["diabetes"],
@@ -717,7 +722,8 @@ accessToken은 서버에 상태가 없어 만료까지 유효하다. 요청으�
 | 필드 | 비고 |
 |------|------|
 | emailVerified | 읽기 전용. 이메일로 받은 코드를 맞혔는지(5-4). 가입 직후엔 false |
-| birthday | nullable. 연도는 받지 않는다(나이는 `age`로) |
+| birthday | nullable. 세 칸이 다 비면 null. 연도가 생기기 전에 가입한 사람은 `year`만 null일 수 있다. PATCH에서 보내면 세 칸을 통째로 갈아끼운다(`month: null`이면 월을 지운다) |
+| age | 앱이 생년월일로 계산한 만 나이. 목표 칼로리 계산은 계속 이 값을 쓴다 |
 | workoutPreference | 기본값 `normal` / `bodyweight` / `full` |
 | goals.targetCalorie | 읽기 전용. 서버 계산 |
 | goals.waterGoalCustom | 사용자가 물 목표를 직접 정했는지 |

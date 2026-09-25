@@ -34,7 +34,8 @@ public record UserResponse(
 		Instant createdAt,
 		Instant updatedAt) {
 
-	public record Birthday(int month, int day) {
+	/** 세 칸 다 비어 있으면 birthday 자체가 null. 예전 가입자는 year만 비어 있을 수 있다. */
+	public record Birthday(Integer year, Integer month, Integer day) {
 	}
 
 	public record WorkoutPreferenceResponse(String intensity, String equipment, String focus) {
@@ -44,8 +45,8 @@ public record UserResponse(
 	}
 
 	public static UserResponse from(User user) {
-		Birthday birthday = user.getBirthdayMonth() != null && user.getBirthdayDay() != null
-				? new Birthday(user.getBirthdayMonth(), user.getBirthdayDay())
+		Birthday birthday = user.getBirthYear() != null || user.getBirthdayMonth() != null || user.getBirthdayDay() != null
+				? new Birthday(user.getBirthYear(), user.getBirthdayMonth(), user.getBirthdayDay())
 				: null;
 
 		WorkoutPreference pref = user.getWorkoutPreference();

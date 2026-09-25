@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import TextField from '../../components/TextField';
 import SelectChip from '../../components/SelectChip';
+import BirthDateFields from '../../components/BirthDateFields';
 import { useTheme } from '../../theme/useTheme';
 import { typography } from '../../theme/tokens';
 import { GENDERS } from '../../constants/codes';
@@ -12,7 +13,7 @@ interface BasicInfoFormProps {
   onChange: (patch: Partial<ObInfo>) => void;
 }
 
-// README 2단계: 이름 / 성별 3분할 / 나이·키·몸무게 3열 숫자 입력.
+// 시안 28: 이름 / 성별 / 생년월일 / 키·몸무게 2열. 나이는 생년월일에서 계산한다.
 // 라벨은 네 항목 모두에 붙인다. 성별만 라벨이 없으면 한 줄 건너뛴 것처럼 보였다.
 export default function BasicInfoForm({ value, onChange }: BasicInfoFormProps) {
   const { colors } = useTheme();
@@ -46,16 +47,21 @@ export default function BasicInfoForm({ value, onChange }: BasicInfoFormProps) {
         </View>
       </Field>
 
+      <Field label="생년월일">
+        <BirthDateFields
+          onBackground
+          value={{ year: value.birthYear, month: value.birthMonth, day: value.birthDay }}
+          onChange={(p) =>
+            onChange({
+              ...(p.year != null && { birthYear: p.year }),
+              ...(p.month != null && { birthMonth: p.month }),
+              ...(p.day != null && { birthDay: p.day }),
+            })
+          }
+        />
+      </Field>
+
       <View style={styles.row}>
-        <Field label="나이" style={styles.col}>
-          <TextField
-            onBackground
-            value={value.age}
-            onChangeText={(t) => onChange({ age: t.replace(/[^0-9]/g, '') })}
-            keyboardType="numeric"
-            center
-          />
-        </Field>
         <Field label="키 (cm)" style={styles.col}>
           <TextField
             onBackground

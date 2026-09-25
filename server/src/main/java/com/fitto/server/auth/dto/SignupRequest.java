@@ -50,6 +50,7 @@ public record SignupRequest(
 			List<@Size(max = 30) String> allergies,
 			List<@Size(min = 1, max = 20) String> customAllergies,
 			@NotNull Personality personality,
+			@Min(1900) @Max(2100) Integer birthYear,
 			Integer birthdayMonth,
 			Integer birthdayDay) {
 	}

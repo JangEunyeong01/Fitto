@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { calculateGoals } from '../utils/goals';
+import { ageFromBirth, calculateGoals } from '../utils/goals';
 // 기록이 바뀌면 동기화 대기열에 알린다. 게스트면 아무 일도 일어나지 않는다(sync/enqueue.ts).
 import { enqueueSync } from '../sync/enqueue';
 import { isUuid, newId } from '../utils/id';
@@ -40,10 +40,15 @@ export const ESSENTIAL_CARDS: CardId[] = ['kcal', 'steps'];
 
 export interface Profile {
   nickname: string;
+  /** 생년월일. 연도는 나중에 생겨서 예전 사용자는 비어 있을 수 있다(그땐 age만 있다). */
+  birthYear: number | null;
   birthdayMonth: number | null;
   birthdayDay: number | null;
   gender: GenderCode | null;
-  /** 온보딩 필수값. 나이대별 건강 주의·생리 안내에 쓴다. */
+  /**
+   * 목표 계산·나이대별 건강 주의에 쓰는 만 나이. 직접 받지 않고 생년월일이 바뀔 때 계산해 넣는다.
+   * ponytail: 저장 시점 기준이라 생일이 지나도 다음 수정 전까지 한 살 어리게 남는다. 목표 칼로리로 5kcal 차이.
+   */
   age: number | null;
   height: number | null;
   weight: number | null;
@@ -152,7 +157,9 @@ export interface CustomIngredient {
 export interface ObInfo {
   name: string;
   gender: string;
-  age: string;
+  birthYear: string;
+  birthMonth: string;
+  birthDay: string;
   height: string;
   weight: string;
 }
@@ -302,6 +309,7 @@ function emptyRecord(): DailyRecord {
 const defaultProfile: Profile = {
   // 온보딩에서 이름을 받기 전까지 쓰는 기본 호칭.
   nickname: '피또 친구',
+  birthYear: null,
   birthdayMonth: null,
   birthdayDay: null,
   gender: null,
@@ -365,7 +373,7 @@ export const useAppStore = create<AppState>()(
       // 전역 상수를 그대로 상태에 넣으면 어딘가에서 배열을 직접 수정했을 때 기본값이 오염된다.
       cardOrder: [...DEFAULT_CARD_ORDER],
       cardHidden: [],
-      obInfo: { name: '', gender: '', age: '', height: '', weight: '' },
+      obInfo: { name: '', gender: '', birthYear: '', birthMonth: '', birthDay: '', height: '', weight: '' },
       obTags: emptyTags(),
       obPick: { activity: '', goal: '', persona: null },
       alarms: defaultAlarms,
@@ -389,8 +397,15 @@ export const useAppStore = create<AppState>()(
       // 계산에 쓰는 값이 바뀌면 목표 칼로리를 다시 잡는다(명세 F-040·F-041).
       // 모든 프로필 수정이 여기를 지나므로 화면마다 재계산을 부를 필요가 없다.
       // 물 목표는 물 상세에서 직접 바꾼 값을 덮어쓰지 않도록 건드리지 않는다.
-      setProfile: (patch) => {
+      setProfile: (input) => {
         set((s) => {
+          let patch = input;
+          // 생년월일을 고치면 나이도 같이 바뀐다. 연도가 없으면 예전에 받은 나이를 그대로 둔다.
+          if ('birthYear' in patch || 'birthdayMonth' in patch || 'birthdayDay' in patch) {
+            const next = { ...s.profile, ...patch };
+            const age = ageFromBirth(next.birthYear, next.birthdayMonth, next.birthdayDay);
+            if (age != null) patch = { ...patch, age };
+          }
           const profile = { ...s.profile, ...patch };
           const calcKeys: (keyof Profile)[] = ['gender', 'age', 'height', 'weight', 'activity', 'goalType'];
           if (!calcKeys.some((k) => k in patch)) return { profile };
@@ -511,9 +526,13 @@ export const useAppStore = create<AppState>()(
       // 온보딩 완료: 계산된 목표를 홈 목표치로, 입력값을 프로필로 옮긴다.
       completeOnboarding: () =>
         set((s) => {
+          const birthYear = s.obInfo.birthYear ? Number(s.obInfo.birthYear) : null;
+          const birthdayMonth = s.obInfo.birthMonth ? Number(s.obInfo.birthMonth) : null;
+          const birthdayDay = s.obInfo.birthDay ? Number(s.obInfo.birthDay) : null;
+          const age = ageFromBirth(birthYear, birthdayMonth, birthdayDay);
           const result = calculateGoals({
             gender: s.obInfo.gender,
-            age: s.obInfo.age,
+            age,
             height: s.obInfo.height,
             weight: s.obInfo.weight,
             activity: s.obPick.activity,
@@ -527,7 +546,11 @@ export const useAppStore = create<AppState>()(
               ...s.profile,
               nickname: s.obInfo.name.trim() || s.profile.nickname,
               gender: (s.obInfo.gender || null) as GenderCode | null,
-              age: s.obInfo.age ? Number(s.obInfo.age) : null,
+              birthYear,
+              birthdayMonth,
+              birthdayDay,
+              // 온보딩 다시 보기에서 연도를 비워둔 예전 사용자는 원래 나이를 지킨다.
+              age: age ?? s.profile.age,
               height: s.obInfo.height ? Number(s.obInfo.height) : null,
               weight: s.obInfo.weight ? Number(s.obInfo.weight) : null,
               activity: (s.obPick.activity || null) as ActivityCode | null,
@@ -550,7 +573,9 @@ export const useAppStore = create<AppState>()(
           obInfo: {
             name: s.profile.nickname,
             gender: s.profile.gender ?? '',
-            age: s.profile.age != null ? String(s.profile.age) : s.obInfo.age,
+            birthYear: s.profile.birthYear ? String(s.profile.birthYear) : '',
+            birthMonth: s.profile.birthdayMonth ? String(s.profile.birthdayMonth) : '',
+            birthDay: s.profile.birthdayDay ? String(s.profile.birthdayDay) : '',
             height: s.profile.height ? String(s.profile.height) : '',
             weight: s.profile.weight ? String(s.profile.weight) : '',
           },

@@ -38,6 +38,31 @@ export const INPUT_LIMITS = {
   weight: { min: 25, max: 250 },
 };
 
+/** 나이 범위를 태어난 연도로 옮긴 것. 올해 기준이라 해가 바뀌면 같이 움직인다. */
+export function birthYearLimits(now: Date = new Date()) {
+  const y = now.getFullYear();
+  return { min: y - INPUT_LIMITS.age.max, max: y - INPUT_LIMITS.age.min };
+}
+
+/**
+ * 만 나이. 월·일을 모르면 올해 생일이 지났다고 본다(한 살 차이는 목표 칼로리로 5kcal 남짓이다).
+ * 연도가 없으면 계산할 수 없어서 null.
+ */
+export function ageFromBirth(
+  year: number | null,
+  month: number | null,
+  day: number | null,
+  now: Date = new Date()
+): number | null {
+  if (!year) return null;
+  let age = now.getFullYear() - year;
+  if (month && day) {
+    const m = now.getMonth() + 1;
+    if (m < month || (m === month && now.getDate() < day)) age -= 1;
+  }
+  return age;
+}
+
 /** 물 상세(GoalField)와 같은 범위. 온보딩 계산 결과도 이 안으로 들어와야 한다. */
 export const WATER_GOAL_LIMITS = { min: 500, max: 4000 };
 /** 하루 목표 칼로리 상·하한. 하한 1200은 README 명시값. */

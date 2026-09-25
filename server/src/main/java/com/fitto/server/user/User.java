@@ -70,7 +70,12 @@ public class User {
 
 	private Double targetWeight;
 
-	/** 생일은 월·일만 받는다. 나이는 age로 따로 받으므로 연도가 필요 없다. */
+	/**
+	 * 생년월일. 연도는 나중에 추가해서 예전 가입자는 비어 있을 수 있다.
+	 * 나이(age)는 앱이 생년월일로 계산해 같이 보낸다 — 목표 계산은 지금처럼 age를 쓴다.
+	 */
+	private Integer birthYear;
+
 	private Integer birthdayMonth;
 
 	private Integer birthdayDay;
@@ -181,7 +186,7 @@ public class User {
 	/** 온보딩에서 받은 프로필을 한 번에 채운다. 목표 계산은 호출한 쪽에서 이어서 한다. */
 	public void applyProfile(String name, Gender gender, Integer age, Double height, Double weight,
 			Double targetWeight, ActivityLevel activityLevel, Goal goal, Personality personality,
-			Integer birthdayMonth, Integer birthdayDay) {
+			Integer birthYear, Integer birthdayMonth, Integer birthdayDay) {
 		this.name = name;
 		this.gender = gender;
 		this.age = age;
@@ -191,6 +196,7 @@ public class User {
 		this.activityLevel = activityLevel;
 		this.goal = goal;
 		this.personality = personality;
+		this.birthYear = birthYear;
 		this.birthdayMonth = birthdayMonth;
 		this.birthdayDay = birthdayDay;
 	}

@@ -156,7 +156,12 @@ export default function SettingsScreen() {
               <Text style={[styles.goalSummary, { color: colors.textSecondary }]} numberOfLines={1}>
                 {goalSummary || '목표를 설정해 주세요'}
               </Text>
-              {togetherDays != null && (
+              {/* 연도가 생기기 전에 가입한 사람에게 한 번 채워 달라고 알린다. 채우면 사라진다. */}
+              {!profile.birthYear ? (
+                <Text style={[styles.together, { color: colors.textAccent }]} numberOfLines={1}>
+                  태어난 연도를 넣어 주세요
+                </Text>
+              ) : togetherDays != null && (
                 <Text style={[styles.together, { color: colors.textSecondary }]} numberOfLines={1}>
                   피또와 함께한 지 {togetherDays.toLocaleString()}일째
                 </Text>

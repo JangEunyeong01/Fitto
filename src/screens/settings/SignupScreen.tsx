@@ -75,6 +75,9 @@ export default function SignupScreen() {
           allergies: profile.allergies,
           customAllergies: profile.customAllergies,
           personality: persona,
+          birthYear: profile.birthYear,
+          birthdayMonth: profile.birthdayMonth,
+          birthdayDay: profile.birthdayDay,
         },
         // 게스트로 쓴 기간을 이어받는다(F-008). 안 보내면 서버가 가입 시각을 시작일로 잡아
         // "피또와 함께한 지 N일"이 1일로 되돌아간다.

@@ -10,9 +10,9 @@ import TagPicker from './TagPicker';
 import BasicInfoForm from './BasicInfoForm';
 import CompleteStep from './CompleteStep';
 import { useTheme } from '../../theme/useTheme';
-import { useAppStore } from '../../store/useAppStore';
+import { useAppStore, type ObInfo } from '../../store/useAppStore';
 import { useToastStore } from '../../store/useToastStore';
-import { INPUT_LIMITS } from '../../utils/goals';
+import { INPUT_LIMITS, birthYearLimits } from '../../utils/goals';
 import { typography } from '../../theme/tokens';
 import { PERSONA_OPTIONS, STEP_LABELS, TOTAL_STEPS } from './onboardingData';
 import { ACTIVITY_OPTIONS, AVOID_TAGS, DISEASE_TAGS, GOAL_OPTIONS, TASTE_TAGS } from '../../constants/codes';
@@ -78,17 +78,20 @@ const COMMENT_MIN_ROOM = COMMENT_BLOCK_H + 16;
 const NUMBERED_STEPS = TOTAL_STEPS - 2;
 
 /** 범위를 벗어난 첫 항목의 안내 문구를 돌려준다. 다 정상이면 null. */
-function checkRange(info: { age: string; height: string; weight: string }): string | null {
+function checkRange(info: ObInfo): string | null {
+  // 라벨에 조사까지 붙여 둔다. "월는"처럼 받침에 안 맞는 조사가 붙지 않게.
   const checks: { value: string; limit: { min: number; max: number }; label: string; unit: string }[] = [
-    { value: info.age, limit: INPUT_LIMITS.age, label: '나이', unit: '세' },
-    { value: info.height, limit: INPUT_LIMITS.height, label: '키', unit: 'cm' },
-    { value: info.weight, limit: INPUT_LIMITS.weight, label: '몸무게', unit: 'kg' },
+    { value: info.birthYear, limit: birthYearLimits(), label: '태어난 연도는', unit: '년' },
+    { value: info.birthMonth, limit: { min: 1, max: 12 }, label: '월은', unit: '월' },
+    { value: info.birthDay, limit: { min: 1, max: 31 }, label: '일은', unit: '일' },
+    { value: info.height, limit: INPUT_LIMITS.height, label: '키는', unit: 'cm' },
+    { value: info.weight, limit: INPUT_LIMITS.weight, label: '몸무게는', unit: 'kg' },
   ];
   for (const c of checks) {
-    if (!c.value.trim()) continue; // 빈 값은 기본값으로 계산되므로 통과시킨다.
+    if (!c.value.trim()) continue; // 빈 값은 필수 검사가 따로 잡거나(연도·키·몸무게), 비워도 되는 칸이다(월·일).
     const n = parseFloat(c.value);
     if (!Number.isFinite(n) || n < c.limit.min || n > c.limit.max) {
-      return `${c.label}는 ${c.limit.min}~${c.limit.max}${c.unit} 사이로 입력해 주세요`;
+      return `${c.label} ${c.limit.min}~${c.limit.max}${c.unit} 사이로 입력해 주세요`;
     }
   }
   return null;
@@ -134,9 +137,10 @@ export default function OnboardingScreen() {
         showToast('성별을 선택해 주세요');
         return false;
       }
-      // 나이는 필수. 나이대별 건강 주의·생리 안내가 달라져서 기본값으로 채우면 안 된다.
-      if (!obInfo.age.trim() || !obInfo.height.trim() || !obInfo.weight.trim()) {
-        showToast('나이, 키, 몸무게를 입력해 주세요');
+      // 태어난 연도는 필수. 나이대별 건강 주의·생리 안내가 달라져서 기본값으로 채우면 안 된다.
+      // 월·일은 생일 축하에만 쓰여서 비워도 넘어간다.
+      if (!obInfo.birthYear.trim() || !obInfo.height.trim() || !obInfo.weight.trim()) {
+        showToast('태어난 연도, 키, 몸무게를 입력해 주세요');
         return false;
       }
       // 자릿수를 잘못 넣으면 목표 칼로리·물 목표가 엉뚱하게 잡히므로 여기서 막는다.
@@ -170,7 +174,7 @@ export default function OnboardingScreen() {
       return (
         !!obInfo.name.trim() &&
         !!obInfo.gender &&
-        !!obInfo.age.trim() &&
+        !!obInfo.birthYear.trim() &&
         !!obInfo.height.trim() &&
         !!obInfo.weight.trim() &&
         !checkRange(obInfo)

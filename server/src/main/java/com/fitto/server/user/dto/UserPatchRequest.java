@@ -41,7 +41,9 @@ public record UserPatchRequest(
 		Boolean periodEnabled,
 		@Valid Goals goals) {
 
-	public record Birthday(@Min(1) @Max(12) Integer month, @Min(1) @Max(31) Integer day) {
+	/** 연도는 나이 범위(10~100세)와 맞춰 앱이 자른다. 서버는 말이 안 되는 값만 막는다. */
+	public record Birthday(@Min(1900) @Max(2100) Integer year, @Min(1) @Max(12) Integer month,
+			@Min(1) @Max(31) Integer day) {
 	}
 
 	/**

@@ -3,7 +3,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import FittoCharacter from '../../components/FittoCharacter';
 import { useTheme } from '../../theme/useTheme';
 import { useAppStore } from '../../store/useAppStore';
-import { calculateGoals } from '../../utils/goals';
+import { ageFromBirth, calculateGoals } from '../../utils/goals';
 import { typography } from '../../theme/tokens';
 import {
   ACTIVITY_OPTIONS,
@@ -27,7 +27,11 @@ export default function CompleteStep() {
 
   const result = calculateGoals({
     gender: obInfo.gender,
-    age: obInfo.age,
+    age: ageFromBirth(
+      obInfo.birthYear ? Number(obInfo.birthYear) : null,
+      obInfo.birthMonth ? Number(obInfo.birthMonth) : null,
+      obInfo.birthDay ? Number(obInfo.birthDay) : null
+    ),
     height: obInfo.height,
     weight: obInfo.weight,
     activity: obPick.activity,
@@ -41,7 +45,7 @@ export default function CompleteStep() {
   // 기본값·잘린 값으로 계산됐을 때도 화면 숫자와 어긋나지 않는다.
   const body = [
     labelOf(GENDERS, obInfo.gender),
-    `${result.age}세`,
+    `만 ${result.age}세`,
     `${result.height}cm`,
     `${result.weight}kg`,
   ].filter(Boolean).join(' · ');

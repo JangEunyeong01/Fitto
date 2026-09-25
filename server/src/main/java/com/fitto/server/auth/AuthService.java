@@ -79,7 +79,7 @@ public class AuthService {
 
 		SignupRequest.Profile p = request.profile();
 		user.applyProfile(p.name(), p.gender(), p.age(), p.height(), p.weight(), p.targetWeight(),
-				p.activityLevel(), p.goal(), p.personality(), p.birthdayMonth(), p.birthdayDay());
+				p.activityLevel(), p.goal(), p.personality(), p.birthYear(), p.birthdayMonth(), p.birthdayDay());
 		user.replaceTagLists(p.diseases(), p.customDiseases(), p.preferredFoods(), p.customPreferredFoods(),
 				p.allergies(), p.customAllergies());
 
