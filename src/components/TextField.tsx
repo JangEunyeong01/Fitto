@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { TextInput, View, Text, Pressable, Platform, StyleSheet, StyleProp, TextStyle, TextInputProps } from 'react-native';
-import Icon from './Icon';
+import Icon, { type IconName } from './Icon';
 import { useTheme } from '../theme/useTheme';
 import { radius, typography } from '../theme/tokens';
 
@@ -29,6 +29,8 @@ interface TextFieldProps extends Omit<TextInputProps, 'style' | 'placeholderText
   error?: string | null;
   /** 칸 아래 도움말. 오류가 있으면 오류가 대신 보인다. */
   helper?: string;
+  /** 칸 안 왼쪽 아이콘. 검색 칸(돋보기)에만 쓴다(시안 13·14). */
+  leftIcon?: IconName;
   style?: StyleProp<TextStyle>;
 }
 
@@ -50,6 +52,7 @@ export default function TextField({
   revealable,
   error,
   helper,
+  leftIcon,
   style,
   onFocus,
   onBlur,
@@ -98,6 +101,7 @@ export default function TextField({
         // 웹 브라우저가 입력칸에 그리는 기본 포커스 테두리(주황)를 끈다. 포커스는 위의 파란 선이 알린다.
         Platform.OS === 'web' && ({ outlineStyle: 'none' } as unknown as TextStyle),
         (clearable || revealable) && styles.clearablePad,
+        leftIcon && styles.iconPad,
         style,
       ]}
       {...rest}
@@ -107,9 +111,16 @@ export default function TextField({
 
   const message = error ?? helper;
 
-  // 문구도 X도 없으면 감싸지 않는다. 한 줄에 여러 칸을 놓는 곳(키·몸무게, 탄단지)은
+  // 문구도 X도 아이콘도 없으면 감싸지 않는다. 한 줄에 여러 칸을 놓는 곳(키·몸무게, 탄단지)은
   // 호출부가 style={{ flex: 1 }}을 입력칸에 직접 주므로, View로 감싸면 폭이 무너진다.
-  if (!message && !clearable && !revealable) return input;
+  if (!message && !clearable && !revealable && !leftIcon) return input;
+
+  // 아이콘은 누르는 대상이 아니라 칸의 뜻을 알리는 표시라서 터치를 칸으로 흘려보낸다.
+  const iconOverlay = leftIcon ? (
+    <View style={styles.leftIcon} pointerEvents="none">
+      <Icon name={leftIcon} size={20} color={colors.textSecondary} />
+    </View>
+  ) : null;
 
   return (
     <View>
@@ -128,6 +139,7 @@ export default function TextField({
       ) : clearable ? (
         <View>
           {input}
+          {iconOverlay}
           {!!rest.value && editable && (
             <Pressable
               // 지우는 건 대개 다시 쓰려는 거라 포커스를 입력창으로 되돌린다.
@@ -144,7 +156,10 @@ export default function TextField({
           )}
         </View>
       ) : (
-        input
+        <View>
+          {input}
+          {iconOverlay}
+        </View>
       )}
 
       {!!message && (
@@ -176,6 +191,16 @@ const styles = StyleSheet.create({
   clearablePad: {
     paddingRight: 44,
   },
+  iconPad: {
+    paddingLeft: 44,
+  },
+  leftIcon: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: 14,
+    justifyContent: 'center',
+  },
   // X는 44×44 영역을 통째로 누를 수 있게 한다. 예전에는 아이콘 14px + 여유 8이었다.
   clearBtn: {
     position: 'absolute',
@@ -200,18 +225,23 @@ const styles = StyleSheet.create({
 /**
  * 높이는 UI 기준서 7-2 기준. 폼 입력 48, 좁은 자리 44. 예전 46·42는 44 미달이 있었다.
  * 아래 모서리는 선이 있을 때만 펴므로 위에서 따로 정한다.
+ *
+ * 좌우 여백은 paddingHorizontal로 묶지 않고 따로 적는다. 웹에서는 묶음 값이 나중에 준 paddingLeft·paddingRight를
+ * 이겨서, X·눈·돋보기 자리를 비워 둔 게 먹지 않고 글씨가 아이콘 밑으로 들어갔다.
  */
 const sizeStyles = {
   md: {
     height: 48,
     borderTopLeftRadius: radius.button,
     borderTopRightRadius: radius.button,
-    paddingHorizontal: 14,
+    paddingLeft: 14,
+    paddingRight: 14,
   },
   sm: {
     height: 44,
     borderTopLeftRadius: radius.button,
     borderTopRightRadius: radius.button,
-    paddingHorizontal: 12,
+    paddingLeft: 12,
+    paddingRight: 12,
   },
 } as const;
