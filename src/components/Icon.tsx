@@ -17,7 +17,8 @@ export type IconName =
   | 'arrowUp'
   | 'arrowDown'
   | 'eye'
-  | 'eyeOff';
+  | 'eyeOff'
+  | 'check';
 
 /**
  * 아이콘 크기는 세 단계만 쓴다(UI 기준서 8장). 예전에는 13~20까지 8종이 섞여 있었다.
@@ -191,5 +192,8 @@ function renderPaths(name: IconName, p: StrokeProps) {
           <Path d="M4.5 4.5 19.5 19.5" {...p} />
         </>
       );
+
+    case 'check':
+      return <Path d="m5.5 12.5 4.2 4.2 8.8-9.4" {...p} />;
   }
 }

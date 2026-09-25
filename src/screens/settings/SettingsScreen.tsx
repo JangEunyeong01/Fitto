@@ -1,13 +1,11 @@
-import React, { useState } from 'react';
-import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
+import React, { useRef, useState } from 'react';
+import { View, Text, Pressable, ScrollView, Modal, StyleSheet, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import { LinearGradient } from 'expo-linear-gradient';
 import PrimaryButton from '../../components/PrimaryButton';
 import ScreenBackground from '../../components/ScreenBackground';
 import GlassCard from '../../components/GlassCard';
 import ToggleSwitch from '../../components/ToggleSwitch';
-import Badge from '../../components/Badge';
 import Icon from '../../components/Icon';
 import SegmentedControl from '../../components/SegmentedControl';
 import { useTheme } from '../../theme/useTheme';
@@ -23,7 +21,7 @@ import { useAuthStore } from '../../store/useAuthStore';
 import { PERSONA_OPTIONS } from '../onboarding/onboardingData';
 import { GOAL_OPTIONS, labelOf } from '../../constants/codes';
 import { daysBetween, toDateKey } from '../../utils/periodCycle';
-import { typography } from '../../theme/tokens';
+import { typography, weight } from '../../theme/tokens';
 // 버전은 app.json 한 곳에서만 올린다. 화면에 따로 적어두면 배포 때 둘 중 하나를 꼭 까먹는다.
 import appConfig from '../../../app.json';
 
@@ -33,10 +31,17 @@ const THEME_OPTIONS: { value: ThemeMode; label: string }[] = [
   { value: 'system', label: '시스템' },
 ];
 
+/** 카드 안 줄의 좌우 여백. 구분선도 이만큼 들여 긋는다(시안 06). */
+const PAD = 18;
+const MENU_WIDTH = 196;
+const MENU_ITEM = 44;
+const MENU_HEIGHT = MENU_ITEM * THEME_OPTIONS.length + 12;
+
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<any>();
-  const { colors, mode, accentGradient } = useTheme();
+  const { colors } = useTheme();
+  const win = useWindowDimensions();
 
   const profile = useAppStore((s) => s.profile);
   const goals = useAppStore((s) => s.goals);
@@ -95,6 +100,25 @@ export default function SettingsScreen() {
   const showBirthdayModal = useBirthdayModalStore((s) => s.show);
   const startTutorial = useTutorialStore((s) => s.start);
 
+  /**
+   * 화면 모드는 줄 하나 + 작은 메뉴(시안 06-1). 세 칸 세그먼트를 늘 펼쳐두기엔 자주 바꾸는 값이 아니다.
+   * 메뉴는 누른 줄 바로 아래에 붙인다. 아래 자리가 모자라면 위로 띄운다.
+   */
+  const themeRowRef = useRef<View>(null);
+  const [menuPos, setMenuPos] = useState<{ top: number; right: number } | null>(null);
+  const openThemeMenu = () => {
+    themeRowRef.current?.measureInWindow((x, y, w, h) => {
+      const below = y + h - 6;
+      const top = below + MENU_HEIGHT > win.height - insets.bottom - 8 ? y - MENU_HEIGHT + 6 : below;
+      setMenuPos({ top, right: win.width - (x + w) + 12 });
+    });
+  };
+  const pickTheme = (value: ThemeMode) => {
+    setTheme(value);
+    setMenuPos(null);
+  };
+  const themeLabel = THEME_OPTIONS.find((o) => o.value === theme)?.label ?? '';
+
   // 명세 F-008: 시작일을 1일차로 센다. 시작일을 모르는 상태(초기화 직후)면 줄을 숨긴다.
   const togetherDays = startDate ? daysBetween(startDate, toDateKey(new Date())) + 1 : null;
 
@@ -113,29 +137,38 @@ export default function SettingsScreen() {
         <Text style={[styles.title, { color: colors.textPrimary }]}>설정</Text>
 
         {/* 내 정보와 계정은 "나"에 대한 것이라 한 장에 둔다. 계정 속내용은 화면을 따로 팠다. */}
-        <GlassCard style={styles.card}>
-          <Pressable onPress={() => navigation.navigate('Profile')} accessibilityRole="button">
-            <View style={styles.profileRow}>
-              <LinearGradient colors={accentGradient} style={styles.avatar} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} />
-              <View style={styles.profileText}>
-                <Text style={[styles.nickname, { color: colors.textPrimary }]}>{profile.nickname}</Text>
-                <Text style={[styles.goalSummary, { color: colors.textSecondary }]} numberOfLines={1}>
-                  {goalSummary || '목표를 설정해 주세요'}
-                </Text>
-                {togetherDays != null && (
-                  <Text style={[styles.together, { color: colors.textSecondary }]} numberOfLines={1}>
-                    피또와 함께한 지 {togetherDays.toLocaleString()}일째
-                  </Text>
-                )}
-              </View>
-              <Icon name="chevronRight" size={16} color={colors.textSecondary} />
+        <GlassCard style={styles.card} noPadding>
+          <Pressable
+            onPress={() => navigation.navigate('Profile')}
+            accessibilityRole="button"
+            style={({ pressed }) => [styles.profileRow, pressed && { backgroundColor: colors.fillMuted }]}
+          >
+            {/* 색 그라데이션 대신 회색 원에 이름 첫 글자(시안 06). 설정은 조용한 화면이다. */}
+            <View style={[styles.avatar, { backgroundColor: colors.fillMuted }]}>
+              <Text style={[styles.avatarText, { color: colors.textSecondary }]}>
+                {profile.nickname.trim().charAt(0)}
+              </Text>
             </View>
+            <View style={styles.profileText}>
+              <Text style={[styles.nickname, { color: colors.textPrimary }]} numberOfLines={1}>
+                {profile.nickname}
+              </Text>
+              <Text style={[styles.goalSummary, { color: colors.textSecondary }]} numberOfLines={1}>
+                {goalSummary || '목표를 설정해 주세요'}
+              </Text>
+              {togetherDays != null && (
+                <Text style={[styles.together, { color: colors.textSecondary }]} numberOfLines={1}>
+                  피또와 함께한 지 {togetherDays.toLocaleString()}일째
+                </Text>
+              )}
+            </View>
+            <Icon name="chevronRight" size={16} color={colors.textSecondary} />
           </Pressable>
 
           <Divider colors={colors} />
 
           {/* 못 올린 기록이 있으면 들어가 보기 전에 알려준다. 계정 화면에 들어가야 아는 건 늦다. */}
-          <NavRow
+          <Row
             label="계정"
             desc={
               authStatus === 'member'
@@ -144,13 +177,14 @@ export default function SettingsScreen() {
             }
             descTone={failedNotice ? 'danger' : 'normal'}
             onPress={() => navigation.navigate('Account')}
+            chevron
             colors={colors}
           />
         </GlassCard>
 
         <GlassCard style={styles.card}>
           <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>피또 성격</Text>
-          <View style={styles.gap10}>
+          <View style={styles.segmentWrap}>
             <SegmentedControl
               options={PERSONA_OPTIONS.map((p) => ({ value: p.key, label: p.label }))}
               value={persona}
@@ -158,93 +192,86 @@ export default function SettingsScreen() {
             />
           </View>
           <Text style={[styles.previewText, { color: colors.textSecondary }]}>{personaDesc}</Text>
-
-          <Divider colors={colors} />
-          <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>화면 모드</Text>
-          <View style={styles.gap10}>
-            <SegmentedControl options={THEME_OPTIONS} value={theme} onChange={setTheme} />
-          </View>
-
-          <Divider colors={colors} />
-          <NavRow label="홈 카드 순서" actionLabel="변경" onPress={showCardOrderSheet} colors={colors} />
-
-          <Divider colors={colors} />
-          {/* README: 글씨 크기 조절은 V2 예정 기능이라 지금은 눌러도 반응하지 않는 자리만 잡아둔다. */}
-          <View style={styles.row}>
-            <Text style={[styles.rowLabel, { color: colors.textPrimary }]}>글씨 크기 조절</Text>
-            <Badge label="준비 중" />
-          </View>
         </GlassCard>
 
-        <GlassCard style={styles.card}>
-          <ToggleRow label="생리 주기 기능" value={periodOn} onChange={setPeriodOn} colors={colors} />
+        {/* 글씨 크기 조절은 아직 없는 기능이라 줄을 숨겼다. 눌러도 반응 없는 줄은 고장처럼 보인다. */}
+        <GlassCard style={styles.card} noPadding>
+          <View ref={themeRowRef} collapsable={false}>
+            <Row
+              label="화면 모드"
+              value={themeLabel}
+              onPress={openThemeMenu}
+              chevron
+              colors={colors}
+              a11yHint="누르면 라이트·다크·시스템 중에서 고를 수 있어요"
+            />
+          </View>
+          <Divider colors={colors} />
+          <Row label="홈 카드 순서" value="변경" onPress={showCardOrderSheet} chevron colors={colors} />
+          <Divider colors={colors} />
+          <Row label="생리 주기 기능" colors={colors} right={<ToggleSwitch value={periodOn} onChange={setPeriodOn} />} />
           {/* 명세 F-044: 생리 기능이 켜져 있을 때만 주기 설정을 보여준다. */}
           {periodOn && (
             <>
               <Divider colors={colors} />
-              <NavRow label="생리 주기 설정" onPress={() => navigation.navigate('PeriodSettings')} colors={colors} />
+              <Row label="생리 주기 설정" onPress={() => navigation.navigate('PeriodSettings')} chevron colors={colors} />
             </>
           )}
           <Divider colors={colors} />
-          <NavRow label="알림" onPress={() => navigation.navigate('Notifications')} colors={colors} />
+          <Row label="알림" onPress={() => navigation.navigate('Notifications')} chevron colors={colors} />
           <Divider colors={colors} />
           {SCREEN_LOCK_SUPPORTED ? (
-            <ToggleRow
+            <Row
               label="화면 잠금"
               desc="앱을 열 때 지문·얼굴·폰 비밀번호로 확인해요"
-              value={screenLock}
-              onChange={toggleScreenLock}
               colors={colors}
+              right={<ToggleSwitch value={screenLock} onChange={toggleScreenLock} />}
             />
           ) : (
             // 웹 미리보기에는 생체 인증이 없다. 기능이 있다는 건 보여주고 토글만 막는다.
-            <View style={styles.row}>
-              <View style={styles.rowTextCol}>
-                <Text style={[styles.rowLabel, { color: colors.textPrimary }]}>화면 잠금</Text>
-                <Text style={[styles.rowDesc, { color: colors.textSecondary }]}>휴대폰 앱에서 켤 수 있어요</Text>
-              </View>
-              <Badge label="앱 전용" />
-            </View>
+            <Row label="화면 잠금" desc="휴대폰 앱에서 켤 수 있어요" value="앱 전용" colors={colors} />
           )}
         </GlassCard>
 
         {/* 매일 쓰는 게 아니라 "다시 보고 싶을 때" 찾는 것들. 아래로 모은다. */}
-        <GlassCard style={styles.card}>
-          <NavRow
+        <GlassCard style={styles.card} noPadding>
+          <Row
             label="튜토리얼 다시 보기"
-            actionLabel="실행"
+            value="실행"
             onPress={() => {
               // 튜토리얼은 홈 카드를 가리키므로 홈으로 보낸 뒤 띄운다.
               navigation.navigate('Home');
               startTutorial();
             }}
+            chevron
             colors={colors}
           />
           <Divider colors={colors} />
-          <NavRow label="온보딩 다시 보기" actionLabel="실행" onPress={resetOnboarding} colors={colors} />
+          <Row label="온보딩 다시 보기" value="실행" onPress={resetOnboarding} chevron colors={colors} />
           <Divider colors={colors} />
-          <View style={styles.row}>
-            <View style={styles.rowTextCol}>
-              <View style={styles.rowTitleLine}>
-                <Text style={[styles.rowLabel, { color: colors.textPrimary }]}>생일 축하 메시지</Text>
-                <Badge label="준비 중" />
-              </View>
-              <Text style={[styles.rowDesc, { color: colors.textSecondary }]}>생일 당일 홈에서 피또가 깜짝 축하해요</Text>
-            </View>
-            <PrimaryButton label="미리보기" variant="secondary" size="sm" onPress={showBirthdayModal} />
-          </View>
+          <Row
+            label="생일 축하 메시지"
+            tag="준비 중"
+            desc="생일 당일 홈에서 피또가 깜짝 축하해요"
+            colors={colors}
+            right={
+              // 박스 버튼 대신 강조색 글씨 버튼(시안 규칙 2). 줄 높이를 채워 누르는 영역 44를 넘긴다.
+              <Pressable
+                onPress={showBirthdayModal}
+                accessibilityRole="button"
+                style={({ pressed }) => [styles.textBtn, { opacity: pressed ? 0.6 : 1 }]}
+              >
+                <Text style={[styles.textBtnLabel, { color: colors.textAccent }]}>미리보기</Text>
+              </Pressable>
+            }
+          />
         </GlassCard>
 
-        <GlassCard style={styles.card}>
-          <View style={styles.row}>
-            <Text style={[styles.rowLabel, { color: colors.textPrimary }]}>앱 버전</Text>
-            <Text style={[styles.rowAction, { color: colors.textSecondary }]}>{appConfig.expo.version}</Text>
-          </View>
+        <GlassCard style={styles.card} noPadding>
+          <Row label="앱 버전" value={appConfig.expo.version} colors={colors} />
           <Divider colors={colors} />
           {resetStep === 0 ? (
-            <Pressable onPress={() => setResetStep(1)} style={styles.row}>
-              <Text style={[styles.rowLabel, { color: colors.textDanger }]}>데이터 초기화</Text>
-            </Pressable>
+            <Row label="데이터 초기화" danger onPress={() => setResetStep(1)} colors={colors} />
           ) : (
             <View style={styles.resetBox}>
               <Text style={[styles.rowLabel, { color: colors.textPrimary }]}>
@@ -276,80 +303,116 @@ export default function SettingsScreen() {
           )}
         </GlassCard>
       </ScrollView>
+
+      <Modal visible={menuPos != null} transparent animationType="fade" onRequestClose={() => setMenuPos(null)}>
+        {/* 바깥을 누르면 닫힌다. 흐림 없이 아주 옅게만 깔아 메뉴가 떠 있다는 것만 알린다. */}
+        <Pressable
+          style={styles.scrim}
+          onPress={() => setMenuPos(null)}
+          accessibilityRole="button"
+          accessibilityLabel="메뉴 닫기"
+        />
+        {menuPos && (
+          <View
+            accessibilityRole="menu"
+            style={[
+              styles.menu,
+              { top: menuPos.top, right: menuPos.right, backgroundColor: colors.surfaceSolid, borderColor: colors.borderDivider },
+            ]}
+          >
+            {THEME_OPTIONS.map((o) => {
+              const selected = o.value === theme;
+              return (
+                <Pressable
+                  key={o.value}
+                  onPress={() => pickTheme(o.value)}
+                  accessibilityRole="menuitem"
+                  accessibilityState={{ selected }}
+                  style={({ pressed }) => [styles.menuItem, pressed && { backgroundColor: colors.fillMuted }]}
+                >
+                  <Text style={[styles.menuLabel, { color: colors.textPrimary }, selected && styles.menuLabelOn]}>
+                    {o.label}
+                  </Text>
+                  {selected && <Icon name="check" size={16} color={colors.textPrimary} strokeWidth={2.2} />}
+                </Pressable>
+              );
+            })}
+          </View>
+        )}
+      </Modal>
     </ScreenBackground>
   );
 }
 
-function ToggleRow({
+/**
+ * 설정 한 줄. 오른쪽은 셋 중 하나: 값 글씨(+ ›), 스위치 같은 컨트롤(right), 아무것도 없음.
+ * onPress가 있으면 줄 전체가 버튼이다.
+ */
+function Row({
   label,
-  desc,
-  value,
-  onChange,
-  colors,
-}: {
-  label: string;
-  desc?: string;
-  value: boolean;
-  onChange: (v: boolean) => void;
-  colors: any;
-}) {
-  return (
-    <View style={styles.row}>
-      {desc ? (
-        <View style={styles.rowTextCol}>
-          <Text style={[styles.rowLabel, { color: colors.textPrimary }]}>{label}</Text>
-          <Text style={[styles.rowDesc, { color: colors.textSecondary }]}>{desc}</Text>
-        </View>
-      ) : (
-        <Text style={[styles.rowLabel, { color: colors.textPrimary }]}>{label}</Text>
-      )}
-      <ToggleSwitch value={value} onChange={onChange} />
-    </View>
-  );
-}
-
-function NavRow({
-  label,
+  tag,
   desc,
   descTone = 'normal',
-  actionLabel,
+  value,
+  chevron,
+  right,
+  danger,
   onPress,
+  a11yHint,
   colors,
 }: {
   label: string;
+  /** 라벨 옆 회색 한 마디. 배지 대신 쓴다(시안 규칙: 상태는 글씨로). */
+  tag?: string;
   /** 줄 아래 한 줄 더. 들어가 보기 전에 알아야 하는 값만 적는다. */
   desc?: string | null;
   descTone?: 'normal' | 'danger';
-  actionLabel?: string;
-  onPress: () => void;
+  value?: string;
+  chevron?: boolean;
+  right?: React.ReactNode;
+  danger?: boolean;
+  onPress?: () => void;
+  a11yHint?: string;
   colors: any;
 }) {
-  return (
-    <Pressable onPress={onPress} accessibilityRole="button" style={styles.row}>
-      {desc ? (
-        <View style={styles.rowTextCol}>
-          <Text style={[styles.rowLabel, { color: colors.textPrimary }]}>{label}</Text>
+  const body = (
+    <>
+      <View style={styles.rowTextCol}>
+        <View style={styles.rowTitleLine}>
+          <Text style={[styles.rowLabel, { color: danger ? colors.textDanger : colors.textPrimary }]}>{label}</Text>
+          {tag && <Text style={[styles.rowTag, { color: colors.textSecondary }]}>{tag}</Text>}
+        </View>
+        {desc ? (
           <Text
             style={[styles.rowDesc, { color: descTone === 'danger' ? colors.textDanger : colors.textSecondary }]}
             numberOfLines={1}
           >
             {desc}
           </Text>
-        </View>
-      ) : (
-        <Text style={[styles.rowLabel, { color: colors.textPrimary }]}>{label}</Text>
-      )}
-      {actionLabel ? (
-        <Text style={[styles.rowAction, { color: colors.textSecondary }]}>{actionLabel}</Text>
-      ) : (
-        <Icon name="chevronRight" size={16} color={colors.textSecondary} />
-      )}
+        ) : null}
+      </View>
+      {value != null && <Text style={[styles.rowValue, { color: colors.textSecondary }]}>{value}</Text>}
+      {right}
+      {chevron && <Icon name="chevronRight" size={16} color={colors.textSecondary} />}
+    </>
+  );
+
+  const rowStyle = [styles.row, desc ? styles.rowTall : null];
+  if (!onPress) return <View style={rowStyle}>{body}</View>;
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityHint={a11yHint}
+      style={({ pressed }) => [rowStyle, pressed && { backgroundColor: colors.fillMuted }]}
+    >
+      {body}
     </Pressable>
   );
 }
 
 function Divider({ colors }: { colors: any }) {
-  return <View style={[styles.divider, { borderTopColor: colors.borderDivider }]} />;
+  return <View style={[styles.divider, { backgroundColor: colors.borderDivider }]} />;
 }
 
 const styles = StyleSheet.create({
@@ -369,77 +432,126 @@ const styles = StyleSheet.create({
   profileRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 14,
+    paddingVertical: 16,
+    paddingHorizontal: PAD,
   },
   avatar: {
     width: 48,
     height: 48,
-    borderRadius: 16,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarText: {
+    fontSize: 18,
+    ...weight(700),
   },
   profileText: {
     flex: 1,
-    gap: 3,
+    gap: 2,
   },
-  nickname: typography.itemTitle,
+  nickname: {
+    fontSize: 18,
+    ...weight(700),
+    lineHeight: 18 * 1.35,
+  },
   goalSummary: typography.bodySm,
   together: typography.caption,
-  cardTitle: typography.sectionTitle,
-  gap10: {
-    marginTop: 10,
+  cardTitle: typography.cardTitle,
+  segmentWrap: {
+    marginTop: 12,
   },
   previewText: {
     ...typography.bodySm,
     marginTop: 10,
   },
-  syncText: {
-    ...typography.caption,
-    marginTop: 4,
-  },
-  failedBox: {
-    marginTop: 12,
-    borderWidth: 1,
-    borderRadius: 10,
-    padding: 12,
-    gap: 4,
-  },
-  failedTitle: typography.label,
-  failedRow: typography.caption,
-  failedButtons: {
-    flexDirection: 'row',
-    gap: 8,
-    marginTop: 8,
-  },
   flex: {
     flex: 1,
   },
   divider: {
-    borderTopWidth: StyleSheet.hairlineWidth,
-    marginVertical: 12,
+    height: StyleSheet.hairlineWidth,
+    marginLeft: PAD,
   },
   row: {
+    minHeight: 52,
+    paddingHorizontal: PAD,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     gap: 8,
   },
-  rowLabel: typography.rowLabel,
-  rowAction: typography.unit,
+  rowTall: {
+    minHeight: 64,
+    paddingVertical: 10,
+  },
+  rowLabel: {
+    fontSize: 15,
+    ...weight(600),
+  },
+  rowTag: typography.micro,
+  rowValue: {
+    fontSize: 14,
+    ...weight(400),
+  },
   rowTextCol: {
     flex: 1,
-    gap: 4,
+    gap: 3,
   },
   rowTitleLine: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 7,
+    gap: 6,
   },
   rowDesc: typography.caption,
+  textBtn: {
+    minHeight: 44,
+    paddingHorizontal: 4,
+    marginRight: -4,
+    justifyContent: 'center',
+  },
+  textBtnLabel: {
+    fontSize: 14,
+    ...weight(600),
+  },
   resetBox: {
     gap: 6,
+    padding: PAD,
   },
   resetBtns: {
     flexDirection: 'row',
     gap: 8,
     marginTop: 8,
   },
+  scrim: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(16,26,36,0.06)',
+  },
+  menu: {
+    position: 'absolute',
+    width: MENU_WIDTH,
+    paddingVertical: 6,
+    borderRadius: 14,
+    borderWidth: StyleSheet.hairlineWidth,
+    shadowColor: '#2C3E50',
+    shadowOpacity: 0.18,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 12 },
+    elevation: 8,
+  },
+  menuItem: {
+    height: MENU_ITEM,
+    paddingHorizontal: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  menuLabel: {
+    fontSize: 15,
+    ...weight(500),
+  },
+  menuLabelOn: weight(700),
 });
