@@ -251,7 +251,6 @@ export default function SettingsScreen() {
           <Divider colors={colors} />
           <Row
             label="생일 축하 메시지"
-            tag="준비 중"
             desc="생일 당일 홈에서 피또가 깜짝 축하해요"
             colors={colors}
             right={
@@ -350,7 +349,6 @@ export default function SettingsScreen() {
  */
 function Row({
   label,
-  tag,
   desc,
   descTone = 'normal',
   value,
@@ -362,8 +360,6 @@ function Row({
   colors,
 }: {
   label: string;
-  /** 라벨 옆 회색 한 마디. 배지 대신 쓴다(시안 규칙: 상태는 글씨로). */
-  tag?: string;
   /** 줄 아래 한 줄 더. 들어가 보기 전에 알아야 하는 값만 적는다. */
   desc?: string | null;
   descTone?: 'normal' | 'danger';
@@ -378,10 +374,7 @@ function Row({
   const body = (
     <>
       <View style={styles.rowTextCol}>
-        <View style={styles.rowTitleLine}>
-          <Text style={[styles.rowLabel, { color: danger ? colors.textDanger : colors.textPrimary }]}>{label}</Text>
-          {tag && <Text style={[styles.rowTag, { color: colors.textSecondary }]}>{tag}</Text>}
-        </View>
+        <Text style={[styles.rowLabel, { color: danger ? colors.textDanger : colors.textPrimary }]}>{label}</Text>
         {desc ? (
           <Text
             style={[styles.rowDesc, { color: descTone === 'danger' ? colors.textDanger : colors.textSecondary }]}
@@ -488,7 +481,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
     ...weight(600),
   },
-  rowTag: typography.micro,
   rowValue: {
     fontSize: 14,
     ...weight(400),
@@ -496,11 +488,6 @@ const styles = StyleSheet.create({
   rowTextCol: {
     flex: 1,
     gap: 3,
-  },
-  rowTitleLine: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
   },
   rowDesc: typography.caption,
   textBtn: {
