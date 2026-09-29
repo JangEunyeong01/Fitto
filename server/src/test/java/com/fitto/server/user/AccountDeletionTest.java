@@ -146,13 +146,28 @@ class AccountDeletionTest {
 		MvcResult result = mvc.perform(delete("/users/me")
 				.header("Authorization", "Bearer " + accessToken)
 				.contentType(MediaType.APPLICATION_JSON)
-				.content("{ \"password\": \"wrong1234\" }"))
+				.content("{ \"password\": \"wrong1234\", \"reason\": \"tedious\" }"))
 				.andReturn();
 
 		assertEquals(401, result.getResponse().getStatus());
 		assertEquals("INVALID_CREDENTIALS", body(result).get("code").asString());
 		assertTrue(rowsOf("users") > 0);
 		assertTrue(rowsOf("meal_items") > 0);
+		// 탈퇴가 안 됐으면 사유도 안 남는다.
+		assertEquals(0, jdbc.queryForObject("select count(*) from deletion_reasons", Integer.class));
+	}
+
+	@Test
+	@Order(2)
+	void 정해진_사유가_아니면_400이다() throws Exception {
+		MvcResult result = mvc.perform(delete("/users/me")
+				.header("Authorization", "Bearer " + accessToken)
+				.contentType(MediaType.APPLICATION_JSON)
+				.content("{ \"password\": \"fitto1234\", \"reason\": \"010-1234-5678로 연락 주세요\" }"))
+				.andReturn();
+
+		assertEquals(400, result.getResponse().getStatus());
+		assertTrue(rowsOf("users") > 0);
 	}
 
 	@Test
@@ -201,10 +216,13 @@ class AccountDeletionTest {
 		MvcResult result = mvc.perform(delete("/users/me")
 				.header("Authorization", "Bearer " + accessToken)
 				.contentType(MediaType.APPLICATION_JSON)
-				.content("{ \"password\": \"fitto5678\" }"))
+				.content("{ \"password\": \"fitto5678\", \"reason\": \"too_many_notifications\" }"))
 				.andReturn();
 
 		assertEquals(204, result.getResponse().getStatus());
+
+		// 사유는 남되 누구의 것인지는 없다. 표에 user_id 칸이 없으니 아래 검사에도 안 걸린다.
+		assertEquals("TOO_MANY_NOTIFICATIONS", jdbc.queryForObject("select reason from deletion_reasons", String.class));
 
 		for (String table : userTables()) {
 			assertEquals(0, rowsOf(table), table + "에 탈퇴한 사용자의 기록이 남았다");
