@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import ScreenBackground from '../../components/ScreenBackground';
 import GlassCard from '../../components/GlassCard';
+import { FittoLoading } from '../../components/FittoLoader';
 import Icon from '../../components/Icon';
 import DateNavigator from '../../components/DateNavigator';
 import QuickWorkoutRow from '../../components/QuickWorkoutRow';
@@ -139,10 +140,12 @@ export default function HealthScreen() {
               </Text>
             )}
           </View>
-          {exercises.length === 0 ? (
+          {exercises.length === 0 && loading ? (
             // 서버에서 받아오는 중이면 "없다"고 단정하지 않는다.
+            <FittoLoading text="기록을 불러오는 중이에요" size={56} />
+          ) : exercises.length === 0 ? (
             <Text style={[styles.empty, { color: colors.textSecondary }]}>
-              {loading ? '기록을 불러오는 중이에요.' : isToday ? '오늘 운동 기록이 없어요.' : '이날은 운동 기록이 없어요.'}
+              {isToday ? '오늘 운동 기록이 없어요.' : '이날은 운동 기록이 없어요.'}
             </Text>
           ) : (
             <View style={styles.recordList}>

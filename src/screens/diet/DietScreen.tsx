@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import ScreenBackground from '../../components/ScreenBackground';
 import GlassCard from '../../components/GlassCard';
+import { FittoLoading } from '../../components/FittoLoader';
 import ProgressBar from '../../components/ProgressBar';
 import Icon from '../../components/Icon';
 import FittoCharacter from '../../components/FittoCharacter';
@@ -72,20 +73,23 @@ export default function DietScreen() {
 
         {isEmpty ? (
           <GlassCard style={styles.card}>
-            <View style={styles.emptyInner}>
-              <View style={styles.emptyChar}>
-                <FittoCharacter current={1} goal={5} size={96} glow={false} />
-              </View>
-              {/* 명세 F-051 빈 상태 문구. 서버에서 받아오는 중이면 "없다"고 단정하지 않는다. */}
-              <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>
-                {loading ? '기록을 불러오는 중이에요' : isToday ? '오늘 뭐 드셨나요?' : '이날 뭐 드셨나요?'}
-              </Text>
-              {!loading && (
+            {/* 서버에서 받아오는 중이면 "없다"고 단정하지 않는다. */}
+            {loading ? (
+              <FittoLoading text="기록을 불러오는 중이에요" size={96} />
+            ) : (
+              <View style={styles.emptyInner}>
+                <View style={styles.emptyChar}>
+                  <FittoCharacter current={1} goal={5} size={96} glow={false} />
+                </View>
+                {/* 명세 F-051 빈 상태 문구. */}
+                <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>
+                  {isToday ? '오늘 뭐 드셨나요?' : '이날 뭐 드셨나요?'}
+                </Text>
                 <Text style={[styles.emptyDesc, { color: colors.textSecondary }]}>
                   먹은 음식을 한 개만 추가해도 피또가 상태를 알려줄 수 있어요.
                 </Text>
-              )}
-            </View>
+              </View>
+            )}
           </GlassCard>
         ) : (
           // 명세 F-021: 총 섭취 칼로리와 목표 대비 진행 바.

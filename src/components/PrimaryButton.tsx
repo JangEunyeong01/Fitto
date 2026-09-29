@@ -1,5 +1,6 @@
 import React from 'react';
-import { Pressable, Text, StyleSheet, StyleProp, ViewStyle, ActivityIndicator, View } from 'react-native';
+import { Pressable, Text, StyleSheet, StyleProp, ViewStyle, View } from 'react-native';
+import { LoadingDrops } from './FittoLoader';
 import { useTheme } from '../theme/useTheme';
 import { brand, typography } from '../theme/tokens';
 
@@ -36,7 +37,7 @@ interface PrimaryButtonProps {
    * 누르면 호출부가 무엇이 빠졌는지 알려준다. 막아버리면 왜 못 넘어가는지 알려줄 방법이 없다.
    */
   inactive?: boolean;
-  /** 진행 중. 글씨 자리에 스피너를 두고 너비는 그대로 둔다. 눌리지 않는다. */
+  /** 진행 중. 글씨 자리에 물방울 셋을 두고 너비는 그대로 둔다. 눌리지 않는다. */
   loading?: boolean;
   accessibilityLabel?: string;
 }
@@ -81,8 +82,11 @@ export default function PrimaryButton({
             : colors.textPrimary;
 
   const labelStyle = resolvedSize === 'lg' ? typography.buttonLabel : typography.buttonLabelSm;
+  // 로딩 물방울은 글씨색을 따르지 않는다(탈퇴 버튼에서 빨간 원이 돌던 문제). 칠한 면 위만 면에 맞춘 색.
+  const dropColor =
+    variant === 'primary' ? colors.textOnPrimary : variant === 'danger' ? '#FFFFFF' : colors.textAccent;
   const content = loading ? (
-    <ActivityIndicator color={labelColor} />
+    <LoadingDrops color={dropColor} />
   ) : (
     <Text style={[labelStyle, { color: labelColor }]} numberOfLines={1}>
       {label}
