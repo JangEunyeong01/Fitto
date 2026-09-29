@@ -70,7 +70,8 @@ class AccountDeletionTest {
 						    "diseases": ["diabetes"], "customDiseases": ["직접입력질환"],
 						    "preferredFoods": ["chicken"], "customPreferredFoods": ["직접입력음식"],
 						    "allergies": ["nuts"], "customAllergies": ["직접입력알레르기"]
-						  }
+						  },
+						  "agreements": { "terms": true, "privacy": true, "health": true, "version": "2026-10-01" }
 						}
 						"""))
 				.andReturn();
@@ -80,6 +81,13 @@ class AccountDeletionTest {
 		accessToken = json.get("accessToken").asString();
 		refreshToken = json.get("refreshToken").asString();
 		userId = UUID.fromString(json.get("user").get("userId").asString());
+
+		// 약관 동의는 서버 시각과 버전으로 남는다.
+		var agreed = jdbc.queryForMap(
+				"select terms_agreed_at, privacy_agreed_at, health_agreed_at, terms_version from users where id = ?",
+				userId);
+		assertTrue(agreed.get("terms_agreed_at") != null && agreed.get("health_agreed_at") != null);
+		assertEquals("2026-10-01", agreed.get("terms_version"));
 
 		// 한 번에 모든 표를 채운다. 개별 API로 하나씩 넣으면 표가 늘 때 여기에 추가하는 걸 또 잊는다.
 		MvcResult imported = mvc.perform(post("/me/import")
@@ -222,7 +230,8 @@ class AccountDeletionTest {
 						{
 						  "email": "bye@fitto.app", "password": "fitto1234",
 						  "profile": { "name": "다시", "gender": "female", "age": 30, "height": 160.0,
-						    "weight": 52.0, "activityLevel": "light", "goal": "maintain", "personality": "friendly" }
+						    "weight": 52.0, "activityLevel": "light", "goal": "maintain", "personality": "friendly" },
+						  "agreements": { "terms": true, "privacy": true, "health": true, "version": "2026-10-01" }
 						}
 						"""))
 				.andReturn();

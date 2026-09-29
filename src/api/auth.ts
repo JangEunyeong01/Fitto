@@ -52,6 +52,8 @@ export function signup(params: {
   profile: SignupProfile;
   /** 게스트로 앱을 처음 쓴 시각. 가입했다고 "함께한 지 1일"로 돌아가지 않게 넘긴다(F-008). */
   startedAt?: string;
+  /** 필수 약관 셋과 동의한 약관 버전. 하나라도 false면 서버가 400을 준다. */
+  agreements: { terms: boolean; privacy: boolean; health: boolean; version: string };
 }): Promise<AuthResult> {
   return awake(() => request<AuthResult>('/auth/signup', { method: 'POST', body: params }));
 }

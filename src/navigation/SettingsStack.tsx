@@ -12,6 +12,9 @@ import PasswordChangeScreen from '../screens/settings/PasswordChangeScreen';
 import DeleteAccountScreen from '../screens/settings/DeleteAccountScreen';
 import ForgotPasswordScreen from '../screens/settings/ForgotPasswordScreen';
 import EmailVerifyScreen from '../screens/settings/EmailVerifyScreen';
+import TermsListScreen from '../screens/settings/TermsListScreen';
+import TermsScreen from '../screens/settings/TermsScreen';
+import type { TermsId } from '../data/terms';
 
 export type SettingsStackParamList = {
   SettingsMain: undefined;
@@ -25,6 +28,8 @@ export type SettingsStackParamList = {
   DeleteAccount: undefined;
   ForgotPassword: { email?: string } | undefined;
   EmailVerify: undefined;
+  TermsList: undefined;
+  Terms: { id: TermsId };
 };
 
 const Stack = createNativeStackNavigator<SettingsStackParamList>();
@@ -44,6 +49,8 @@ export default function SettingsStack() {
       <Stack.Screen name="DeleteAccount" component={DeleteAccountScreen} />
       <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
       <Stack.Screen name="EmailVerify" component={EmailVerifyScreen} />
+      <Stack.Screen name="TermsList" component={TermsListScreen} />
+      <Stack.Screen name="Terms" component={TermsScreen} />
     </Stack.Navigator>
   );
 }

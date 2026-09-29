@@ -275,6 +275,8 @@ export default function SettingsScreen() {
         <GlassCard style={styles.card} noPadding>
           <SettingsRow label="앱 버전" value={appConfig.expo.version} />
           <RowDivider />
+          <SettingsRow label="약관 및 정책" onPress={() => navigation.navigate('TermsList')} chevron />
+          <RowDivider />
           {resetStep === 0 ? (
             <SettingsRow label="데이터 초기화" danger onPress={() => setResetStep(1)} />
           ) : (

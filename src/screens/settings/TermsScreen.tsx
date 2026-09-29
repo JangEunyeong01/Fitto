@@ -1,0 +1,65 @@
+import React from 'react';
+import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useRoute } from '@react-navigation/native';
+import ScreenBackground from '../../components/ScreenBackground';
+import DetailHeader from '../detail/DetailHeader';
+import { useTheme } from '../../theme/useTheme';
+import { typography, weight } from '../../theme/tokens';
+import { findTerms, TermsId } from '../../data/terms';
+
+/** 약관 본문(시안 39). 카드 없이 조 제목과 문단만 쌓는다. 가입 시트의 "보기"와 설정의 약관 목록이 같이 쓴다. */
+export default function TermsScreen() {
+  const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
+  const { id } = useRoute().params as { id: TermsId };
+  const doc = findTerms(id);
+
+  return (
+    <ScreenBackground showTimeGradient={false}>
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={[styles.content, { paddingTop: insets.top + 14, paddingBottom: insets.bottom + 40 }]}
+        showsVerticalScrollIndicator={false}
+      >
+        <DetailHeader title={doc.title} />
+        <View style={styles.body}>
+          <Text style={[styles.effective, { color: colors.textSecondary }]}>시행일 {doc.effective}</Text>
+          {doc.sections.map((s, i) => (
+            <View key={s.heading} style={{ marginTop: i === 0 ? 20 : 28 }}>
+              <Text style={[styles.heading, { color: colors.textPrimary }]} accessibilityRole="header">
+                {s.heading}
+              </Text>
+              <Text style={[styles.paragraph, { color: colors.textPrimary }]}>{s.body}</Text>
+            </View>
+          ))}
+        </View>
+      </ScrollView>
+    </ScreenBackground>
+  );
+}
+
+const styles = StyleSheet.create({
+  scroll: {
+    flex: 1,
+  },
+  content: {
+    paddingHorizontal: 16,
+  },
+  body: {
+    paddingHorizontal: 4,
+  },
+  effective: {
+    ...typography.caption,
+    lineHeight: 18,
+  },
+  heading: {
+    fontSize: 15,
+    ...weight(700),
+  },
+  paragraph: {
+    fontSize: 14,
+    lineHeight: 14 * 1.7,
+    marginTop: 8,
+  },
+});

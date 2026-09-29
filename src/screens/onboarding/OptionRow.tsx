@@ -41,7 +41,7 @@ export default function OptionRow({ title, desc, selected, onPress, divider }: O
 }
 
 /** 안 고름은 빈 원, 고름은 파란 원 + 진한 체크. 색만이 아니라 체크 모양으로도 구분된다. */
-function RadioMark({ on }: { on: boolean }) {
+export function RadioMark({ on }: { on: boolean }) {
   const { colors } = useTheme();
   if (on) {
     return (

@@ -68,7 +68,8 @@ class EmailCodeFlowTest {
 						  "profile": {
 						    "name": "코드", "gender": "female", "age": 30, "height": 160.0, "weight": 52.0,
 						    "activityLevel": "light", "goal": "maintain", "personality": "friendly"
-						  }
+						  },
+						  "agreements": { "terms": true, "privacy": true, "health": true, "version": "2026-10-01" }
 						}
 						""".formatted(email)))
 				.andReturn();

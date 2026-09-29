@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import ConsentSheet, { Agreed } from './ConsentSheet';
+import { TERMS_VERSION, TermsId } from '../../data/terms';
 import TextLink from '../../components/TextLink';
 import TextField from '../../components/TextField';
 import PrimaryButton from '../../components/PrimaryButton';
@@ -50,9 +52,35 @@ export default function SignupScreen() {
     return !next.email && !next.password;
   };
 
-  const handleSignup = async () => {
+  /** 가입 버튼은 약관 시트를 연다. 실제 가입은 시트에서 셋 다 동의했을 때 한다. */
+  const [consentOpen, setConsentOpen] = useState(false);
+  const [agreed, setAgreed] = useState<Agreed>({ terms: false, privacy: false, health: false });
+  /** "보기"로 본문에 다녀오는 중. 시트(Modal)는 화면 위에 떠서 본문을 가리므로 잠깐 닫았다가 돌아오면 다시 연다. */
+  const viewingTerms = useRef(false);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (viewingTerms.current) {
+        viewingTerms.current = false;
+        setConsentOpen(true);
+      }
+    }, []),
+  );
+
+  const openConsent = () => {
     if (busy) return;
     if (!validate()) return;
+    setConsentOpen(true);
+  };
+
+  const viewTerms = (id: TermsId) => {
+    viewingTerms.current = true;
+    setConsentOpen(false);
+    navigation.navigate('Terms', { id });
+  };
+
+  const handleSignup = async () => {
+    if (busy) return;
     setBusy(true);
 
     try {
@@ -82,7 +110,10 @@ export default function SignupScreen() {
         // 게스트로 쓴 기간을 이어받는다(F-008). 안 보내면 서버가 가입 시각을 시작일로 잡아
         // "피또와 함께한 지 N일"이 1일로 되돌아간다.
         startedAt: startDate ? new Date(`${startDate}T00:00:00`).toISOString() : undefined,
+        // 동의 시각은 서버가 찍는다. 앱은 무엇에, 어느 버전에 동의했는지만 보낸다.
+        agreements: { ...agreed, version: TERMS_VERSION },
       });
+      setConsentOpen(false);
 
       signIn({
         accessToken: result.accessToken,
@@ -116,6 +147,8 @@ export default function SignupScreen() {
       // 그때는 돌아갈 화면이 없으므로 확인하고 부른다.
       if (navigation.canGoBack()) navigation.goBack();
     } catch (e) {
+      // 칸 오류를 보여야 하니 시트를 내린다. 체크는 남겨 둬서 고친 뒤 바로 다시 누를 수 있다.
+      setConsentOpen(false);
       // 서버가 준 문장을 그대로 보여준다(명세 0-6). 칸에 속한 오류는 그 칸 아래로, 나머지는 토스트로.
       if (e instanceof ApiError && e.code === 'EMAIL_DUPLICATED') {
         setFieldErrors({ email: e.message });
@@ -177,11 +210,21 @@ export default function SignupScreen() {
       <View style={styles.buttonWrap}>
         <PrimaryButton
           label="계정 만들기"
-          onPress={handleSignup}
-          loading={busy}
+          onPress={openConsent}
+          loading={busy && !consentOpen}
           inactive={!email.trim() || password.length < 8}
         />
       </View>
+
+      <ConsentSheet
+        visible={consentOpen}
+        agreed={agreed}
+        onChange={setAgreed}
+        onView={viewTerms}
+        onConfirm={handleSignup}
+        onClose={() => setConsentOpen(false)}
+        busy={busy}
+      />
 
       {wakeNotice && <Text style={[styles.wakeNotice, { color: colors.textSecondary }]}>{wakeNotice}</Text>}
 

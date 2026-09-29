@@ -138,6 +138,16 @@ public class User {
 	@Column(nullable = false)
 	private Instant startedAt;
 
+	/** 약관 동의 시각(서버 시계). 이 칸이 생기기 전 가입자는 비어 있다. */
+	private Instant termsAgreedAt;
+
+	private Instant privacyAgreedAt;
+
+	private Instant healthAgreedAt;
+
+	@Column(length = 20)
+	private String termsVersion;
+
 	@CreationTimestamp
 	@Column(nullable = false, updatable = false)
 	private Instant createdAt;
@@ -177,6 +187,14 @@ public class User {
 	/** 체중 기록이 갱신되면 프로필의 현재 체중도 따라간다(명세 2-6). */
 	public void changeWeight(double weight) {
 		this.weight = weight;
+	}
+
+	/** 필수 약관 셋에 한꺼번에 동의한 기록. 요청 검사에서 셋 다 true인 걸 확인한 뒤에만 부른다. */
+	public void recordAgreements(String version, Instant at) {
+		this.termsAgreedAt = at;
+		this.privacyAgreedAt = at;
+		this.healthAgreedAt = at;
+		this.termsVersion = version;
 	}
 
 	public void changePeriodEnabled(boolean enabled) {

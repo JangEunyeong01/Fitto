@@ -88,6 +88,9 @@ public class AuthService {
 			user.changeStartedAt(request.startedAt());
 		}
 
+		// 동의 시각은 앱이 보낸 값이 아니라 서버 시계로 찍는다.
+		user.recordAgreements(request.agreements().version(), Instant.now());
+
 		userGoalService.recalculate(user);
 		userRepository.save(user);
 
