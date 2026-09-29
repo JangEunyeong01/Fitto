@@ -49,7 +49,7 @@ export default function CardOrderSheet({ visible, onClose }: CardOrderSheetProps
   // 순서 시트에만 남아 있으면 옮겨도 아무 일이 없는 줄이 된다.
   const rows = cardOrder.filter((id) => id !== 'period' || periodOn);
 
-  // 끄는 중인 줄과, 지금 놓으면 들어갈 자리.
+  // 끄는 중인 줄과 지금 놓으면 들어갈 자리.
   const [drag, setDrag] = useState<{ id: CardId; from: number; to: number } | null>(null);
 
   /** 보이는 목록 안에서 from → to로 옮기고, 목록에 없는 카드(꺼둔 생리 카드)는 뒤에 그대로 붙인다. */

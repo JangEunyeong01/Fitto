@@ -188,16 +188,11 @@ export const tabBarShadowColor = alpha(lightColors.textPrimary, 0.16);
  * 옅은 복숭아색은 아침 시간대 색(#FFCBB6)과 같은 값을 쓴다.
  */
 const BIRTHDAY_PEACH = '#FFCBB6';
-const BIRTHDAY_MODAL_INK = '#14202A';
 
+// 모달의 장식 원·그라데이션 버튼 색은 개편 때 뺐다(시안 38). 공통 알림창(AlertModal)을 쓴다.
 export const birthday = {
   bannerGradient: [alpha(brand.lavender, 0.35), alpha(BIRTHDAY_PEACH, 0.35)] as const,
   avatarGradient: [brand.lavender, BIRTHDAY_PEACH] as const,
-  confirmGradient: [brand.lavender, brand.blue] as const,
-  modalBackdrop: alpha(BIRTHDAY_MODAL_INK, 0.44),
-  modalShadow: alpha(BIRTHDAY_MODAL_INK, 0.32),
-  glowLavender: alpha(brand.lavender, 0.55),
-  glowPeach: alpha(BIRTHDAY_PEACH, 0.6),
   /** 모달 캐릭터 부유 주기 (프로토타입: fbob 3.4s). */
   floatDuration: 3400,
 } as const;
