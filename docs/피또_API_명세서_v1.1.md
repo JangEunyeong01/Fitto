@@ -28,7 +28,7 @@
 
 *마지막 갱신: 2026-09-26*
 
-서버는 PostgreSQL 17에 실제로 연결해 가입·기록·조회 흐름을 확인했고, H2 인메모리 DB로 같은 흐름을 테스트 56개로 자동화했다.
+서버는 PostgreSQL 17에 실제로 연결해 가입·기록·조회 흐름을 확인했고, H2 인메모리 DB로 같은 흐름을 테스트 57개로 자동화했다.
 앱은 로컬 우선 구조로 서버와 양방향 동기화한다 — 기록은 기기에 먼저 저장하고 대기열을 통해 올리며, 앱 시작·로그인·복귀 시점에 서버 값을 받아온다.
 
 | 영역 | 앱 | 서버 |
@@ -524,7 +524,8 @@ fertileEnd    = ovulation
     "birthdayMonth": 3,
     "birthdayDay": 14
   },
-  "startedAt": "2026-08-01T09:00:00Z"
+  "startedAt": "2026-08-01T09:00:00Z",
+  "agreements": { "terms": true, "privacy": true, "health": true, "version": "2026-10-01" }
 }
 ```
 
@@ -539,6 +540,10 @@ fertileEnd    = ovulation
 | profile.birthdayMonth, birthdayDay | 선택 |
 | custom* 배열 | 항목당 1~20자, 최대 10개 |
 | startedAt | 선택. 게스트로 앱을 처음 쓴 시각(피또 친근해지기 기준). 없으면 가입 시각 |
+| agreements | 필수. 이용약관·개인정보·건강 정보 셋 다 `true`여야 한다. 하나라도 빠지거나 `false`면 `400` |
+| agreements.version | 필수, 20자 이하. 동의한 약관의 시행일 |
+
+**약관 동의 기록** — 서버는 동의 시각을 `users.terms_agreed_at`·`privacy_agreed_at`·`health_agreed_at`에, 버전을 `terms_version`에 남긴다. 시각은 앱이 보낸 값이 아니라 서버 시계로 찍는다. 건강 정보는 민감정보라 개인정보와 따로 동의받는다. 동의 기록은 응답에 담지 않는다.
 
 **Response 201**
 
