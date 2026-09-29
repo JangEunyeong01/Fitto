@@ -176,9 +176,13 @@ export default function SettingsScreen() {
           <SettingsRow
             label="계정"
             desc={
-              authStatus === 'member'
-                ? failedNotice ?? (emailUnverified ? `${authEmail} · 인증 필요` : authEmail)
-                : '게스트로 쓰는 중 · 기록은 이 기기에만'
+              // 못 올린 기록 경고가 먼저다. 게스트여도 로그인이 풀리기 전 기록이 남아 있을 수 있다.
+              failedNotice ??
+              (authStatus === 'member'
+                ? emailUnverified
+                  ? `${authEmail} · 인증 필요`
+                  : authEmail
+                : '게스트로 쓰는 중 · 기록은 이 기기에만')
             }
             descTone={failedNotice ? 'danger' : 'normal'}
             onPress={() => navigation.navigate('Account')}
