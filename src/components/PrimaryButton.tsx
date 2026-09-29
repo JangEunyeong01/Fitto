@@ -11,9 +11,10 @@ import { brand, typography } from '../theme/tokens';
  * - secondary: 테두리 박스. 시안 규칙 2로 대부분 글씨 버튼으로 바뀌고, 남는 자리는 탈퇴 확인 모달뿐이다.
  *   화면을 옮길 때마다 하나씩 걷어내고, 다 걷히면 이 변형도 지운다
  * - text: 가벼운 이동(건너뛰기, 나중에 하기). 면 없음
- * - danger: 되돌릴 수 없는 동작의 **최종 확인에만**(탈퇴, 데이터 초기화)
+ * - danger: 되돌릴 수 없는 동작의 **최종 확인에만**(데이터 초기화)
+ * - dangerOutline: 테두리 박스 + 빨간 글씨. 탈퇴 확인 모달(시안 42)처럼 칠한 "취소"를 권하고 위험한 쪽은 한 발 물릴 때
  */
-export type ButtonVariant = 'primary' | 'secondary' | 'text' | 'danger';
+export type ButtonVariant = 'primary' | 'secondary' | 'text' | 'danger' | 'dangerOutline';
 
 /** lg 52: 화면 하단 전폭 / md 44: 카드 안 주요 동작 / sm 36: 행 끝 보조 동작(누르는 영역은 44로 넓힌다). */
 export type ButtonSize = 'lg' | 'md' | 'sm';
@@ -73,9 +74,11 @@ export default function PrimaryButton({
       ? colors.textOnPrimary
       : variant === 'danger'
         ? '#FFFFFF'
-        : variant === 'text'
-          ? colors.textAccent
-          : colors.textPrimary;
+        : variant === 'dangerOutline'
+          ? colors.textDanger
+          : variant === 'text'
+            ? colors.textAccent
+            : colors.textPrimary;
 
   const labelStyle = resolvedSize === 'lg' ? typography.buttonLabel : typography.buttonLabelSm;
   const content = loading ? (
@@ -114,7 +117,7 @@ export default function PrimaryButton({
           if (muted) return { backgroundColor: colors.fillMuted };
           if (variant === 'primary') return { backgroundColor: pressed ? brand.blueDeep : brand.blue };
           if (variant === 'danger') return { backgroundColor: pressed ? DANGER_PRESSED : DANGER_FACE };
-          if (variant === 'secondary') {
+          if (variant === 'secondary' || variant === 'dangerOutline') {
             return {
               backgroundColor: pressed ? colors.surfaceMuted : colors.surfaceSolid,
               borderWidth: 1,

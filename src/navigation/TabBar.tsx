@@ -114,6 +114,12 @@ export default function TabBar({ state, navigation }: BottomTabBarProps) {
   );
 }
 
+/**
+ * 탭 안 하위 화면의 스크롤 아래 여백. 탭바가 화면 위에 떠 있어서 이만큼 비워야 마지막 버튼이 가리지 않는다.
+ * 탭바 위치(아래 12 + 안전 영역) + 높이 64 + 숨 쉴 틈 24.
+ */
+export const tabBarSpace = (bottomInset: number) => 12 + Math.max(0, bottomInset - 8) + 64 + 24;
+
 const styles = StyleSheet.create({
   wrap: {
     position: 'absolute',

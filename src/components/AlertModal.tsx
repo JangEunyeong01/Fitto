@@ -19,6 +19,13 @@ interface AlertModalProps {
   onPrimary: () => void;
   /** 회색 "나중에". 없으면 칠한 버튼 하나만 둔다(생일처럼 거절할 게 없는 알림). */
   laterLabel?: string;
+  /**
+   * 되돌릴 수 없는 동작(탈퇴). 있으면 "나중에" 대신 [위험 테두리 버튼 | 칠한 버튼]을 나란히 둔다(시안 42).
+   * 이때 칠한 버튼은 "취소"다 — 권하는 쪽이 안전한 쪽이 되게.
+   */
+  dangerLabel?: string;
+  onDanger?: () => void;
+  dangerLoading?: boolean;
 }
 
 /**
@@ -37,6 +44,9 @@ export default function AlertModal({
   primaryLabel,
   onPrimary,
   laterLabel,
+  dangerLabel,
+  onDanger,
+  dangerLoading,
 }: AlertModalProps) {
   const { colors } = useTheme();
 
@@ -60,10 +70,23 @@ export default function AlertModal({
           ) : (
             body
           )}
-          <View style={styles.primary}>
-            <PrimaryButton label={primaryLabel} onPress={onPrimary} />
-          </View>
-          {!!laterLabel && (
+          {dangerLabel && onDanger ? (
+            <View style={styles.pair}>
+              <PrimaryButton
+                label={dangerLabel}
+                variant="dangerOutline"
+                onPress={onDanger}
+                loading={dangerLoading}
+                style={styles.flex}
+              />
+              <PrimaryButton label={primaryLabel} onPress={onPrimary} style={styles.flex} />
+            </View>
+          ) : (
+            <View style={styles.primary}>
+              <PrimaryButton label={primaryLabel} onPress={onPrimary} />
+            </View>
+          )}
+          {!!laterLabel && !dangerLabel && (
             <View style={styles.later}>
               <TextLink tone="muted" label={laterLabel} onPress={onClose} />
             </View>
@@ -123,6 +146,16 @@ const styles = StyleSheet.create({
   primary: {
     alignSelf: 'stretch',
     marginTop: 20,
+  },
+  pair: {
+    alignSelf: 'stretch',
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 20,
+    marginBottom: 10,
+  },
+  flex: {
+    flex: 1,
   },
   later: {
     minHeight: 44,

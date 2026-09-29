@@ -1,22 +1,19 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { tabBarSpace } from '../../navigation/TabBar';
 import { useNavigation } from '@react-navigation/native';
 import ScreenBackground from '../../components/ScreenBackground';
 import GlassCard from '../../components/GlassCard';
-import TextField from '../../components/TextField';
 import PrimaryButton from '../../components/PrimaryButton';
+import TextLink from '../../components/TextLink';
 import DetailHeader from '../detail/DetailHeader';
+import { RadioMark } from '../onboarding/OptionRow';
+import { ROW_PAD } from './SettingsRow';
 import { useTheme } from '../../theme/useTheme';
-import { typography } from '../../theme/tokens';
-import { useAppStore } from '../../store/useAppStore';
+import { typography, weight } from '../../theme/tokens';
 import { useAuthStore } from '../../store/useAuthStore';
-import { useOutboxStore } from '../../store/useOutboxStore';
-import { useFoodSearchStore } from '../../store/useFoodSearchStore';
-import { useToastStore } from '../../store/useToastStore';
-import { deleteAccount } from '../../api/auth';
-import { ApiError, NetworkError } from '../../api/client';
-import { useWakeNotice } from '../../hooks/useWakeNotice';
+import type { DeletionReason } from '../../api/auth';
 
 /** 무엇이 지워지는지 먼저 보여준다. "정말요?"만 두 번 묻는 건 확인이 아니다. */
 const ERASED = [
@@ -26,63 +23,34 @@ const ERASED = [
   '프로필과 목표 설정',
 ];
 
+const REASONS: { code: DeletionReason; label: string }[] = [
+  { code: 'tedious', label: '기록하는 게 번거로워요' },
+  { code: 'too_many_notifications', label: '알림이 너무 자주 와요' },
+  { code: 'missing_feature', label: '원하는 기능이 없어요' },
+  { code: 'other_app', label: '다른 앱을 쓰려고요' },
+  { code: 'privacy', label: '개인정보가 걱정돼요' },
+  { code: 'other', label: '기타' },
+];
+
 /**
- * 회원 탈퇴(명세 5장). 되돌릴 수 없다.
+ * 회원 탈퇴 1단계(시안 40) — 지워지는 것과 떠나는 이유.
  *
- * 두 단계로 나눈다. 비밀번호를 받는 단계와, 지운다고 한 번 더 누르는 단계다.
- * 토큰만으로 지우게 하면 잠금 안 된 폰을 잠깐 만진 사람이 계정을 없앨 수 있다.
- *
- * 서버 기록을 지우면 이 기기 기록도 함께 지운다. 계정을 없앴는데 폰에 기록이 남아 있으면
- * 무엇이 지워진 건지 알 수 없고, 다음에 가입할 때 남은 기록이 새 계정으로 올라간다.
+ * 탈퇴는 세 단계다: 여기서 무엇이 지워지는지 보고 → 비밀번호로 본인 확인 → 알림창에서 마지막 확인.
+ * 이유는 고르지 않아도 넘어간다. 직접 쓰는 칸은 두지 않았다 — 연락처나 병명을 적으면 익명이 깨진다.
+ * 알림 때문에 떠나려는 사람에게는 탈퇴 대신 알림만 줄이는 길을 보여준다.
  */
 export default function DeleteAccountScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<any>();
   const { colors } = useTheme();
-
   const authEmail = useAuthStore((s) => s.email);
-  const signOut = useAuthStore((s) => s.signOut);
-  const resetAll = useAppStore((s) => s.resetAll);
-  const showToast = useToastStore((s) => s.show);
-
-  const [password, setPassword] = useState('');
-  const [confirming, setConfirming] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
-  const wakeNotice = useWakeNotice(busy);
-
-  const submit = async () => {
-    if (busy) return;
-    setBusy(true);
-    setError(null);
-
-    try {
-      const token = useAuthStore.getState().accessToken;
-      await deleteAccount(password, token ?? '');
-
-      // 서버가 지워진 뒤에 기기를 정리한다. 순서가 반대면 요청이 실패했을 때 기록만 사라진다.
-      signOut();
-      resetAll();
-      useOutboxStore.getState().clear();
-      useFoodSearchStore.setState({ recent: [] });
-      showToast('계정을 삭제했어요');
-    } catch (e) {
-      if (e instanceof ApiError || e instanceof NetworkError) {
-        setError(e.message);
-      } else {
-        setError('계정을 삭제하지 못했어요. 잠시 후 다시 시도해 주세요');
-      }
-      setConfirming(false);
-    } finally {
-      setBusy(false);
-    }
-  };
+  const [reason, setReason] = useState<DeletionReason | null>(null);
 
   return (
     <ScreenBackground showTimeGradient={false}>
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={[styles.content, { paddingTop: insets.top + 14, paddingBottom: insets.bottom + 40 }]}
+        contentContainerStyle={[styles.content, { paddingTop: insets.top + 14, paddingBottom: tabBarSpace(insets.bottom) }]}
         showsVerticalScrollIndicator={false}
       >
         <DetailHeader title="회원 탈퇴" />
@@ -90,71 +58,57 @@ export default function DeleteAccountScreen() {
         <GlassCard style={styles.card}>
           <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>지워지는 것</Text>
           <Text style={[styles.desc, { color: colors.textSecondary }]}>{authEmail} 계정과 아래 기록이 모두 지워져요.</Text>
-          <View style={styles.list}>
-            {ERASED.map((item) => (
-              <Text key={item} style={[styles.listItem, { color: colors.textPrimary }]}>
-                · {item}
-              </Text>
-            ))}
-          </View>
+          {ERASED.map((item) => (
+            <Text key={item} style={[styles.listItem, { color: colors.textPrimary }]}>
+              · {item}
+            </Text>
+          ))}
           <Text style={[styles.warn, { color: colors.textDanger }]}>
             지운 기록은 되돌릴 수 없어요. 이 기기에 있는 기록도 함께 지워지고 온보딩부터 다시 시작해요.
           </Text>
         </GlassCard>
 
-        <GlassCard style={styles.card}>
-          <Text style={[styles.label, { color: colors.textSecondary }]}>비밀번호</Text>
-          <TextField
-            value={password}
-            onChangeText={setPassword}
-            placeholder="본인 확인을 위해 입력해 주세요"
-            autoCapitalize="none"
-            secureTextEntry
-            maxLength={64}
-          />
-
-          {error && <Text style={[styles.error, { color: colors.textDanger }]}>{error}</Text>}
-          {wakeNotice && <Text style={[styles.error, { color: colors.textSecondary }]}>{wakeNotice}</Text>}
-
-          {/* 빨간 버튼은 되돌릴 수 없는 동작의 **마지막 확인에만** 쓴다(UI 기준서 5-1). 첫 단계는 보조 버튼. */}
-          {!confirming ? (
-            <PrimaryButton
-              label="탈퇴하기"
-              variant="secondary"
-              size="md"
-              style={styles.firstBtn}
-              onPress={() => {
-                if (!password) {
-                  setError('비밀번호를 입력해 주세요');
-                  return;
-                }
-                setConfirming(true);
-              }}
-              inactive={!password}
-            />
-          ) : (
-            <View style={styles.confirmBox}>
-              <Text style={[styles.confirmTitle, { color: colors.textPrimary }]}>정말 탈퇴할까요?</Text>
-              <View style={styles.confirmButtons}>
-                <PrimaryButton
-                  label="취소"
-                  variant="secondary"
-                  size="md"
-                  style={styles.flex}
-                  onPress={() => setConfirming(false)}
-                />
-                <PrimaryButton
-                  label="계정 삭제"
-                  variant="danger"
-                  size="md"
-                  style={styles.flex}
-                  onPress={submit}
-                  loading={busy}
-                />
-              </View>
-            </View>
-          )}
+        <GlassCard style={styles.card} noPadding>
+          <View style={styles.reasonHead}>
+            <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>떠나시는 이유 (선택)</Text>
+            <Text style={[styles.hint, { color: colors.textSecondary }]}>답은 피또를 고치는 데만 써요.</Text>
+          </View>
+          {REASONS.map((r, i) => {
+            const on = reason === r.code;
+            return (
+              <React.Fragment key={r.code}>
+                {i > 0 && <View style={[styles.divider, { backgroundColor: colors.borderDivider }]} />}
+                <Pressable
+                  // 고른 걸 다시 누르면 비운다. 선택 항목이라 안 고른 상태로 돌아갈 길이 있어야 한다.
+                  onPress={() => setReason(on ? null : r.code)}
+                  accessibilityRole="radio"
+                  accessibilityState={{ checked: on }}
+                  style={({ pressed }) => [styles.reasonRow, pressed && { backgroundColor: colors.fillMuted }]}
+                >
+                  <RadioMark on={on} />
+                  <Text style={[styles.reasonLabel, { color: colors.textPrimary }, on && weight(700)]}>{r.label}</Text>
+                </Pressable>
+              </React.Fragment>
+            );
+          })}
+          <View style={[styles.fullDivider, { backgroundColor: colors.borderDivider }]} />
+          <View style={styles.notifyRow}>
+            <Text style={[styles.hint, styles.notifyText, { color: colors.textSecondary }]}>
+              알림이 부담스러우면 탈퇴 대신 알림만 줄일 수 있어요
+            </Text>
+            <TextLink label="알림 설정" onPress={() => navigation.navigate('Notifications')} />
+          </View>
         </GlassCard>
+
+        <View style={styles.buttons}>
+          <PrimaryButton
+            label="다음"
+            onPress={() => navigation.navigate('DeleteAccountConfirm', { reason: reason ?? undefined })}
+          />
+          <Pressable onPress={() => navigation.goBack()} accessibilityRole="button" style={styles.stayBtn}>
+            <Text style={[styles.stayLabel, { color: colors.textSecondary }]}>계속 쓸게요</Text>
+          </Pressable>
+        </View>
       </ScrollView>
     </ScreenBackground>
   );
@@ -170,44 +124,77 @@ const styles = StyleSheet.create({
   card: {
     marginBottom: 12,
   },
-  cardTitle: typography.sectionTitle,
+  cardTitle: {
+    fontSize: 15,
+    ...weight(700),
+  },
   desc: {
-    ...typography.bodySm,
-    marginTop: 8,
+    fontSize: 13,
+    lineHeight: 13 * 1.5,
+    marginTop: 4,
+    marginBottom: 2,
   },
-  list: {
-    marginTop: 10,
-    gap: 4,
-  },
-  listItem: typography.bodySm,
-  warn: {
-    ...typography.caption,
-    marginTop: 12,
-  },
-  label: {
-    ...typography.label,
-    marginBottom: 8,
-  },
-  error: {
-    ...typography.caption,
-    marginTop: 10,
-  },
-  firstBtn: {
-    marginTop: 16,
-  },
-  confirmBox: {
+  listItem: {
+    fontSize: 14,
+    lineHeight: 14 * 1.5,
     marginTop: 4,
   },
-  confirmTitle: {
-    ...typography.sectionTitle,
-    marginTop: 14,
-  },
-  confirmButtons: {
-    flexDirection: 'row',
-    gap: 8,
+  warn: {
+    fontSize: 13,
+    ...weight(600),
+    lineHeight: 13 * 1.5,
     marginTop: 12,
   },
-  flex: {
+  reasonHead: {
+    paddingTop: ROW_PAD,
+    paddingHorizontal: ROW_PAD,
+    paddingBottom: 2,
+  },
+  hint: {
+    ...typography.caption,
+    lineHeight: 18,
+    marginTop: 4,
+  },
+  reasonRow: {
+    minHeight: 52,
+    paddingHorizontal: ROW_PAD,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  reasonLabel: {
+    fontSize: 15,
+    ...weight(600),
+  },
+  divider: {
+    height: StyleSheet.hairlineWidth,
+    marginHorizontal: ROW_PAD,
+  },
+  fullDivider: {
+    height: StyleSheet.hairlineWidth,
+  },
+  notifyRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+    paddingVertical: 6,
+    paddingHorizontal: ROW_PAD,
+  },
+  notifyText: {
     flex: 1,
+    marginTop: 0,
+  },
+  buttons: {
+    marginTop: 8,
+  },
+  stayBtn: {
+    minHeight: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stayLabel: {
+    fontSize: 15,
+    ...weight(600),
   },
 });
