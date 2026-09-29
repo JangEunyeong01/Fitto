@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { tabBarSpace } from '../../navigation/TabBar';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import ScreenBackground from '../../components/ScreenBackground';
 import CodeInput from '../../components/CodeInput';
@@ -120,7 +121,7 @@ export default function ForgotPasswordScreen() {
     <ScreenBackground showTimeGradient={false}>
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={[styles.content, { paddingTop: insets.top + 14, paddingBottom: insets.bottom + 40 }]}
+        contentContainerStyle={[styles.content, { paddingTop: insets.top + 14, paddingBottom: tabBarSpace(insets.bottom) }]}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >

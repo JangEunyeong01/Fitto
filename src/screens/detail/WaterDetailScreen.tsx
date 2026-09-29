@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ScrollView, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { tabBarSpace } from '../../navigation/TabBar';
 import ScreenBackground from '../../components/ScreenBackground';
 import DetailHeader from './DetailHeader';
 import PeriodChips, { Period } from './PeriodChips';
@@ -92,7 +93,7 @@ export default function WaterDetailScreen() {
     <ScreenBackground showTimeGradient={false}>
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={[styles.content, { paddingTop: insets.top + 14, paddingBottom: insets.bottom + 40 }]}
+        contentContainerStyle={[styles.content, { paddingTop: insets.top + 14, paddingBottom: tabBarSpace(insets.bottom) }]}
         showsVerticalScrollIndicator={false}
       >
         <DetailHeader title="물 섭취" />

@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { tabBarSpace } from '../../navigation/TabBar';
 import { useNavigation } from '@react-navigation/native';
 import GlassCard from '../../components/GlassCard';
 import ScreenBackground from '../../components/ScreenBackground';
@@ -90,7 +91,7 @@ export default function AccountScreen() {
     <ScreenBackground showTimeGradient={false}>
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={[styles.content, { paddingTop: insets.top + 14, paddingBottom: insets.bottom + 40 }]}
+        contentContainerStyle={[styles.content, { paddingTop: insets.top + 14, paddingBottom: tabBarSpace(insets.bottom) }]}
         showsVerticalScrollIndicator={false}
       >
         <DetailHeader title="계정" />
