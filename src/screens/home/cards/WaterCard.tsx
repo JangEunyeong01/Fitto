@@ -1,11 +1,10 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { runOnJS } from 'react-native-reanimated';
 import { useNavigation } from '@react-navigation/native';
 import TextLink from '../../../components/TextLink';
 import GlassCard from '../../../components/GlassCard';
-import PrimaryButton from '../../../components/PrimaryButton';
 import WaterCup from './WaterCup';
 import { useTheme } from '../../../theme/useTheme';
 import { useAppStore } from '../../../store/useAppStore';
@@ -13,7 +12,7 @@ import { dateKey } from '../../../utils/timeOfDay';
 import { getWaterStageSpec } from '../../../utils/health';
 import { waterStageNames } from '../../../copy/persona';
 import { useToastStore } from '../../../store/useToastStore';
-import { typography } from '../../../theme/tokens';
+import { typography, weight } from '../../../theme/tokens';
 
 export default function WaterCard() {
   const navigation = useNavigation<any>();
@@ -67,10 +66,15 @@ export default function WaterCard() {
           <WaterCup progress={water / goal} percent={percent} onPress={() => applyDelta(cup)} />
         </View>
 
-        {/* 홈에서 유일한 칠해진 버튼(시안 규칙 1). */}
-        <View style={styles.buttonWrap}>
-          <PrimaryButton size="md" label={`+${cup} ml`} onPress={() => applyDelta(cup)} />
-        </View>
+        {/* 칠한 버튼이었는데 홈에서 혼자 튀어 힘을 뺐다. 파란 글씨만으로 누를 수 있다는 게 읽힌다. */}
+        <Pressable
+          onPress={() => applyDelta(cup)}
+          accessibilityRole="button"
+          accessibilityLabel={`물 ${cup}ml 기록`}
+          style={({ pressed }) => [styles.addBtn, { opacity: pressed ? 0.6 : 1 }]}
+        >
+          <Text style={[styles.addLabel, { color: colors.textAccent }]}>+{cup} ml</Text>
+        </Pressable>
       </GlassCard>
     </GestureDetector>
   );
@@ -104,8 +108,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 12,
   },
-  buttonWrap: {
+  addBtn: {
     marginTop: 'auto',
-    paddingTop: 12,
+    minHeight: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  addLabel: {
+    fontSize: 15,
+    ...weight(700),
   },
 });

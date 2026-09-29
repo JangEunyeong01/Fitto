@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { StyleSheet, Text, Pressable, View, Animated, Easing } from 'react-native';
-import { BlurView } from 'expo-blur';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useToastStore, type ToastAction } from '../store/useToastStore';
+import { tabBarSpace } from '../navigation/TabBar';
 import { motion, overlay, radius, spacing, typography, white } from '../theme/tokens';
 
 /**
@@ -13,8 +14,10 @@ const ACTION_VISIBLE = 5000;
 /** 어두운 토스트 위 글씨 버튼. 짙은 바탕 위라 파스텔을 조금 밝혀 쓴다(시안 03: #A9D6EE). */
 const ACTION_COLOR = '#A9D6EE';
 
-// README: left/right 16, bottom 88, padding 13/15, r16, 어두운 반투명+blur(10), 흰 글씨, fin
+// README: left/right 16, padding 13/15, r16, 흰 글씨. 반투명+흐림은 뒤가 비쳐 안 읽혀서 불투명 단색 + 그림자로 바꿨다.
+// 떠 있는 탭바 바로 위에 뜬다(예전 bottom 88은 탭바와 겹쳤다).
 export default function Toast() {
+  const insets = useSafeAreaInsets();
   const { message, action, seq } = useToastStore();
   const opacity = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(motion.fadeInOffsetY)).current;
@@ -82,10 +85,10 @@ export default function Toast() {
     // 버튼이 없으면 아래 화면을 가리지 않게 터치를 통과시킨다.
     <Animated.View
       pointerEvents={shownAction ? 'box-none' : 'none'}
-      style={[styles.wrap, { opacity, transform: [{ translateY }] }]}
+      style={[styles.wrap, { bottom: tabBarSpace(insets.bottom) - 16, opacity, transform: [{ translateY }] }]}
       accessibilityLiveRegion="polite"
     >
-      <BlurView intensity={20} tint="dark" style={[styles.blur, shownAction && styles.blurWithAction]}>
+      <View style={[styles.blur, shownAction && styles.blurWithAction]}>
         <View style={styles.row}>
           <Text style={[styles.text, shownAction && styles.textLeft]}>{text}</Text>
           {shownAction && (
@@ -102,7 +105,7 @@ export default function Toast() {
             </Pressable>
           )}
         </View>
-      </BlurView>
+      </View>
     </Animated.View>
   );
 }
@@ -112,7 +115,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: spacing.screenX,
     right: spacing.screenX,
-    bottom: 88,
     zIndex: 999,
     alignItems: 'center',
   },
@@ -121,8 +123,12 @@ const styles = StyleSheet.create({
     paddingVertical: 13,
     paddingHorizontal: 15,
     borderRadius: radius.blockMid,
-    overflow: 'hidden',
     alignSelf: 'stretch',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.18,
+    shadowRadius: 20,
+    elevation: 10,
   },
   // 버튼 자리를 위해 위아래·오른쪽 여백을 줄인다(시안 03: 10 10 10 16).
   blurWithAction: {

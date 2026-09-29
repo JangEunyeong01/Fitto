@@ -163,8 +163,11 @@ export const selection = {
 const SCRIM_BASE = '#101A24';
 
 export const overlay = {
-  /** 토스트 배경 (README: rgba(28,42,54,.9) + blur(10)). */
-  toastBg: 'rgba(28,42,54,.9)',
+  /**
+   * 토스트 배경. README는 rgba(28,42,54,.9) + 흐림이었는데, 탭바·카드 위에 겹치면 뒤가 비쳐 잘 안 읽혔다.
+   * 불투명 단색으로 둔다. 다크 모드 바탕(#0E151B 계열)보다 한 단 밝아 어두운 화면에서도 구분된다.
+   */
+  toastBg: '#1C2A36',
   /** 튜토리얼 딤 (README 명시값). */
   tutorialDim: alpha(SCRIM_BASE, 0.62),
   /** 바텀시트 배경 딤. README에 값이 없어 튜토리얼 딤과 같은 색을 옅게 썼다. */
@@ -218,8 +221,6 @@ export const motion = {
   tab: 220,
   /** fpulse — 튜토리얼 하이라이트 (2.2s). */
   pulse: 2200,
-  /** fwave — 컵 수면 물결 (2.6s). */
-  wave: 2600,
   /** 토스트 자동 소멸까지 유지 시간. 1.9초는 두 줄 문구를 다 읽기 전에 사라졌다(UI 기준서 5-7). */
   toastVisible: 3000,
 } as const;
