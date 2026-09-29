@@ -1,11 +1,12 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import BottomSheet from '../../components/BottomSheet';
 import PrimaryButton from '../../components/PrimaryButton';
 import { RadioMark } from '../onboarding/OptionRow';
 import { useTheme } from '../../theme/useTheme';
 import { typography, weight } from '../../theme/tokens';
-import { TERMS, TermsId } from '../../data/terms';
+import { TERMS, TermsId, findTerms } from '../../data/terms';
+import { TermsBody } from './TermsScreen';
 
 export type Agreed = Record<TermsId, boolean>;
 
@@ -13,7 +14,6 @@ interface ConsentSheetProps {
   visible: boolean;
   agreed: Agreed;
   onChange: (next: Agreed) => void;
-  onView: (id: TermsId) => void;
   onConfirm: () => void;
   onClose: () => void;
   busy?: boolean;
@@ -21,12 +21,27 @@ interface ConsentSheetProps {
 
 /**
  * 가입 직전 약관 동의 시트(시안 35). 셋 다 필수라 모두 체크해야 버튼이 켜진다.
- * 체크 상태는 부르는 쪽이 들고 있다 — "보기"로 본문을 보고 돌아와도 체크가 남아야 해서다.
+ * "보기"는 화면을 옮기지 않고 시트 안 내용을 본문으로 바꾼다. 다른 화면으로 가면 탭바가 보여 설정으로 넘어간 것처럼
+ * 느껴지고, 시트 위에 창을 하나 더 띄우면 닫히는 순서가 꼬인다. ‹로 돌아오면 체크 목록 그대로다.
  */
-export default function ConsentSheet({ visible, agreed, onChange, onView, onConfirm, onClose, busy }: ConsentSheetProps) {
+export default function ConsentSheet({ visible, agreed, onChange, onConfirm, onClose, busy }: ConsentSheetProps) {
   const { colors } = useTheme();
+  const [viewing, setViewing] = useState<TermsId | null>(null);
   const all = TERMS.every((t) => agreed[t.id]);
   const setAll = (v: boolean) => onChange({ terms: v, privacy: v, health: v });
+
+  // 닫혔다 다시 열리면 목록부터 보여준다.
+  useEffect(() => {
+    if (!visible) setViewing(null);
+  }, [visible]);
+
+  if (viewing) {
+    return (
+      <BottomSheet visible={visible} title={findTerms(viewing).title} onClose={onClose} onBack={() => setViewing(null)}>
+        <TermsBody id={viewing} />
+      </BottomSheet>
+    );
+  }
 
   return (
     <BottomSheet
@@ -65,8 +80,8 @@ export default function ConsentSheet({ visible, agreed, onChange, onView, onConf
               </Text>
             </Pressable>
             <Pressable
-              onPress={() => onView(t.id)}
-              accessibilityRole="link"
+              onPress={() => setViewing(t.id)}
+              accessibilityRole="button"
               accessibilityLabel={`${t.title} 보기`}
               style={styles.viewBtn}
             >

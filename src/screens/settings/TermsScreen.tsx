@@ -8,10 +8,9 @@ import { useTheme } from '../../theme/useTheme';
 import { typography, weight } from '../../theme/tokens';
 import { findTerms, TermsId } from '../../data/terms';
 
-/** 약관 본문(시안 39). 카드 없이 조 제목과 문단만 쌓는다. 가입 시트의 "보기"와 설정의 약관 목록이 같이 쓴다. */
+/** 약관 본문(시안 39). 카드 없이 조 제목과 문단만 쌓는다. 설정 > 약관 및 정책에서 들어온다. */
 export default function TermsScreen() {
   const insets = useSafeAreaInsets();
-  const { colors } = useTheme();
   const { id } = useRoute().params as { id: TermsId };
   const doc = findTerms(id);
 
@@ -24,18 +23,29 @@ export default function TermsScreen() {
       >
         <DetailHeader title={doc.title} />
         <View style={styles.body}>
-          <Text style={[styles.effective, { color: colors.textSecondary }]}>시행일 {doc.effective}</Text>
-          {doc.sections.map((s, i) => (
-            <View key={s.heading} style={{ marginTop: i === 0 ? 20 : 28 }}>
-              <Text style={[styles.heading, { color: colors.textPrimary }]} accessibilityRole="header">
-                {s.heading}
-              </Text>
-              <Text style={[styles.paragraph, { color: colors.textPrimary }]}>{s.body}</Text>
-            </View>
-          ))}
+          <TermsBody id={id} />
         </View>
       </ScrollView>
     </ScreenBackground>
+  );
+}
+
+/** 시행일과 조 제목·문단. 이 화면과 가입 동의 시트가 같이 쓴다. */
+export function TermsBody({ id }: { id: TermsId }) {
+  const { colors } = useTheme();
+  const doc = findTerms(id);
+  return (
+    <>
+      <Text style={[styles.effective, { color: colors.textSecondary }]}>시행일 {doc.effective}</Text>
+      {doc.sections.map((s, i) => (
+        <View key={s.heading} style={{ marginTop: i === 0 ? 20 : 28 }}>
+          <Text style={[styles.heading, { color: colors.textPrimary }]} accessibilityRole="header">
+            {s.heading}
+          </Text>
+          <Text style={[styles.paragraph, { color: colors.textPrimary }]}>{s.body}</Text>
+        </View>
+      ))}
+    </>
   );
 }
 

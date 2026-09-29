@@ -1,8 +1,8 @@
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useState } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import ConsentSheet, { Agreed } from './ConsentSheet';
-import { TERMS_VERSION, TermsId } from '../../data/terms';
+import { TERMS_VERSION } from '../../data/terms';
 import TextLink from '../../components/TextLink';
 import TextField from '../../components/TextField';
 import PrimaryButton from '../../components/PrimaryButton';
@@ -55,28 +55,10 @@ export default function SignupScreen() {
   /** 가입 버튼은 약관 시트를 연다. 실제 가입은 시트에서 셋 다 동의했을 때 한다. */
   const [consentOpen, setConsentOpen] = useState(false);
   const [agreed, setAgreed] = useState<Agreed>({ terms: false, privacy: false, health: false });
-  /** "보기"로 본문에 다녀오는 중. 시트(Modal)는 화면 위에 떠서 본문을 가리므로 잠깐 닫았다가 돌아오면 다시 연다. */
-  const viewingTerms = useRef(false);
-
-  useFocusEffect(
-    useCallback(() => {
-      if (viewingTerms.current) {
-        viewingTerms.current = false;
-        setConsentOpen(true);
-      }
-    }, []),
-  );
-
   const openConsent = () => {
     if (busy) return;
     if (!validate()) return;
     setConsentOpen(true);
-  };
-
-  const viewTerms = (id: TermsId) => {
-    viewingTerms.current = true;
-    setConsentOpen(false);
-    navigation.navigate('Terms', { id });
   };
 
   const handleSignup = async () => {
@@ -220,7 +202,6 @@ export default function SignupScreen() {
         visible={consentOpen}
         agreed={agreed}
         onChange={setAgreed}
-        onView={viewTerms}
         onConfirm={handleSignup}
         onClose={() => setConsentOpen(false)}
         busy={busy}

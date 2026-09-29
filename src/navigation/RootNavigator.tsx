@@ -7,8 +7,6 @@ import AccountChoiceScreen from '../screens/onboarding/AccountChoiceScreen';
 import SignupScreen from '../screens/settings/SignupScreen';
 import LoginScreen from '../screens/settings/LoginScreen';
 import ForgotPasswordScreen from '../screens/settings/ForgotPasswordScreen';
-import TermsScreen from '../screens/settings/TermsScreen';
-import type { TermsId } from '../data/terms';
 import { ROOT_OPTIONS } from './transitions';
 import MainTabs from './MainTabs';
 
@@ -18,7 +16,6 @@ export type RootStackParamList = {
   Signup: undefined;
   Login: { email?: string } | undefined;
   ForgotPassword: { email?: string } | undefined;
-  Terms: { id: TermsId };
   Main: undefined;
 };
 
@@ -43,7 +40,6 @@ export default function RootNavigator() {
           <Stack.Screen name="Signup" component={SignupScreen} />
           <Stack.Screen name="Login" component={LoginScreen} />
           <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
-          <Stack.Screen name="Terms" component={TermsScreen} />
         </>
       ) : (
         <Stack.Screen name="Main" component={MainTabs} />

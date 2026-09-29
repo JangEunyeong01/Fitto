@@ -12,6 +12,8 @@ interface BottomSheetProps {
   children: React.ReactNode;
   /** 아래에 고정되는 버튼 자리(저장 등). 내용이 길어 스크롤돼도 늘 보인다. */
   footer?: React.ReactNode;
+  /** 있으면 제목 왼쪽에 ‹. 시트 안에서 한 단계 들어갔을 때(약관 본문 등) 목록으로 돌아간다. */
+  onBack?: () => void;
 }
 
 /**
@@ -19,7 +21,7 @@ interface BottomSheetProps {
  * 시트마다 따로 그리다 보니 여백·손잡이·닫기 버튼 크기가 제각각이라 한 군데로 모았다.
  * 뒤를 누르거나 안드로이드 뒤로가기를 누르면 닫힌다.
  */
-export default function BottomSheet({ visible, title, onClose, children, footer }: BottomSheetProps) {
+export default function BottomSheet({ visible, title, onClose, children, footer, onBack }: BottomSheetProps) {
   const { colors, radius } = useTheme();
   const insets = useSafeAreaInsets();
 
@@ -50,6 +52,11 @@ export default function BottomSheet({ visible, title, onClose, children, footer 
         >
           <View style={[styles.grabber, { backgroundColor: colors.borderDivider }]} />
           <View style={styles.headerRow}>
+            {onBack && (
+              <Pressable onPress={onBack} accessibilityRole="button" accessibilityLabel="뒤로" style={styles.backBtn}>
+                <Icon name="chevronLeft" size={24} color={colors.textPrimary} />
+              </Pressable>
+            )}
             <Text style={[typography.sheetTitle, styles.title, { color: colors.textPrimary }]} numberOfLines={1}>
               {title}
             </Text>
@@ -103,6 +110,15 @@ const styles = StyleSheet.create({
   },
   title: {
     flex: 1,
+  },
+  // 화살표가 제목 글씨 줄에 맞아 보이게 왼쪽으로 당긴다(닫기 ×와 대칭).
+  backBtn: {
+    width: 44,
+    height: 44,
+    marginLeft: -12,
+    marginRight: -8,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   closeBtn: {
     width: 44,
