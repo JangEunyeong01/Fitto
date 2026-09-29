@@ -13,7 +13,8 @@ import { useTheme } from '../../theme/useTheme';
 import { useAppStore, type ObInfo } from '../../store/useAppStore';
 import { useToastStore } from '../../store/useToastStore';
 import { INPUT_LIMITS, birthYearLimits } from '../../utils/goals';
-import { typography } from '../../theme/tokens';
+import { typography, weight } from '../../theme/tokens';
+import GlassCard from '../../components/GlassCard';
 import { PERSONA_OPTIONS, STEP_LABELS, TOTAL_STEPS } from './onboardingData';
 import { ACTIVITY_OPTIONS, AVOID_TAGS, DISEASE_TAGS, GOAL_OPTIONS, TASTE_TAGS } from '../../constants/codes';
 
@@ -198,7 +199,8 @@ export default function OnboardingScreen() {
   const ctaLabel = step === 0 ? '시작하기' : step === TOTAL_STEPS - 1 ? '피또와 시작하기' : '다음';
 
   return (
-    <ScreenBackground>
+    // 시간대 색은 홈에만(개편 규칙). 온보딩은 바탕색만.
+    <ScreenBackground showTimeGradient={false}>
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -229,7 +231,7 @@ export default function OnboardingScreen() {
                 남는 자리는 아래가 아니라 위에 두어(flex-end) 제목이 본문에서 떨어지지 않게 한다.
               */}
               <View style={styles.header}>
-                <Text style={[styles.stepLabel, { color: colors.textPrimary }]}>{STEP_LABELS[step]}</Text>
+                <Text style={[styles.stepLabel, { color: colors.textSecondary }]}>{STEP_LABELS[step]}</Text>
                 <Text style={[typography.onboardingTitle, styles.title, { color: colors.textPrimary }]}>{TITLES[step]}</Text>
                 {!!DESCRIPTIONS[step] && (
                   <Text style={[styles.desc, { color: colors.textSecondary }]}>{DESCRIPTIONS[step]}</Text>
@@ -239,27 +241,36 @@ export default function OnboardingScreen() {
               <View style={styles.body}>
                 {step === 1 && <BasicInfoForm value={obInfo} onChange={setObInfo} />}
 
-                {step === 2 &&
-                  ACTIVITY_OPTIONS.map((o) => (
-                    <OptionRow
-                      key={o.code}
-                      title={o.label}
-                      desc={o.desc}
-                      selected={obPick.activity === o.code}
-                      onPress={() => setObPick({ activity: o.code })}
-                    />
-                  ))}
+                {/* 고르는 목록은 카드 한 장 안에 줄로(시안 29). 줄마다 박스를 두르지 않는다. */}
+                {step === 2 && (
+                  <GlassCard noPadding>
+                    {ACTIVITY_OPTIONS.map((o, i) => (
+                      <OptionRow
+                        key={o.code}
+                        title={o.label}
+                        desc={o.desc}
+                        selected={obPick.activity === o.code}
+                        onPress={() => setObPick({ activity: o.code })}
+                        divider={i > 0}
+                      />
+                    ))}
+                  </GlassCard>
+                )}
 
-                {step === 3 &&
-                  GOAL_OPTIONS.map((o) => (
-                    <OptionRow
-                      key={o.code}
-                      title={o.label}
-                      desc={o.desc}
-                      selected={obPick.goal === o.code}
-                      onPress={() => setObPick({ goal: o.code })}
-                    />
-                  ))}
+                {step === 3 && (
+                  <GlassCard noPadding>
+                    {GOAL_OPTIONS.map((o, i) => (
+                      <OptionRow
+                        key={o.code}
+                        title={o.label}
+                        desc={o.desc}
+                        selected={obPick.goal === o.code}
+                        onPress={() => setObPick({ goal: o.code })}
+                        divider={i > 0}
+                      />
+                    ))}
+                  </GlassCard>
+                )}
 
                 {step === 4 && (
                   <TagPicker
@@ -297,16 +308,20 @@ export default function OnboardingScreen() {
                   />
                 )}
 
-                {step === 7 &&
-                  PERSONA_OPTIONS.map((o) => (
-                    <OptionRow
-                      key={o.key}
-                      title={o.label}
-                      desc={o.desc}
-                      selected={obPick.persona === o.key}
-                      onPress={() => setObPick({ persona: o.key })}
-                    />
-                  ))}
+                {step === 7 && (
+                  <GlassCard noPadding>
+                    {PERSONA_OPTIONS.map((o, i) => (
+                      <OptionRow
+                        key={o.key}
+                        title={o.label}
+                        desc={o.desc}
+                        selected={obPick.persona === o.key}
+                        onPress={() => setObPick({ persona: o.key })}
+                        divider={i > 0}
+                      />
+                    ))}
+                  </GlassCard>
+                )}
 
                 {step === 8 && <CompleteStep />}
               </View>
@@ -331,9 +346,10 @@ export default function OnboardingScreen() {
           </ScrollView>
 
           <View style={styles.buttonRow}>
+            {/* "이전"은 박스 대신 회색 글씨(시안 29). 칠한 "다음"과 무게가 같아 보이지 않게. */}
             {step > 0 && (
-              <Pressable onPress={() => setStep(step - 1)} style={[styles.prevButton, { borderColor: colors.borderDivider }]}>
-                <Text style={[styles.prevLabel, { color: colors.textPrimary }]}>이전</Text>
+              <Pressable onPress={() => setStep(step - 1)} accessibilityRole="button" style={styles.prevButton}>
+                <Text style={[styles.prevLabel, { color: colors.textSecondary }]}>이전</Text>
               </Pressable>
             )}
             <PrimaryButton label={ctaLabel} onPress={handleNext} inactive={!canProceed()} style={styles.nextButton} />
@@ -363,8 +379,12 @@ const styles = StyleSheet.create({
     minHeight: HEADER_MIN_H,
     justifyContent: 'flex-end',
   },
-  // 진행 상황을 알려주는 유일한 텍스트라 sub 색으로는 너무 흐렸다. 자간과 굵기로 위계를 준다.
-  stepLabel: typography.sectionLabel,
+  // 단계 라벨은 작은 대문자 느낌으로 자간을 벌려 제목과 구분한다(시안 27~31).
+  stepLabel: {
+    fontSize: 12,
+    ...weight(700),
+    letterSpacing: 0.8,
+  },
   title: {
     marginTop: 8,
   },
@@ -387,18 +407,19 @@ const styles = StyleSheet.create({
   },
   buttonRow: {
     flexDirection: 'row',
-    gap: 10,
+    alignItems: 'center',
+    gap: 16,
     marginTop: 12,
   },
   prevButton: {
-    width: 52,
-    height: 52,
-    borderRadius: 14,
-    borderWidth: 1,
-    alignItems: 'center',
+    minHeight: 44,
+    paddingHorizontal: 6,
     justifyContent: 'center',
   },
-  prevLabel: typography.rowLabel,
+  prevLabel: {
+    fontSize: 15,
+    ...weight(600),
+  },
   nextButton: {
     flex: 1,
   },

@@ -1,95 +1,93 @@
 import React from 'react';
 import { Pressable, Text, View, StyleSheet } from 'react-native';
-import { BlurView } from 'expo-blur';
+import Icon from '../../components/Icon';
 import { useTheme } from '../../theme/useTheme';
-import { brand, radius, selection, typography } from '../../theme/tokens';
+import { brand, weight } from '../../theme/tokens';
 
 interface OptionRowProps {
   title: string;
   desc?: string;
   selected: boolean;
   onPress: () => void;
+  /** 위 줄과 가르는 얇은 선. 첫 줄만 false. */
+  divider?: boolean;
 }
 
-// README: 선택 옵션 행 — 패딩 15/16, r18, 글래스. 선택 시 테두리 blue.9, 배경 blue.16,
-// 그림자 blue.24, 우측 20px 원형 마커가 6px solid blue 링으로 채워짐.
-export default function OptionRow({ title, desc, selected, onPress }: OptionRowProps) {
-  const { colors, mode } = useTheme();
+/**
+ * 하나를 고르는 목록의 한 줄(시안 17-1·29). 이름·설명과 오른쪽 동그라미.
+ * 예전엔 줄마다 유리 박스였는데, 카드 한 장 안에 얇은 선으로 나눈다. 카드(또는 시트)는 부르는 쪽이 감싼다.
+ * 온보딩(활동량·목표·피또 성격)과 프로필 시트가 같이 쓴다.
+ */
+export default function OptionRow({ title, desc, selected, onPress, divider }: OptionRowProps) {
+  const { colors } = useTheme();
 
   return (
     <Pressable
       onPress={onPress}
-      style={styles.wrap}
-      // 여럿 중 하나를 고르는 행이라 radio로 알린다. 예전에는 스크린리더가 누를 수 있는 요소인지도 몰랐다.
+      // 여럿 중 하나를 고르는 줄이라 radio로 알린다.
       accessibilityRole="radio"
       accessibilityState={{ checked: selected }}
       accessibilityLabel={desc ? `${title}, ${desc}` : title}
+      style={({ pressed }) => [styles.row, pressed && { backgroundColor: colors.fillMuted }]}
     >
-      <View
-        style={[
-          styles.shadowWrap,
-          selected && { shadowColor: selection.shadow, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 1, shadowRadius: 18, elevation: 4 },
-        ]}
-      >
-        <BlurView intensity={25} tint={mode === 'dark' ? 'dark' : 'light'} style={[styles.blur, { borderColor: selected ? colors.borderSelected : colors.borderInput }]}>
-          <View
-            style={[
-              styles.inner,
-              { backgroundColor: selected ? selection.bg : colors.surface },
-            ]}
-          >
-            <View style={styles.textCol}>
-              <Text style={[styles.title, { color: colors.textPrimary }]}>{title}</Text>
-              {!!desc && <Text style={[styles.desc, { color: colors.textSecondary }]}>{desc}</Text>}
-            </View>
-            <View style={[styles.marker, { borderColor: selected ? colors.borderSelected : colors.borderInput }]}>
-              {selected && <View style={styles.markerFill} />}
-            </View>
-          </View>
-        </BlurView>
+      {divider && <View style={[styles.divider, { backgroundColor: colors.borderDivider }]} />}
+      <View style={styles.textCol}>
+        <Text style={[styles.title, { color: colors.textPrimary }, selected && weight(700)]}>{title}</Text>
+        {!!desc && <Text style={[styles.desc, { color: colors.textSecondary }]}>{desc}</Text>}
       </View>
+      <RadioMark on={selected} />
     </Pressable>
   );
 }
 
+/** 안 고름은 빈 원, 고름은 파란 원 + 진한 체크. 색만이 아니라 체크 모양으로도 구분된다. */
+function RadioMark({ on }: { on: boolean }) {
+  const { colors } = useTheme();
+  if (on) {
+    return (
+      <View style={[styles.mark, { backgroundColor: brand.blue }]}>
+        <Icon name="check" size={16} color={colors.textOnPrimary} strokeWidth={2.4} />
+      </View>
+    );
+  }
+  return <View style={[styles.mark, styles.markOff, { borderColor: colors.borderInput }]} />;
+}
+
 const styles = StyleSheet.create({
-  wrap: {
-    marginBottom: 10,
-  },
-  shadowWrap: {
-    borderRadius: radius.optionRow,
-  },
-  blur: {
-    borderRadius: radius.optionRow,
-    borderWidth: 1,
-    overflow: 'hidden',
-  },
-  inner: {
+  row: {
+    minHeight: 64,
+    paddingHorizontal: 18,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 15,
-    paddingHorizontal: 16,
+    gap: 12,
+  },
+  // 선은 좌우를 18씩 들여 글씨 폭에 맞춘다(시안 17-1·29).
+  divider: {
+    position: 'absolute',
+    top: 0,
+    left: 18,
+    right: 18,
+    height: StyleSheet.hairlineWidth,
   },
   textCol: {
     flex: 1,
-    gap: 3,
   },
-  title: typography.itemTitle,
-  desc: typography.bodySm,
-  marker: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    borderWidth: 2,
+  title: {
+    fontSize: 15,
+    ...weight(600),
+  },
+  desc: {
+    fontSize: 12,
+    marginTop: 3,
+  },
+  mark: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  markerFill: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    borderWidth: 6,
-    borderColor: brand.blue,
+  markOff: {
+    borderWidth: 1.5,
   },
 });

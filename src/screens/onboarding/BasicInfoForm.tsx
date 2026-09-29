@@ -22,7 +22,6 @@ export default function BasicInfoForm({ value, onChange }: BasicInfoFormProps) {
     <View style={styles.root}>
       <Field label="이름">
         <TextField
-          onBackground
           clearable
           value={value.name}
           onChangeText={(t) => onChange({ name: t })}
@@ -41,7 +40,6 @@ export default function BasicInfoForm({ value, onChange }: BasicInfoFormProps) {
               onPress={() => onChange({ gender: g.code })}
               size="field"
               fill
-              onBackground
             />
           ))}
         </View>
@@ -49,7 +47,6 @@ export default function BasicInfoForm({ value, onChange }: BasicInfoFormProps) {
 
       <Field label="생년월일">
         <BirthDateFields
-          onBackground
           value={{ year: value.birthYear, month: value.birthMonth, day: value.birthDay }}
           onChange={(p) =>
             onChange({
@@ -64,7 +61,6 @@ export default function BasicInfoForm({ value, onChange }: BasicInfoFormProps) {
       <View style={styles.row}>
         <Field label="키 (cm)" style={styles.col}>
           <TextField
-            onBackground
             value={value.height}
             onChangeText={(t) => onChange({ height: t.replace(/[^0-9.]/g, '') })}
             keyboardType="numeric"
@@ -73,7 +69,6 @@ export default function BasicInfoForm({ value, onChange }: BasicInfoFormProps) {
         </Field>
         <Field label="몸무게 (kg)" style={styles.col}>
           <TextField
-            onBackground
             value={value.weight}
             onChangeText={(t) => onChange({ weight: t.replace(/[^0-9.]/g, '') })}
             keyboardType="numeric"

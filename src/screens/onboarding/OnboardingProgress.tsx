@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import ProgressBar from '../../components/ProgressBar';
 import { useTheme } from '../../theme/useTheme';
-import { accentGradient, tabularNums, typography } from '../../theme/tokens';
+import { brand, tabularNums, weight } from '../../theme/tokens';
 
 interface OnboardingProgressProps {
   /** 0..1. 인트로·완료를 포함한 전체 화면 기준이라 바는 끊김 없이 찬다. */
@@ -23,7 +23,8 @@ export default function OnboardingProgress({ progress, stepNumber, stepTotal }: 
   return (
     <View style={styles.row}>
       <View style={styles.barWrap}>
-        <ProgressBar progress={progress} height={5} radius={3} gradientColors={accentGradient} />
+        {/* 그라데이션 대신 단색(개편 규칙: 강조색은 파랑 하나). */}
+        <ProgressBar progress={progress} height={4} radius={2} color={brand.blue} />
       </View>
       {/* 숫자가 없는 화면에서도 자리는 남겨둬야 바 길이가 안 흔들린다. */}
       <Text style={[styles.count, { color: colors.textSecondary }]}>
@@ -43,7 +44,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   count: {
-    ...typography.label,
+    fontSize: 13,
+    ...weight(600),
     // 단계를 넘길 때 숫자 폭이 흔들리지 않게 고정폭 숫자를 쓴다.
     fontVariant: tabularNums,
     minWidth: 34,

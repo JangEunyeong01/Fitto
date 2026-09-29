@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
-import { BlurView } from 'expo-blur';
-import TextField from '../../components/TextField';
+import { View, Text, Pressable, TextInput, Platform, StyleSheet, type TextStyle } from 'react-native';
+import SelectChip from '../../components/SelectChip';
 import Icon from '../../components/Icon';
 import { useTheme } from '../../theme/useTheme';
-import { alpha, brand, radius, selection, typography, weight } from '../../theme/tokens';
+import { typography, weight } from '../../theme/tokens';
 import { useToastStore } from '../../store/useToastStore';
 import type { TagOption } from '../../constants/codes';
 import type { TagSelection } from '../../store/useAppStore';
+
+const noWebOutline = Platform.OS === 'web' ? ({ outlineStyle: 'none' } as unknown as TextStyle) : null;
 
 interface TagPickerProps {
   tags: readonly TagOption[];
@@ -22,8 +23,11 @@ interface TagPickerProps {
 }
 
 /**
- * README "태그 + 직접 입력 단계 구조" (건강 상태·식단 취향·못 먹는 음식 공통).
- * 2열 태그 그리드 → 직접 입력 + 추가 → 선택 칩(× 제거) → 없음 링크.
+ * 여러 개를 고르는 태그(시안 17-2·30). 목록 칩 + 직접 입력 + "해당사항 없음".
+ * 온보딩(건강 상태·식단 취향·못 먹는 음식)과 프로필 시트가 같이 쓴다.
+ *
+ * 직접 적은 항목은 목록 칩 뒤에 골라진 칩으로 붙고, 누르면 빠진다.
+ * 입력칸은 "입력 | 지우기 × | 추가"를 한 칸 안에 둔다 — 칸 밖에 버튼을 두면 화면 아래 "다음"과 칠한 버튼이 둘로 보인다.
  */
 export default function TagPicker({
   tags,
@@ -34,195 +38,131 @@ export default function TagPicker({
   placeholder,
   noneLabel,
 }: TagPickerProps) {
-  const { colors, mode } = useTheme();
+  const { colors } = useTheme();
   const showToast = useToastStore((s) => s.show);
   const [draft, setDraft] = useState('');
+  const ready = draft.trim().length > 0;
 
   const addCustom = () => {
     const input = draft.trim();
-    if (!input) {
-      showToast('내용을 입력해 주세요');
-      return;
-    }
-    // 목록에 있는 걸 직접 적었으면 그 태그를 켜준다. 같은 뜻이 코드와 문자열로 둘 다 남지 않게.
+    if (!input) return;
+    // 목록에 있는 걸 직접 적었으면 그 칩을 켠다. 같은 뜻이 코드와 글자로 둘 다 남지 않게.
     const known = tags.find((t) => t.label === input);
     if (known) {
       if (!value.codes.includes(known.code)) onToggle(known.code);
-      else showToast('이미 선택했어요');
-      setDraft('');
-      return;
+      else showToast('이미 골랐어요');
+    } else if (value.custom.includes(input)) {
+      showToast('이미 골랐어요');
+    } else {
+      onToggleCustom(input);
     }
-    if (value.custom.includes(input)) {
-      showToast('이미 선택했어요');
-      return;
-    }
-    onToggleCustom(input);
     setDraft('');
   };
 
   return (
     <View>
-      <View style={styles.grid}>
-        {tags.map((tag) => {
-          const on = value.codes.includes(tag.code);
-          return (
-            <Pressable
-              key={tag.code}
-              onPress={() => onToggle(tag.code)}
-              style={styles.gridSlot}
-              // 여러 개를 고를 수 있는 태그라 checkbox로 알린다.
-              accessibilityRole="checkbox"
-              accessibilityState={{ checked: on }}
-              accessibilityLabel={tag.label}
-            >
-              <View style={[on && styles.tagShadow]}>
-                <BlurView
-                  intensity={20}
-                  tint={mode === 'dark' ? 'dark' : 'light'}
-                  style={[styles.tag, { borderColor: on ? colors.borderSelected : colors.borderInput }]}
-                >
-                  <View style={[styles.tagInner, { backgroundColor: on ? selection.bg : colors.surface }]}>
-                    <Text style={[styles.tagText, { color: colors.textPrimary }, weight(on ? 700 : 500)]} numberOfLines={1}>
-                      {tag.label}
-                    </Text>
-                  </View>
-                </BlurView>
-              </View>
-            </Pressable>
-          );
-        })}
+      <View style={styles.chipWrap}>
+        {tags.map((t) => (
+          <SelectChip key={t.code} label={t.label} selected={value.codes.includes(t.code)} onPress={() => onToggle(t.code)} />
+        ))}
+        {value.custom.map((c) => (
+          <SelectChip key={`custom-${c}`} label={c} selected onPress={() => onToggleCustom(c)} />
+        ))}
       </View>
 
-      <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>직접 입력</Text>
-      <View style={styles.inputRow}>
-        <TextField
-          onBackground
+      <Text style={[styles.label, { color: colors.textSecondary }]}>직접 입력</Text>
+      <View style={[styles.inputRow, { backgroundColor: colors.fillMuted }]}>
+        <TextInput
           value={draft}
           onChangeText={setDraft}
           onSubmitEditing={addCustom}
           placeholder={placeholder}
+          placeholderTextColor={colors.textPlaceholder}
           returnKeyType="done"
           // 서버가 받는 직접 입력 태그 길이와 같은 값. 넘기면 동기화 때 거절당한다.
           maxLength={20}
-          style={styles.input}
+          accessibilityLabel={placeholder}
+          style={[styles.input, { color: colors.textPrimary }, noWebOutline]}
         />
-        {/* 화면의 주요 액션은 하단 "다음"이다. 여기까지 그라데이션을 쓰면 CTA가 둘로 보여서 아웃라인으로 낮췄다. */}
-        <Pressable
-          onPress={addCustom}
-          style={[styles.addBtn, { borderColor: colors.borderInput, backgroundColor: colors.surfaceSolid }]}
-          accessibilityRole="button"
-        >
-          <Text style={[styles.addLabel, { color: colors.textPrimary }]}>추가</Text>
+        {ready && (
+          <Pressable onPress={() => setDraft('')} accessibilityRole="button" accessibilityLabel="입력 지우기" style={styles.clearBtn}>
+            <Icon name="close" size={16} color={colors.textSecondary} />
+          </Pressable>
+        )}
+        <View style={[styles.inputDivider, { backgroundColor: colors.fillStrong }]} />
+        <Pressable onPress={addCustom} accessibilityRole="button" accessibilityState={{ disabled: !ready }} style={styles.addBtn}>
+          <Text style={[styles.addLabel, { color: ready ? colors.textAccent : colors.textPlaceholder }]}>추가</Text>
         </Pressable>
       </View>
 
-      {/* 그리드에 있는 태그는 위에서 이미 선택 표시가 되므로 여기에는 직접 적은 값만 나열한다. */}
-      {value.custom.length > 0 && (
-        <>
-          <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>직접 입력한 항목</Text>
-          <View style={styles.chipWrap}>
-            {value.custom.map((item) => (
-              <Pressable
-                key={item}
-                onPress={() => onToggleCustom(item)}
-                style={[styles.chip, { backgroundColor: selection.bg, borderColor: colors.borderSelected }]}
-                accessibilityRole="button"
-                accessibilityLabel={`${item} 지우기`}
-                hitSlop={{ top: 6, bottom: 6 }}
-              >
-                <Text style={[styles.chipText, { color: colors.textPrimary }]}>{item}</Text>
-                <Icon name="close" size={16} color={colors.textSecondary} />
-              </Pressable>
-            ))}
-          </View>
-        </>
-      )}
-
-      <Pressable onPress={onClear} style={styles.noneWrap}>
-        <Text style={[styles.noneText, { color: colors.textSecondary }]}>{noneLabel}</Text>
+      <Pressable
+        onPress={onClear}
+        accessibilityRole="button"
+        style={({ pressed }) => [styles.noneBtn, { opacity: pressed ? 0.6 : 1 }]}
+      >
+        <Text style={[styles.noneLabel, { color: colors.textSecondary }]}>{noneLabel}</Text>
       </Pressable>
     </View>
   );
 }
 
-const GAP = 9;
-
 const styles = StyleSheet.create({
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginHorizontal: -GAP / 2,
-  },
-  gridSlot: {
-    width: '50%',
-    paddingHorizontal: GAP / 2,
-    paddingBottom: GAP,
-  },
-  tagShadow: {
-    shadowColor: alpha(brand.blue, 0.22),
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 1,
-    shadowRadius: 14,
-    elevation: 3,
-    borderRadius: 14,
-  },
-  tag: {
-    height: 48,
-    borderRadius: 14,
-    borderWidth: 1,
-    overflow: 'hidden',
-  },
-  tagInner: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 10,
-  },
-  tagText: typography.input,
-  sectionLabel: {
-    ...typography.label,
-    marginTop: 12,
-    marginBottom: 8,
-  },
-  inputRow: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  input: {
-    flex: 1,
-  },
-  addBtn: {
-    width: 66,
-    height: 48,
-    borderRadius: 14,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  addLabel: typography.buttonLabelSm,
   chipWrap: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
   },
-  chip: {
-    height: 34,
-    borderRadius: radius.chip,
-    borderWidth: 1,
-    paddingHorizontal: 12,
+  label: {
+    ...typography.label,
+    marginTop: 14,
+    marginBottom: 6,
+  },
+  inputRow: {
+    height: 48,
+    borderRadius: 12,
+    paddingLeft: 14,
+    paddingRight: 10,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
   },
-  chipText: typography.unit,
-  noneWrap: {
-    // 이 단계를 건너뛰는 유일한 방법이라 글자 높이만큼만 눌리면 안 된다.
-    marginTop: 8,
-    paddingVertical: 12,
+  input: {
+    flex: 1,
+    minWidth: 0,
+    height: 48,
+    fontSize: 15,
+    padding: 0,
+  },
+  clearBtn: {
+    width: 36,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  inputDivider: {
+    width: 1,
+    height: 18,
+    marginLeft: 8,
+  },
+  addBtn: {
+    height: 44,
+    marginRight: -4,
+    paddingLeft: 12,
+    paddingRight: 4,
+    justifyContent: 'center',
+  },
+  addLabel: {
+    fontSize: 15,
+    ...weight(700),
+  },
+  // 이 단계를 건너뛰는 유일한 방법이라 글자 높이만큼만 눌리면 안 된다.
+  noneBtn: {
     alignSelf: 'center',
+    minHeight: 44,
+    justifyContent: 'center',
+    marginTop: 8,
   },
-  noneText: {
-    ...typography.body,
-    textDecorationLine: 'underline',
+  noneLabel: {
+    fontSize: 14,
+    ...weight(600),
   },
 });

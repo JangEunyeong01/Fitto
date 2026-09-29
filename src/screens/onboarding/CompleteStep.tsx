@@ -1,10 +1,11 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import FittoCharacter from '../../components/FittoCharacter';
+import GlassCard from '../../components/GlassCard';
 import { useTheme } from '../../theme/useTheme';
 import { useAppStore } from '../../store/useAppStore';
 import { ageFromBirth, calculateGoals } from '../../utils/goals';
-import { typography } from '../../theme/tokens';
+import { weight } from '../../theme/tokens';
 import {
   ACTIVITY_OPTIONS,
   AVOID_TAGS,
@@ -77,29 +78,31 @@ export default function CompleteStep() {
         </View>
       </View>
 
-      <View style={styles.cardRow}>
-        <View style={[styles.card, { backgroundColor: colors.surfaceSubtle, borderColor: colors.borderGlass }]}>
-          <Text style={[styles.cardLabel, { color: colors.textSecondary }]}>목표 칼로리</Text>
-          <Text style={[styles.cardValue, { color: colors.textPrimary }]}>{result.kcal.toLocaleString()}</Text>
-          <Text style={[styles.cardCaption, { color: colors.textSecondary }]}>kcal · BMR {result.bmr.toLocaleString()}</Text>
+      {/* 목표 두 개와 근거를 카드 한 장에(시안 31). 상자 세 개로 나누면 숫자보다 상자가 먼저 보인다. */}
+      <GlassCard noPadding>
+        <View style={styles.goalRow}>
+          <View style={styles.goalCol}>
+            <Text style={[styles.cardLabel, { color: colors.textSecondary }]}>목표 칼로리</Text>
+            <Text style={[styles.cardValue, { color: colors.textPrimary }]}>{result.kcal.toLocaleString()}</Text>
+            <Text style={[styles.cardCaption, { color: colors.textSecondary }]}>kcal · BMR {result.bmr.toLocaleString()}</Text>
+          </View>
+          <View style={[styles.vDivider, { backgroundColor: colors.borderDivider }]} />
+          <View style={styles.goalCol}>
+            <Text style={[styles.cardLabel, { color: colors.textSecondary }]}>물 목표</Text>
+            <Text style={[styles.cardValue, { color: colors.textPrimary }]}>{result.water.toLocaleString()}</Text>
+            <Text style={[styles.cardCaption, { color: colors.textSecondary }]}>ml · 체중·활동량 기준</Text>
+          </View>
         </View>
-        <View style={[styles.card, { backgroundColor: colors.surfaceSubtle, borderColor: colors.borderGlass }]}>
-          <Text style={[styles.cardLabel, { color: colors.textSecondary }]}>물 목표</Text>
-          <Text style={[styles.cardValue, { color: colors.textPrimary }]}>{result.water.toLocaleString()}</Text>
-          <Text style={[styles.cardCaption, { color: colors.textSecondary }]}>ml · 체중·활동량 기준</Text>
-        </View>
-      </View>
-
-      <View style={[styles.summary, { backgroundColor: colors.surfaceSubtle }]}>
         {summaryRows.map((row) => (
           <View key={row.label} style={styles.summaryRow}>
+            <View style={[styles.hDivider, { backgroundColor: colors.borderDivider }]} />
             <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>{row.label}</Text>
             <Text style={[styles.summaryValue, { color: colors.textPrimary }]} numberOfLines={2}>
               {row.values.length ? row.values.join(', ') : row.empty}
             </Text>
           </View>
         ))}
-      </View>
+      </GlassCard>
 
       <Text style={[styles.notice, { color: colors.textSecondary }]}>
         이 정보를 반영한 추천 식단이 준비됐어요. 의료 진단을 대체하지 않습니다.
@@ -112,50 +115,74 @@ const styles = StyleSheet.create({
   greetRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 14,
+    marginBottom: 16,
   },
   greetText: {
     flex: 1,
     gap: 3,
   },
-  greetName: typography.rowLabel,
-  greetMeta: typography.bodySm,
-  cardRow: {
+  greetName: {
+    fontSize: 16,
+    ...weight(700),
+  },
+  greetMeta: {
+    fontSize: 13,
+    ...weight(400),
+  },
+  goalRow: {
     flexDirection: 'row',
-    gap: 12,
-    marginTop: 18,
   },
-  card: {
+  goalCol: {
     flex: 1,
-    borderRadius: 16,
-    borderWidth: 1,
-    padding: 16,
-    gap: 4,
+    paddingVertical: 16,
+    paddingHorizontal: 18,
   },
-  cardLabel: typography.label,
-  cardValue: typography.bigNumber,
-  cardCaption: typography.captionSm,
-  summary: {
-    borderRadius: 16,
-    padding: 16,
-    marginTop: 14,
-    gap: 10,
+  vDivider: {
+    width: StyleSheet.hairlineWidth,
+  },
+  cardLabel: {
+    fontSize: 12,
+    ...weight(600),
+  },
+  cardValue: {
+    fontSize: 28,
+    ...weight(700),
+    letterSpacing: -1.1,
+    lineHeight: 30,
+    marginTop: 6,
+  },
+  cardCaption: {
+    fontSize: 12,
+    ...weight(500),
   },
   summaryRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 18,
+  },
+  hDivider: {
+    position: 'absolute',
+    top: 0,
+    left: 18,
+    right: 18,
+    height: StyleSheet.hairlineWidth,
   },
   summaryLabel: {
-    ...typography.label,
+    fontSize: 13,
     width: 62,
   },
   summaryValue: {
-    ...typography.unit,
+    fontSize: 13,
+    ...weight(600),
     flex: 1,
   },
   notice: {
-    ...typography.bodySm,
-    marginTop: 14,
+    fontSize: 13,
+    ...weight(400),
+    lineHeight: 13 * 1.5,
+    marginTop: 12,
   },
 });
