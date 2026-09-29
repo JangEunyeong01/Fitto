@@ -3,7 +3,9 @@ import { StyleSheet, Text, Pressable, View, Animated, Easing } from 'react-nativ
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useToastStore, type ToastAction } from '../store/useToastStore';
 import { tabBarSpace } from '../navigation/TabBar';
-import { motion, overlay, radius, spacing, typography, white } from '../theme/tokens';
+import { BlurView } from 'expo-blur';
+import { useTheme } from '../theme/useTheme';
+import { alpha, motion, radius, spacing, tabBarShadowColor, typography } from '../theme/tokens';
 
 /**
  * "실행 취소"가 달린 토스트는 더 오래 둔다(UI 기준서 5-7).
@@ -11,13 +13,15 @@ import { motion, overlay, radius, spacing, typography, white } from '../theme/to
  */
 const ACTION_VISIBLE = 5000;
 
-/** 어두운 토스트 위 글씨 버튼. 짙은 바탕 위라 파스텔을 조금 밝혀 쓴다(시안 03: #A9D6EE). */
-const ACTION_COLOR = '#A9D6EE';
-
-// README: left/right 16, padding 13/15, r16, 흰 글씨. 반투명+흐림은 뒤가 비쳐 안 읽혀서 불투명 단색 + 그림자로 바꿨다.
-// 떠 있는 탭바 바로 위에 뜬다(예전 bottom 88은 탭바와 겹쳤다).
+/**
+ * 밝은 유리 토스트 — 탭바·카드와 같은 계열(흐림 + 흰 면 95% + 유리 테두리 + 탭바 그림자), 글씨는 진하게.
+ * 시안은 어두운 반투명(.9)이었는데 탭바와 겹쳐 뒤가 비쳤고, 불투명 남색으로 바꾸니 홈에서 너무 무거웠다.
+ * 88%로 깔았더니 흰 카드 위에서 뒤 글씨가 비쳐 95%로 올렸다. 카드와는 그림자로 떨어져 보인다.
+ * 떠 있는 탭바 바로 위에 뜬다(예전 bottom 88은 탭바와 겹쳤다).
+ */
 export default function Toast() {
   const insets = useSafeAreaInsets();
+  const { colors, mode } = useTheme();
   const { message, action, seq } = useToastStore();
   const opacity = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(motion.fadeInOffsetY)).current;
@@ -88,9 +92,15 @@ export default function Toast() {
       style={[styles.wrap, { bottom: tabBarSpace(insets.bottom) - 16, opacity, transform: [{ translateY }] }]}
       accessibilityLiveRegion="polite"
     >
-      <View style={[styles.blur, shownAction && styles.blurWithAction]}>
+      <View style={[styles.shadow, { shadowColor: tabBarShadowColor }]}>
+      <BlurView
+        intensity={40}
+        tint={mode === 'dark' ? 'dark' : 'light'}
+        style={[styles.blur, { borderColor: colors.borderGlass }]}
+      >
+      <View style={[styles.face, shownAction && styles.faceWithAction, { backgroundColor: alpha(colors.surfaceSolid, 0.95) }]}>
         <View style={styles.row}>
-          <Text style={[styles.text, shownAction && styles.textLeft]}>{text}</Text>
+          <Text style={[styles.text, { color: colors.textPrimary }, shownAction && styles.textLeft]}>{text}</Text>
           {shownAction && (
             <Pressable
               onPress={() => {
@@ -101,10 +111,12 @@ export default function Toast() {
               hitSlop={4}
               style={styles.actionBtn}
             >
-              <Text style={styles.actionLabel}>{shownAction.label}</Text>
+              <Text style={[styles.actionLabel, { color: colors.textAccent }]}>{shownAction.label}</Text>
             </Pressable>
           )}
         </View>
+      </View>
+      </BlurView>
       </View>
     </Animated.View>
   );
@@ -118,20 +130,26 @@ const styles = StyleSheet.create({
     zIndex: 999,
     alignItems: 'center',
   },
+  // 탭바와 같은 그림자. 흐린 면은 overflow를 잘라야 해서 그림자는 바깥 틀이 맡는다.
+  shadow: {
+    alignSelf: 'stretch',
+    borderRadius: radius.blockMid,
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 1,
+    shadowRadius: 30,
+    elevation: 8,
+  },
   blur: {
-    backgroundColor: overlay.toastBg,
+    borderRadius: radius.blockMid,
+    borderWidth: 1,
+    overflow: 'hidden',
+  },
+  face: {
     paddingVertical: 13,
     paddingHorizontal: 15,
-    borderRadius: radius.blockMid,
-    alignSelf: 'stretch',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.18,
-    shadowRadius: 20,
-    elevation: 10,
   },
   // 버튼 자리를 위해 위아래·오른쪽 여백을 줄인다(시안 03: 10 10 10 16).
-  blurWithAction: {
+  faceWithAction: {
     paddingVertical: 4,
     paddingLeft: 16,
     paddingRight: 6,
@@ -143,7 +161,6 @@ const styles = StyleSheet.create({
   },
   text: {
     ...typography.value,
-    color: white,
     textAlign: 'center',
     flex: 1,
   },
@@ -157,6 +174,5 @@ const styles = StyleSheet.create({
   },
   actionLabel: {
     ...typography.value,
-    color: ACTION_COLOR,
   },
 });
