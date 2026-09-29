@@ -1,6 +1,5 @@
 import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import GlassCard from '../../../components/GlassCard';
 import TextLink from '../../../components/TextLink';
@@ -61,7 +60,7 @@ export default function StepsCard() {
           <Text style={[styles.goalNum, { color: colors.textSecondary }]}> / {goal.toLocaleString()}</Text>
         </View>
         <View style={styles.barWrap}>
-          <ProgressBar progress={steps / goal} height={8} radius={5} gradientColors={[brand.mint, brand.blue]} />
+          <ProgressBar progress={steps / goal} height={8} radius={5} color={brand.blue} />
         </View>
 
         <View style={styles.chartRow}>
@@ -71,11 +70,8 @@ export default function StepsCard() {
             return (
               <View key={i} style={styles.chartCol}>
                 <View style={[styles.barTrack, { height: BAR_MAX_HEIGHT }]}>
-                  {isToday ? (
-                    <LinearGradient colors={[brand.blue, brand.blueDeep]} style={[styles.bar, { height: h }]} />
-                  ) : (
-                    <View style={[styles.bar, { height: h, backgroundColor: colors.fillMuted }]} />
-                  )}
+                  {/* 오늘만 피또 블루 단색. 그라데이션은 홈 배경에만 둔다(시안 규칙 10). */}
+                  <View style={[styles.bar, { height: h, backgroundColor: isToday ? brand.blue : colors.fillMuted }]} />
                 </View>
                 <Text style={[styles.dayLabel, { color: colors.textSecondary }]}>{labels[i]}</Text>
               </View>

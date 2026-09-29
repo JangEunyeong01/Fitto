@@ -2,9 +2,9 @@ import React, { useRef, useState } from 'react';
 import { View, Text, Pressable, ScrollView, Modal, StyleSheet, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import PrimaryButton from '../../components/PrimaryButton';
 import ScreenBackground from '../../components/ScreenBackground';
 import GlassCard from '../../components/GlassCard';
+import AlertModal from '../../components/AlertModal';
 import ToggleSwitch from '../../components/ToggleSwitch';
 import Icon from '../../components/Icon';
 import SegmentedControl from '../../components/SegmentedControl';
@@ -65,14 +65,11 @@ export default function SettingsScreen() {
   const failedCount = useOutboxStore((s) => s.failed.length);
   const failedNotice = failedCount > 0 ? `올리지 못한 기록 ${failedCount}건` : null;
 
-  // 명세 F-043 데이터 초기화 2단계 확인. 0: 닫힘, 1: 첫 확인, 2: 마지막 확인.
-  // 네이티브 Alert는 웹에서 버튼을 못 달아서 카드 안에서 단계를 넘긴다.
-  const [resetStep, setResetStep] = useState<0 | 1 | 2>(0);
+  // 명세 F-043 데이터 초기화. 되돌릴 수 없어서 탈퇴와 같은 확인창을 띄운다(시안 규칙 24).
+  // 예전엔 카드 안에서 "지울까요?" → "정말요?"를 두 번 물었는데, 두 번 묻는 것보다 무엇이 지워지는지 한 번 정확히 말하는 게 낫다.
+  const [resetOpen, setResetOpen] = useState(false);
   const confirmReset = () => {
-    if (resetStep === 1) {
-      setResetStep(2);
-      return;
-    }
+    setResetOpen(false);
     resetAll();
     // 최근 검색은 세션 스토어라 앱 스토어 초기화에 안 딸려온다.
     useFoodSearchStore.setState({ recent: [] });
@@ -277,39 +274,20 @@ export default function SettingsScreen() {
           <RowDivider />
           <SettingsRow label="약관 및 정책" onPress={() => navigation.navigate('TermsList')} chevron />
           <RowDivider />
-          {resetStep === 0 ? (
-            <SettingsRow label="데이터 초기화" danger onPress={() => setResetStep(1)} />
-          ) : (
-            <View style={styles.resetBox}>
-              <Text style={[styles.rowLabel, { color: colors.textPrimary }]}>
-                {resetStep === 1 ? '모든 기록을 지울까요?' : '정말 초기화할까요?'}
-              </Text>
-              <Text style={[styles.rowDesc, { color: colors.textSecondary }]}>
-                {resetStep === 1
-                  ? '식단·운동·체중 기록과 프로필, 설정이 모두 지워지고 온보딩부터 다시 시작해요.'
-                  : '지운 데이터는 되돌릴 수 없어요.'}
-              </Text>
-              <View style={styles.resetBtns}>
-                <PrimaryButton
-                  label="취소"
-                  variant="secondary"
-                  size="md"
-                  style={styles.flex}
-                  onPress={() => setResetStep(0)}
-                />
-                {/* 빨간 버튼은 마지막 확인에만. 첫 단계는 보조 버튼으로 한 번 더 묻는다. */}
-                <PrimaryButton
-                  label={resetStep === 1 ? '초기화' : '모두 지우기'}
-                  variant={resetStep === 1 ? 'secondary' : 'danger'}
-                  size="md"
-                  style={styles.flex}
-                  onPress={confirmReset}
-                />
-              </View>
-            </View>
-          )}
+          <SettingsRow label="데이터 초기화" danger onPress={() => setResetOpen(true)} />
         </GlassCard>
       </ScrollView>
+
+      <AlertModal
+        visible={resetOpen}
+        onClose={() => setResetOpen(false)}
+        title="모든 기록을 지울까요?"
+        body="식단·운동·체중 기록과 프로필, 설정이 모두 지워지고 온보딩부터 다시 시작해요. 되돌릴 수 없어요."
+        dangerLabel="초기화"
+        onDanger={confirmReset}
+        primaryLabel="취소"
+        onPrimary={() => setResetOpen(false)}
+      />
 
       <Modal visible={menuPos != null} transparent animationType="fade" onRequestClose={() => setMenuPos(null)}>
         {/* 바깥을 누르면 닫힌다. 흐림 없이 아주 옅게만 깔아 메뉴가 떠 있다는 것만 알린다. */}
@@ -402,14 +380,6 @@ const styles = StyleSheet.create({
     ...typography.bodySm,
     marginTop: 10,
   },
-  flex: {
-    flex: 1,
-  },
-  rowLabel: {
-    fontSize: 15,
-    ...weight(600),
-  },
-  rowDesc: typography.caption,
   textBtn: {
     minHeight: 44,
     paddingHorizontal: 4,
@@ -419,15 +389,6 @@ const styles = StyleSheet.create({
   textBtnLabel: {
     fontSize: 14,
     ...weight(600),
-  },
-  resetBox: {
-    gap: 6,
-    padding: PAD,
-  },
-  resetBtns: {
-    flexDirection: 'row',
-    gap: 8,
-    marginTop: 8,
   },
   scrim: {
     position: 'absolute',

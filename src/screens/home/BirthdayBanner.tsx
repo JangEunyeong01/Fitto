@@ -1,76 +1,55 @@
 import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
-import { BlurView } from 'expo-blur';
-import { LinearGradient } from 'expo-linear-gradient';
+import GlassCard from '../../components/GlassCard';
 import Icon from '../../components/Icon';
 import { useTheme } from '../../theme/useTheme';
-import { birthday, radius, typography } from '../../theme/tokens';
+import { typography } from '../../theme/tokens';
 
 interface BirthdayBannerProps {
   name: string;
   onPress: () => void;
 }
 
-// 프로토타입 명세: 헤더 아래 전폭 버튼. 라벤더→피치 반투명 그라데이션 + 블러 + 흰 테두리.
+/**
+ * 생일 당일 홈 헤더 아래 한 줄. 누르면 축하 알림창이 열린다.
+ * 예전엔 라벤더→피치 그라데이션 + 색 네모였는데, 그라데이션은 홈 배경에만 둔다(시안 규칙 10).
+ * 다른 카드와 같은 면에 글씨와 › 하나 — 목록 줄처럼 읽힌다.
+ */
 export default function BirthdayBanner({ name, onPress }: BirthdayBannerProps) {
-  const { colors, mode, shadow } = useTheme();
+  const { colors } = useTheme();
 
   return (
-    <Pressable onPress={onPress} style={({ pressed }) => [styles.wrap, shadow, { opacity: pressed ? 0.85 : 1 }]}>
-      <BlurView
-        intensity={30}
-        tint={mode === 'dark' ? 'dark' : 'light'}
-        style={[styles.blur, { borderColor: colors.borderGlass }]}
+    <GlassCard style={styles.wrap} noPadding>
+      <Pressable
+        onPress={onPress}
+        accessibilityRole="button"
+        style={({ pressed }) => [styles.row, pressed && { backgroundColor: colors.fillMuted }]}
       >
-        <LinearGradient
-          colors={birthday.bannerGradient}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0.6 }}
-          style={styles.inner}
-        >
-          <LinearGradient
-            colors={birthday.avatarGradient}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.avatar}
-          />
-          <View style={styles.textCol}>
-            <Text style={[styles.title, { color: colors.textPrimary }]} numberOfLines={1}>
-              오늘은 {name}님의 생일이에요
-            </Text>
-            <Text style={[styles.sub, { color: colors.textSecondary }]} numberOfLines={1}>
-              피또의 축하 메시지 열어보기
-            </Text>
-          </View>
-          <Icon name="chevronRight" size={16} color={colors.textSecondary} />
-        </LinearGradient>
-      </BlurView>
-    </Pressable>
+        <View style={styles.textCol}>
+          <Text style={[styles.title, { color: colors.textPrimary }]} numberOfLines={1}>
+            오늘은 {name}님의 생일이에요
+          </Text>
+          <Text style={[styles.sub, { color: colors.textSecondary }]} numberOfLines={1}>
+            피또의 축하 메시지 열어보기
+          </Text>
+        </View>
+        <Icon name="chevronRight" size={16} color={colors.textSecondary} />
+      </Pressable>
+    </GlassCard>
   );
 }
 
 const styles = StyleSheet.create({
   wrap: {
-    width: '100%',
     marginTop: 14,
-    borderRadius: radius.optionRow,
   },
-  blur: {
-    borderRadius: radius.optionRow,
-    borderWidth: 1,
-    overflow: 'hidden',
-  },
-  inner: {
+  row: {
+    minHeight: 64,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 11,
+    gap: 8,
+    paddingHorizontal: 18,
     paddingVertical: 12,
-    paddingHorizontal: 14,
-  },
-  avatar: {
-    width: 34,
-    height: 34,
-    borderRadius: 10,
   },
   textCol: {
     flex: 1,

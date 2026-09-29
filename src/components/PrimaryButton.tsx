@@ -9,13 +9,11 @@ import { brand, typography } from '../theme/tokens';
  *
  * - primary: 그 화면을 끝내는 동작 하나(시안 규칙 1). **단색** 피또 블루 + 짙은 글씨.
  *   예전엔 그라데이션 + 그림자였는데, 화면마다 칠해진 버튼이 여러 개라 전부 떠 보였다
- * - secondary: 테두리 박스. 시안 규칙 2로 대부분 글씨 버튼으로 바뀌고, 남는 자리는 탈퇴 확인 모달뿐이다.
- *   화면을 옮길 때마다 하나씩 걷어내고, 다 걷히면 이 변형도 지운다
  * - text: 가벼운 이동(건너뛰기, 나중에 하기). 면 없음
- * - danger: 되돌릴 수 없는 동작의 **최종 확인에만**(데이터 초기화)
- * - dangerOutline: 테두리 박스 + 빨간 글씨. 탈퇴 확인 모달(시안 42)처럼 칠한 "취소"를 권하고 위험한 쪽은 한 발 물릴 때
+ * - dangerOutline: 테두리 박스 + 빨간 글씨. 탈퇴·데이터 초기화 확인창(시안 42, 규칙 24)에서 칠한 "취소" 옆에 둔다.
+ *   빨간 칠 버튼(danger)과 테두리 보조 버튼(secondary)은 모든 화면을 옮긴 뒤 쓰는 곳이 없어져 지웠다
  */
-export type ButtonVariant = 'primary' | 'secondary' | 'text' | 'danger' | 'dangerOutline';
+export type ButtonVariant = 'primary' | 'text' | 'dangerOutline';
 
 /** lg 52: 화면 하단 전폭 / md 44: 카드 안 주요 동작 / sm 36: 행 끝 보조 동작(누르는 영역은 44로 넓힌다). */
 export type ButtonSize = 'lg' | 'md' | 'sm';
@@ -44,12 +42,6 @@ interface PrimaryButtonProps {
 
 const HEIGHT: Record<ButtonSize, number> = { lg: 52, md: 44, sm: 36 };
 
-/**
- * 위험 버튼 면. 흰 글씨와 5.7:1. 다크 모드에서도 같은 값을 쓴다 —
- * 다크의 textDanger는 밝은 주황이라 면으로 쓰면 흰 글씨가 안 읽힌다.
- */
-const DANGER_FACE = '#A84B32';
-const DANGER_PRESSED = '#8F3F29';
 /** 보이는 높이가 44보다 작을 때 위아래로 넓혀 누르는 영역을 44로 맞춘다. */
 const HIT_SLOP: Record<ButtonSize, number> = { lg: 0, md: 0, sm: 4 };
 
@@ -73,18 +65,13 @@ export default function PrimaryButton({
     ? colors.textDisabled
     : variant === 'primary'
       ? colors.textOnPrimary
-      : variant === 'danger'
-        ? '#FFFFFF'
-        : variant === 'dangerOutline'
-          ? colors.textDanger
-          : variant === 'text'
-            ? colors.textAccent
-            : colors.textPrimary;
+      : variant === 'dangerOutline'
+        ? colors.textDanger
+        : colors.textAccent;
 
   const labelStyle = resolvedSize === 'lg' ? typography.buttonLabel : typography.buttonLabelSm;
   // 로딩 물방울은 글씨색을 따르지 않는다(탈퇴 버튼에서 빨간 원이 돌던 문제). 칠한 면 위만 면에 맞춘 색.
-  const dropColor =
-    variant === 'primary' ? colors.textOnPrimary : variant === 'danger' ? '#FFFFFF' : colors.textAccent;
+  const dropColor = variant === 'primary' ? colors.textOnPrimary : colors.textAccent;
   const content = loading ? (
     <LoadingDrops color={dropColor} />
   ) : (
@@ -120,8 +107,7 @@ export default function PrimaryButton({
           // 시안: rgba(44,62,80,.07) 면 + 흐린 글씨. 다크에서도 뒤집히는 fillMuted를 쓴다.
           if (muted) return { backgroundColor: colors.fillMuted };
           if (variant === 'primary') return { backgroundColor: pressed ? brand.blueDeep : brand.blue };
-          if (variant === 'danger') return { backgroundColor: pressed ? DANGER_PRESSED : DANGER_FACE };
-          if (variant === 'secondary' || variant === 'dangerOutline') {
+          if (variant === 'dangerOutline') {
             return {
               backgroundColor: pressed ? colors.surfaceMuted : colors.surfaceSolid,
               borderWidth: 1,

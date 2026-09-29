@@ -151,15 +151,7 @@ export function alpha(color: string, a: number): string {
   return `rgba(${r},${g},${b},${a})`;
 }
 
-export const primaryGradient = [brand.blue, brand.blueDeep] as const;
-export const primaryButtonShadow = alpha(brand.blue, 0.45);
-export const primaryButtonShadowSmall = alpha(brand.blue, 0.4);
-
-/** 로고 사각형·온보딩 진행 점에 쓰는 블루→민트 그라데이션. */
-export const accentGradient = [brand.blue, brand.mint] as const;
-
-/** 생리 주기 배지 그라데이션 (README: lavender .9 → peach .75). */
-export const periodBadgeGradient = [alpha(brand.lavender, 0.9), alpha(brand.peach, 0.75)] as const;
+// 버튼·로고·배지 그라데이션과 버튼 그림자는 개편 때 뺐다(시안 규칙 1·10). 그라데이션은 홈·로그인 배경과 물컵에만 남는다.
 
 /** 선택 상태 (README 온보딩 옵션 행). */
 export const selection = {
@@ -182,17 +174,8 @@ export const overlay = {
 /** 탭바 그림자 (README: 0 12px 30px rgba(44,62,80,.16)). */
 export const tabBarShadowColor = alpha(lightColors.textPrimary, 0.16);
 
-/**
- * 생일 배너·모달.
- * README 토큰 표에는 없고 원본 프로토타입에만 있는 값이라 따로 모아둔다.
- * 옅은 복숭아색은 아침 시간대 색(#FFCBB6)과 같은 값을 쓴다.
- */
-const BIRTHDAY_PEACH = '#FFCBB6';
-
-// 모달의 장식 원·그라데이션 버튼 색은 개편 때 뺐다(시안 38). 공통 알림창(AlertModal)을 쓴다.
+// 생일 모달의 장식 원·그라데이션 버튼, 배너의 라벤더→피치 면은 개편 때 뺐다(시안 38, 규칙 10).
 export const birthday = {
-  bannerGradient: [alpha(brand.lavender, 0.35), alpha(BIRTHDAY_PEACH, 0.35)] as const,
-  avatarGradient: [brand.lavender, BIRTHDAY_PEACH] as const,
   /** 모달 캐릭터 부유 주기 (프로토타입: fbob 3.4s). */
   floatDuration: 3400,
 } as const;

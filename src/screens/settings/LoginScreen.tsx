@@ -158,7 +158,10 @@ export default function LoginScreen() {
         </Pressable>
       </View>
 
-      <PrimaryButton label="로그인" onPress={submit} loading={busy} inactive={!email.trim() || !password} />
+      {/* 합칠지 묻는 동안은 이미 로그인을 누른 뒤라 숨긴다. 칠한 버튼이 둘이 되면 무엇을 누를지 흐려진다(시안 규칙 1). */}
+      {!askMerge && (
+        <PrimaryButton label="로그인" onPress={submit} loading={busy} inactive={!email.trim() || !password} />
+      )}
 
       {/* 무료 서버가 잠들어 있으면 1분 넘게 걸린다. 스피너만 돌면 고장으로 보인다. */}
       {wakeNotice && <Text style={[styles.wakeNotice, { color: colors.textSecondary }]}>{wakeNotice}</Text>}
