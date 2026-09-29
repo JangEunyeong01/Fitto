@@ -179,17 +179,6 @@ export const birthday = {
 } as const;
 
 /**
- * 캐릭터 5단계 필터 근사용 오버레이 색.
- * RN Image에 CSS filter를 걸 수 없어 반투명 레이어로 대체한다.
- * 최종 5단계 일러스트가 준비되면 이미지 스왑으로 바뀌면서 함께 제거된다.
- */
-export const characterOverlay = {
-  desaturate: '#8FA3B1',
-  vivid: brand.blue,
-  brighten: white,
-} as const;
-
-/**
  * 애니메이션 (README 애니메이션 표).
  * easing은 Easing.bezier(...)에 그대로 펼쳐 넣는 cubic-bezier 제어점이다.
  */
