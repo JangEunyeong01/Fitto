@@ -10,10 +10,11 @@ import TagPicker from './TagPicker';
 import BasicInfoForm from './BasicInfoForm';
 import CompleteStep from './CompleteStep';
 import { useTheme } from '../../theme/useTheme';
-import { useAppStore } from '../../store/useAppStore';
+import { useAppStore, type ObInfo } from '../../store/useAppStore';
 import { useToastStore } from '../../store/useToastStore';
-import { INPUT_LIMITS } from '../../utils/goals';
-import { typography } from '../../theme/tokens';
+import { INPUT_LIMITS, birthYearLimits } from '../../utils/goals';
+import { typography, weight } from '../../theme/tokens';
+import GlassCard from '../../components/GlassCard';
 import { PERSONA_OPTIONS, STEP_LABELS, TOTAL_STEPS } from './onboardingData';
 import { ACTIVITY_OPTIONS, AVOID_TAGS, DISEASE_TAGS, GOAL_OPTIONS, TASTE_TAGS } from '../../constants/codes';
 
@@ -78,17 +79,20 @@ const COMMENT_MIN_ROOM = COMMENT_BLOCK_H + 16;
 const NUMBERED_STEPS = TOTAL_STEPS - 2;
 
 /** 범위를 벗어난 첫 항목의 안내 문구를 돌려준다. 다 정상이면 null. */
-function checkRange(info: { age: string; height: string; weight: string }): string | null {
+function checkRange(info: ObInfo): string | null {
+  // 라벨에 조사까지 붙여 둔다. "월는"처럼 받침에 안 맞는 조사가 붙지 않게.
   const checks: { value: string; limit: { min: number; max: number }; label: string; unit: string }[] = [
-    { value: info.age, limit: INPUT_LIMITS.age, label: '나이', unit: '세' },
-    { value: info.height, limit: INPUT_LIMITS.height, label: '키', unit: 'cm' },
-    { value: info.weight, limit: INPUT_LIMITS.weight, label: '몸무게', unit: 'kg' },
+    { value: info.birthYear, limit: birthYearLimits(), label: '태어난 연도는', unit: '년' },
+    { value: info.birthMonth, limit: { min: 1, max: 12 }, label: '월은', unit: '월' },
+    { value: info.birthDay, limit: { min: 1, max: 31 }, label: '일은', unit: '일' },
+    { value: info.height, limit: INPUT_LIMITS.height, label: '키는', unit: 'cm' },
+    { value: info.weight, limit: INPUT_LIMITS.weight, label: '몸무게는', unit: 'kg' },
   ];
   for (const c of checks) {
-    if (!c.value.trim()) continue; // 빈 값은 기본값으로 계산되므로 통과시킨다.
+    if (!c.value.trim()) continue; // 빈 값은 필수 검사가 따로 잡거나(연도·키·몸무게), 비워도 되는 칸이다(월·일).
     const n = parseFloat(c.value);
     if (!Number.isFinite(n) || n < c.limit.min || n > c.limit.max) {
-      return `${c.label}는 ${c.limit.min}~${c.limit.max}${c.unit} 사이로 입력해 주세요`;
+      return `${c.label} ${c.limit.min}~${c.limit.max}${c.unit} 사이로 입력해 주세요`;
     }
   }
   return null;
@@ -134,9 +138,10 @@ export default function OnboardingScreen() {
         showToast('성별을 선택해 주세요');
         return false;
       }
-      // 나이는 필수. 나이대별 건강 주의·생리 안내가 달라져서 기본값으로 채우면 안 된다.
-      if (!obInfo.age.trim() || !obInfo.height.trim() || !obInfo.weight.trim()) {
-        showToast('나이, 키, 몸무게를 입력해 주세요');
+      // 태어난 연도는 필수. 나이대별 건강 주의·생리 안내가 달라져서 기본값으로 채우면 안 된다.
+      // 월·일은 생일 축하에만 쓰여서 비워도 넘어간다.
+      if (!obInfo.birthYear.trim() || !obInfo.height.trim() || !obInfo.weight.trim()) {
+        showToast('태어난 연도, 키, 몸무게를 입력해 주세요');
         return false;
       }
       // 자릿수를 잘못 넣으면 목표 칼로리·물 목표가 엉뚱하게 잡히므로 여기서 막는다.
@@ -170,7 +175,7 @@ export default function OnboardingScreen() {
       return (
         !!obInfo.name.trim() &&
         !!obInfo.gender &&
-        !!obInfo.age.trim() &&
+        !!obInfo.birthYear.trim() &&
         !!obInfo.height.trim() &&
         !!obInfo.weight.trim() &&
         !checkRange(obInfo)
@@ -194,7 +199,8 @@ export default function OnboardingScreen() {
   const ctaLabel = step === 0 ? '시작하기' : step === TOTAL_STEPS - 1 ? '피또와 시작하기' : '다음';
 
   return (
-    <ScreenBackground>
+    // 시간대 색은 홈에만(개편 규칙). 온보딩은 바탕색만.
+    <ScreenBackground showTimeGradient={false}>
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -225,7 +231,7 @@ export default function OnboardingScreen() {
                 남는 자리는 아래가 아니라 위에 두어(flex-end) 제목이 본문에서 떨어지지 않게 한다.
               */}
               <View style={styles.header}>
-                <Text style={[styles.stepLabel, { color: colors.textPrimary }]}>{STEP_LABELS[step]}</Text>
+                <Text style={[styles.stepLabel, { color: colors.textSecondary }]}>{STEP_LABELS[step]}</Text>
                 <Text style={[typography.onboardingTitle, styles.title, { color: colors.textPrimary }]}>{TITLES[step]}</Text>
                 {!!DESCRIPTIONS[step] && (
                   <Text style={[styles.desc, { color: colors.textSecondary }]}>{DESCRIPTIONS[step]}</Text>
@@ -235,27 +241,36 @@ export default function OnboardingScreen() {
               <View style={styles.body}>
                 {step === 1 && <BasicInfoForm value={obInfo} onChange={setObInfo} />}
 
-                {step === 2 &&
-                  ACTIVITY_OPTIONS.map((o) => (
-                    <OptionRow
-                      key={o.code}
-                      title={o.label}
-                      desc={o.desc}
-                      selected={obPick.activity === o.code}
-                      onPress={() => setObPick({ activity: o.code })}
-                    />
-                  ))}
+                {/* 고르는 목록은 카드 한 장 안에 줄로(시안 29). 줄마다 박스를 두르지 않는다. */}
+                {step === 2 && (
+                  <GlassCard noPadding>
+                    {ACTIVITY_OPTIONS.map((o, i) => (
+                      <OptionRow
+                        key={o.code}
+                        title={o.label}
+                        desc={o.desc}
+                        selected={obPick.activity === o.code}
+                        onPress={() => setObPick({ activity: o.code })}
+                        divider={i > 0}
+                      />
+                    ))}
+                  </GlassCard>
+                )}
 
-                {step === 3 &&
-                  GOAL_OPTIONS.map((o) => (
-                    <OptionRow
-                      key={o.code}
-                      title={o.label}
-                      desc={o.desc}
-                      selected={obPick.goal === o.code}
-                      onPress={() => setObPick({ goal: o.code })}
-                    />
-                  ))}
+                {step === 3 && (
+                  <GlassCard noPadding>
+                    {GOAL_OPTIONS.map((o, i) => (
+                      <OptionRow
+                        key={o.code}
+                        title={o.label}
+                        desc={o.desc}
+                        selected={obPick.goal === o.code}
+                        onPress={() => setObPick({ goal: o.code })}
+                        divider={i > 0}
+                      />
+                    ))}
+                  </GlassCard>
+                )}
 
                 {step === 4 && (
                   <TagPicker
@@ -293,16 +308,20 @@ export default function OnboardingScreen() {
                   />
                 )}
 
-                {step === 7 &&
-                  PERSONA_OPTIONS.map((o) => (
-                    <OptionRow
-                      key={o.key}
-                      title={o.label}
-                      desc={o.desc}
-                      selected={obPick.persona === o.key}
-                      onPress={() => setObPick({ persona: o.key })}
-                    />
-                  ))}
+                {step === 7 && (
+                  <GlassCard noPadding>
+                    {PERSONA_OPTIONS.map((o, i) => (
+                      <OptionRow
+                        key={o.key}
+                        title={o.label}
+                        desc={o.desc}
+                        selected={obPick.persona === o.key}
+                        onPress={() => setObPick({ persona: o.key })}
+                        divider={i > 0}
+                      />
+                    ))}
+                  </GlassCard>
+                )}
 
                 {step === 8 && <CompleteStep />}
               </View>
@@ -327,9 +346,10 @@ export default function OnboardingScreen() {
           </ScrollView>
 
           <View style={styles.buttonRow}>
+            {/* "이전"은 박스 대신 회색 글씨(시안 29). 칠한 "다음"과 무게가 같아 보이지 않게. */}
             {step > 0 && (
-              <Pressable onPress={() => setStep(step - 1)} style={[styles.prevButton, { borderColor: colors.borderDivider }]}>
-                <Text style={[styles.prevLabel, { color: colors.textPrimary }]}>이전</Text>
+              <Pressable onPress={() => setStep(step - 1)} accessibilityRole="button" style={styles.prevButton}>
+                <Text style={[styles.prevLabel, { color: colors.textSecondary }]}>이전</Text>
               </Pressable>
             )}
             <PrimaryButton label={ctaLabel} onPress={handleNext} inactive={!canProceed()} style={styles.nextButton} />
@@ -359,8 +379,12 @@ const styles = StyleSheet.create({
     minHeight: HEADER_MIN_H,
     justifyContent: 'flex-end',
   },
-  // 진행 상황을 알려주는 유일한 텍스트라 sub 색으로는 너무 흐렸다. 자간과 굵기로 위계를 준다.
-  stepLabel: typography.sectionLabel,
+  // 단계 라벨은 작은 대문자 느낌으로 자간을 벌려 제목과 구분한다(시안 27~31).
+  stepLabel: {
+    fontSize: 12,
+    ...weight(700),
+    letterSpacing: 0.8,
+  },
   title: {
     marginTop: 8,
   },
@@ -383,18 +407,19 @@ const styles = StyleSheet.create({
   },
   buttonRow: {
     flexDirection: 'row',
-    gap: 10,
+    alignItems: 'center',
+    gap: 16,
     marginTop: 12,
   },
   prevButton: {
-    width: 52,
-    height: 52,
-    borderRadius: 14,
-    borderWidth: 1,
-    alignItems: 'center',
+    minHeight: 44,
+    paddingHorizontal: 6,
     justifyContent: 'center',
   },
-  prevLabel: typography.rowLabel,
+  prevLabel: {
+    fontSize: 15,
+    ...weight(600),
+  },
   nextButton: {
     flex: 1,
   },

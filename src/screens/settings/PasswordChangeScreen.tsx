@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { tabBarSpace } from '../../navigation/TabBar';
 import { useNavigation } from '@react-navigation/native';
 import ScreenBackground from '../../components/ScreenBackground';
-import GlassCard from '../../components/GlassCard';
 import TextField from '../../components/TextField';
 import PrimaryButton from '../../components/PrimaryButton';
 import DetailHeader from '../detail/DetailHeader';
 import { useTheme } from '../../theme/useTheme';
-import { typography } from '../../theme/tokens';
+import { typography, weight } from '../../theme/tokens';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useToastStore } from '../../store/useToastStore';
 import { changePassword } from '../../api/auth';
@@ -92,12 +92,13 @@ export default function PasswordChangeScreen() {
     <ScreenBackground showTimeGradient={false}>
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={[styles.content, { paddingTop: insets.top + 14, paddingBottom: insets.bottom + 40 }]}
+        contentContainerStyle={[styles.content, { paddingTop: insets.top + 14, paddingBottom: tabBarSpace(insets.bottom) }]}
         showsVerticalScrollIndicator={false}
       >
         <DetailHeader title="비밀번호 변경" />
 
-        <GlassCard style={styles.card}>
+        {/* 카드 없이 화면에 바로(시안 25). */}
+        <View>
           <Text style={[styles.label, { color: colors.textSecondary }]}>현재 비밀번호</Text>
           <TextField
             value={current}
@@ -109,6 +110,7 @@ export default function PasswordChangeScreen() {
             placeholder="지금 쓰는 비밀번호"
             autoCapitalize="none"
             secureTextEntry
+            revealable
             maxLength={64}
             error={fieldError('current')}
           />
@@ -123,6 +125,7 @@ export default function PasswordChangeScreen() {
             placeholder="영문과 숫자를 포함해 8자 이상"
             autoCapitalize="none"
             secureTextEntry
+            revealable
             maxLength={64}
             error={fieldError('next')}
           />
@@ -137,6 +140,7 @@ export default function PasswordChangeScreen() {
             placeholder="한 번 더 입력해 주세요"
             autoCapitalize="none"
             secureTextEntry
+            revealable
             maxLength={64}
             error={fieldError('confirm')}
           />
@@ -157,7 +161,7 @@ export default function PasswordChangeScreen() {
               inactive={!current || !next || !confirm}
             />
           </View>
-        </GlassCard>
+        </View>
       </ScrollView>
     </ScreenBackground>
   );
@@ -170,21 +174,20 @@ const styles = StyleSheet.create({
   content: {
     paddingHorizontal: 16,
   },
-  card: {
-    marginBottom: 12,
-  },
   label: {
     ...typography.label,
-    marginTop: 4,
-    marginBottom: 8,
+    marginTop: 14,
+    marginBottom: 6,
   },
   error: {
     ...typography.caption,
     marginTop: 10,
   },
   desc: {
-    ...typography.caption,
-    marginTop: 10,
+    fontSize: 12,
+    ...weight(400),
+    lineHeight: 18,
+    marginTop: 12,
   },
   buttonWrap: {
     marginTop: 20,

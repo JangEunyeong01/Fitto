@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import GlassCard from '../../components/GlassCard';
-import SelectChip from '../../components/SelectChip';
+import SegmentedControl from '../../components/SegmentedControl';
 import Icon from '../../components/Icon';
 import { useTheme } from '../../theme/useTheme';
 import { typography } from '../../theme/tokens';
@@ -9,11 +9,12 @@ import { YearMonth, ymAdd, ymFromIndex, ymIndex, ymRangeLabel } from '../../util
 
 export type MonthPreset = '1m' | '3m' | '6m' | 'custom';
 
-const PRESETS: { key: MonthPreset; label: string }[] = [
-  { key: '1m', label: '한 달' },
-  { key: '3m', label: '최근 3개월' },
-  { key: '6m', label: '최근 6개월' },
-  { key: 'custom', label: '직접 선택' },
+// 네 칸이 한 줄에 들어가야 해서 "최근"을 뺐다. 가운데 기간 글씨가 "최근 N개월"을 이미 말해준다.
+const PRESETS: { value: MonthPreset; label: string }[] = [
+  { value: '1m', label: '한 달' },
+  { value: '3m', label: '3개월' },
+  { value: '6m', label: '6개월' },
+  { value: 'custom', label: '직접 선택' },
 ];
 
 const MAX_MONTHS = 12;
@@ -43,31 +44,32 @@ export default function PeriodBar({
 
   return (
     <GlassCard style={styles.card}>
+      {/* 화살표는 상자 없이(날짜 이동 줄과 같은 모양). 누르는 영역은 44. */}
       <View style={styles.navRow}>
-        <Pressable onPress={() => onShift(-1)} style={[styles.navBtn, { borderColor: colors.borderDivider }]}>
-          <Icon name="chevronLeft" size={16} color={colors.textPrimary} />
+        <Pressable
+          onPress={() => onShift(-1)}
+          accessibilityRole="button"
+          accessibilityLabel="이전 기간"
+          style={styles.navBtn}
+        >
+          <Icon name="chevronLeft" size={20} color={colors.textPrimary} />
         </Pressable>
         <Text style={[styles.label, { color: colors.textPrimary }]}>{ymRangeLabel(start, end)}</Text>
         <Pressable
           onPress={() => onShift(1)}
           disabled={atMax}
-          style={[styles.navBtn, { borderColor: colors.borderDivider, opacity: atMax ? 0.35 : 1 }]}
+          accessibilityRole="button"
+          accessibilityLabel="다음 기간"
+          accessibilityState={{ disabled: atMax }}
+          style={[styles.navBtn, { opacity: atMax ? 0.35 : 1 }]}
         >
-          <Icon name="chevronRight" size={16} color={colors.textPrimary} />
+          <Icon name="chevronRight" size={20} color={colors.textPrimary} />
         </Pressable>
       </View>
 
+      {/* 늘 하나가 골라져 있어서 떨어진 칩 대신 붙은 세그먼트(시안 규칙 13). */}
       <View style={styles.presetRow}>
-        {PRESETS.map((p) => (
-          <SelectChip
-            key={p.key}
-            label={p.label}
-            selected={p.key === preset}
-            onPress={() => onPresetChange(p.key)}
-            size="sm"
-            fill
-          />
-        ))}
+        <SegmentedControl options={PRESETS} value={preset} onChange={onPresetChange} />
       </View>
 
       {preset === 'custom' && (
@@ -117,11 +119,21 @@ function MonthStepper({
     <View style={styles.stepperCol}>
       <Text style={[styles.stepperLabel, { color: colors.textSecondary }]}>{label}</Text>
       <View style={styles.stepperRow}>
-        <Pressable onPress={() => onChange(ymAdd(value, -1))} style={[styles.stepperBtn, { borderColor: colors.borderDivider }]}>
+        <Pressable
+          onPress={() => onChange(ymAdd(value, -1))}
+          accessibilityRole="button"
+          accessibilityLabel={`${label} 이전 달`}
+          style={styles.stepperBtn}
+        >
           <Icon name="chevronLeft" size={16} color={colors.textPrimary} />
         </Pressable>
         <Text style={[styles.stepperValue, { color: colors.textPrimary }]}>{value.year}.{String(value.month).padStart(2, '0')}</Text>
-        <Pressable onPress={() => onChange(ymAdd(value, 1))} style={[styles.stepperBtn, { borderColor: colors.borderDivider }]}>
+        <Pressable
+          onPress={() => onChange(ymAdd(value, 1))}
+          accessibilityRole="button"
+          accessibilityLabel={`${label} 다음 달`}
+          style={styles.stepperBtn}
+        >
           <Icon name="chevronRight" size={16} color={colors.textPrimary} />
         </Pressable>
       </View>
@@ -137,13 +149,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 16,
+    gap: 8,
+    marginVertical: -6,
   },
   navBtn: {
-    width: 30,
-    height: 30,
-    borderRadius: 10,
-    borderWidth: 1,
+    width: 44,
+    height: 44,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -153,9 +164,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   presetRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
     marginTop: 14,
   },
   customRow: {
@@ -173,13 +181,11 @@ const styles = StyleSheet.create({
   stepperRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    marginHorizontal: -12,
   },
   stepperBtn: {
-    width: 26,
-    height: 26,
-    borderRadius: 10,
-    borderWidth: 1,
+    width: 44,
+    height: 44,
     alignItems: 'center',
     justifyContent: 'center',
   },

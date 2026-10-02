@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, Pressable, TextInput, Image, ScrollView, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { tabBarSpace } from '../../navigation/TabBar';
 import GlassCard from '../../components/GlassCard';
 import ScreenBackground from '../../components/ScreenBackground';
 import DetailHeader from '../detail/DetailHeader';
@@ -9,7 +10,7 @@ import FittoCharacter from '../../components/FittoCharacter';
 import SelectChip from '../../components/SelectChip';
 import TextField from '../../components/TextField';
 import { useTheme } from '../../theme/useTheme';
-import { selection, typography } from '../../theme/tokens';
+import { brand, typography, weight } from '../../theme/tokens';
 import { useAppStore } from '../../store/useAppStore';
 import { personaCopy, waterStageNames } from '../../copy/persona';
 import { dateKey } from '../../utils/timeOfDay';
@@ -17,13 +18,6 @@ import { FITTO_FACE } from '../../theme/assets';
 
 const WATER_INTERVALS = [1, 2, 3, 4];
 const MOVE_THRESHOLDS = [30, 45, 60, 90];
-
-// 갤러리에서 단계를 누르면 그 단계로 보일 수 있는 값 중 가운데 값을 골라 오늘 물 섭취량에 반영한다.
-// getWaterStageIndex(v, goal) = floor((v/goal)*5) 이므로 stage i의 범위는 [goal*i/5, goal*(i+1)/5).
-function targetWaterForStage(stage: number, goal: number): number {
-  const mid = (goal * (stage + 0.5)) / 5;
-  return Math.round(mid / 50) * 50;
-}
 
 export default function NotificationsScreen() {
   const insets = useSafeAreaInsets();
@@ -33,7 +27,6 @@ export default function NotificationsScreen() {
   const persona = useAppStore((s) => s.persona);
   const goal = useAppStore((s) => s.goals.water);
   const today = useAppStore((s) => s.dailyRecords[dateKey()]?.water ?? 0);
-  const addWater = useAppStore((s) => s.addWater);
 
   // 갤러리에서 마지막으로 눌러본 단계. 안 눌러봤으면 오늘 실제 단계를 보여준다.
   const [previewStage, setPreviewStage] = useState<number | null>(null);
@@ -45,66 +38,72 @@ export default function NotificationsScreen() {
   const activeStage = previewStage ?? Math.min(4, Math.floor((today / goal) * 5));
   const stageComment = personaCopy.waterStage[persona][activeStage];
 
-  const pickStage = (i: number) => {
-    const target = targetWaterForStage(i, goal);
-    addWater(dateKey(), target - today);
-    setPreviewStage(i);
-  };
+  // 표정만 미리 본다. 예전에는 오늘 물 기록을 그 단계에 맞게 바꿨는데, 미리보기를 누르다 실제 기록이 바뀌면 안 된다.
+  const pickStage = (i: number) => setPreviewStage(i);
 
   return (
     <ScreenBackground showTimeGradient={false}>
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={[styles.content, { paddingTop: insets.top + 14, paddingBottom: insets.bottom + 40 }]}
+        contentContainerStyle={[styles.content, { paddingTop: insets.top + 14, paddingBottom: tabBarSpace(insets.bottom) }]}
         showsVerticalScrollIndicator={false}
       >
         <DetailHeader title="알림" />
 
-        <GlassCard style={styles.card}>
-          <ToggleRow label="물 마시기" value={alarms.water} onChange={(v) => setAlarms({ water: v })} colors={colors} />
-          {alarms.water && (
-            <ChipRow
-              options={WATER_INTERVALS}
-              value={alarms.waterEvery}
-              onChange={(v) => setAlarms({ waterEvery: v })}
-              suffix="시간마다"
+        {/* 알림 여섯 개를 카드 한 장에 줄로 모은다(시안 19). 카드 여섯 장이면 스위치만 줄지어 떠 있는 화면이 된다. */}
+        <GlassCard style={styles.card} noPadding>
+          <View style={styles.block}>
+            <ToggleRow label="물 마시기" value={alarms.water} onChange={(v) => setAlarms({ water: v })} colors={colors} />
+            {alarms.water && (
+              <ChipRow
+                options={WATER_INTERVALS}
+                value={alarms.waterEvery}
+                onChange={(v) => setAlarms({ waterEvery: v })}
+                suffix="시간마다"
+              />
+            )}
+          </View>
+          <Divider colors={colors} />
+          <View style={styles.block}>
+            <ToggleRow label="식사 기록" desc={alarms.mealTimes.join(' · ')} value={alarms.meal} onChange={(v) => setAlarms({ meal: v })} colors={colors} />
+          </View>
+          <Divider colors={colors} />
+          <View style={styles.block}>
+            <ToggleRow
+              label="움직임"
+              desc="이만큼 앉아 있으면 알려요"
+              value={alarms.move}
+              onChange={(v) => setAlarms({ move: v })}
+              colors={colors}
             />
-          )}
-        </GlassCard>
-
-        <GlassCard style={styles.card}>
-          <ToggleRow label="식사 기록" desc={alarms.mealTimes.join(' · ')} value={alarms.meal} onChange={(v) => setAlarms({ meal: v })} colors={colors} />
-        </GlassCard>
-
-        <GlassCard style={styles.card}>
-          <ToggleRow label="움직임" value={alarms.move} onChange={(v) => setAlarms({ move: v })} colors={colors} />
-          {alarms.move && (
-            <ChipRow
-              options={MOVE_THRESHOLDS}
-              value={alarms.moveAfter}
-              onChange={(v) => setAlarms({ moveAfter: v })}
-              suffix="분 이상 앉아 있으면"
-            />
-          )}
-        </GlassCard>
-
-        <GlassCard style={styles.card}>
-          <ToggleRow label="체중 기록" desc="매주 월요일 아침" value={alarms.weigh} onChange={(v) => setAlarms({ weigh: v })} colors={colors} />
-        </GlassCard>
-
-        <GlassCard style={styles.card}>
-          <ToggleRow label="주간 리포트" desc="일요일 저녁" value={alarms.report} onChange={(v) => setAlarms({ report: v })} colors={colors} />
-        </GlassCard>
-
-        <GlassCard style={styles.card}>
-          <ToggleRow label="방해 금지 시간" value={alarms.quiet} onChange={(v) => setAlarms({ quiet: v })} colors={colors} />
-          {alarms.quiet && (
-            <View style={styles.quietRow}>
-              <TimeField label="시작" value={alarms.quietFrom} onChange={(v) => setAlarms({ quietFrom: v })} colors={colors} />
-              <Text style={[styles.quietDash, { color: colors.textSecondary }]}>–</Text>
-              <TimeField label="종료" value={alarms.quietTo} onChange={(v) => setAlarms({ quietTo: v })} colors={colors} />
-            </View>
-          )}
+            {alarms.move && (
+              <ChipRow
+                options={MOVE_THRESHOLDS}
+                value={alarms.moveAfter}
+                onChange={(v) => setAlarms({ moveAfter: v })}
+                suffix="분"
+              />
+            )}
+          </View>
+          <Divider colors={colors} />
+          <View style={styles.block}>
+            <ToggleRow label="체중 기록" desc="매주 월요일 아침" value={alarms.weigh} onChange={(v) => setAlarms({ weigh: v })} colors={colors} />
+          </View>
+          <Divider colors={colors} />
+          <View style={styles.block}>
+            <ToggleRow label="주간 리포트" desc="일요일 저녁" value={alarms.report} onChange={(v) => setAlarms({ report: v })} colors={colors} />
+          </View>
+          <Divider colors={colors} />
+          <View style={styles.block}>
+            <ToggleRow label="방해 금지 시간" value={alarms.quiet} onChange={(v) => setAlarms({ quiet: v })} colors={colors} />
+            {alarms.quiet && (
+              <View style={styles.quietRow}>
+                <TimeField label="방해 금지 시작" value={alarms.quietFrom} onChange={(v) => setAlarms({ quietFrom: v })} />
+                <Text style={[styles.quietDash, { color: colors.textSecondary }]}>–</Text>
+                <TimeField label="방해 금지 끝" value={alarms.quietTo} onChange={(v) => setAlarms({ quietTo: v })} />
+              </View>
+            )}
+          </View>
         </GlassCard>
 
         <GlassCard style={styles.card}>
@@ -117,20 +116,35 @@ export default function NotificationsScreen() {
 
         <GlassCard style={styles.card}>
           <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>피또 표정 5단계</Text>
-          <View style={styles.galleryRow}>
+          <View style={styles.galleryRow} accessibilityRole="radiogroup">
             {waterStageNames.map((name, i) => {
               const on = i === activeStage;
               return (
-                <Pressable key={name} onPress={() => pickStage(i)} style={styles.galleryCell}>
+                <Pressable
+                  key={name}
+                  onPress={() => pickStage(i)}
+                  accessibilityRole="radio"
+                  accessibilityState={{ checked: on }}
+                  accessibilityLabel={name}
+                  style={styles.galleryCell}
+                >
+                  {/* 고른 표정만 흰 원 + 파란 링 2px(시안 19). 나머지는 테두리 없이 얼굴만. */}
                   <View
                     style={[
                       styles.galleryCircle,
-                      { borderColor: on ? selection.border : colors.borderDivider, backgroundColor: on ? selection.bg : colors.surfaceSubtle },
+                      on && { backgroundColor: colors.surfaceSolid, borderWidth: 2, borderColor: brand.blue },
                     ]}
                   >
                     <FittoCharacter current={i} goal={4} size={34} variant="face" glow={false} />
                   </View>
-                  <Text style={[styles.galleryLabel, { color: colors.textSecondary }]} numberOfLines={1}>
+                  <Text
+                    style={[
+                      styles.galleryLabel,
+                      { color: on ? colors.textPrimary : colors.textSecondary },
+                      weight(on ? 700 : 500),
+                    ]}
+                    numberOfLines={1}
+                  >
                     {name}
                   </Text>
                 </Pressable>
@@ -158,7 +172,7 @@ function ToggleRow({
   colors: any;
 }) {
   return (
-    <View style={styles.toggleRow}>
+    <View style={[styles.toggleRow, desc ? styles.toggleRowTall : null]}>
       <View style={styles.toggleTextCol}>
         <Text style={[styles.rowLabel, { color: colors.textPrimary }]}>{label}</Text>
         {!!desc && <Text style={[styles.rowDesc, { color: colors.textSecondary }]}>{desc}</Text>}
@@ -182,29 +196,18 @@ function ChipRow({
   return (
     <View style={styles.chipWrap}>
       {options.map((n) => (
-        <SelectChip
-          key={n}
-          label={`${n}${suffix}`}
-          selected={n === value}
-          onPress={() => onChange(n)}
-          size="sm"
-        />
+        <SelectChip key={n} label={`${n}${suffix}`} selected={n === value} onPress={() => onChange(n)} />
       ))}
     </View>
   );
 }
 
-function TimeField({
-  label,
-  value,
-  onChange,
-  colors,
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  colors: any;
-}) {
+function Divider({ colors }: { colors: any }) {
+  return <View style={[styles.divider, { backgroundColor: colors.borderDivider }]} />;
+}
+
+// 시작·끝 두 칸을 "–"로 잇는다. 칸 위 라벨은 빼고(시안 19) 스크린리더용 이름만 남긴다.
+function TimeField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
   const [text, setText] = useState(value);
   const commit = () => {
     // HH:MM 형태가 아니면 원래 값으로 되돌린다.
@@ -212,18 +215,17 @@ function TimeField({
     else setText(value);
   };
   return (
-    <View style={styles.timeCol}>
-      <Text style={[styles.timeLabel, { color: colors.textSecondary }]}>{label}</Text>
-      <TextField
-        size="sm"
-        value={text}
-        onChangeText={setText}
-        onEndEditing={commit}
-        onBlur={commit}
-        placeholder="22:30"
-        center
-      />
-    </View>
+    <TextField
+      value={text}
+      onChangeText={setText}
+      onEndEditing={commit}
+      onBlur={commit}
+      placeholder="22:30"
+      accessibilityLabel={label}
+      maxLength={5}
+      center
+      style={styles.timeInput}
+    />
   );
 }
 
@@ -237,40 +239,57 @@ const styles = StyleSheet.create({
   card: {
     marginBottom: 12,
   },
-  cardTitle: typography.sectionTitle,
+  cardTitle: typography.cardTitle,
+  block: {
+    paddingHorizontal: 18,
+  },
+  divider: {
+    height: StyleSheet.hairlineWidth,
+    marginHorizontal: 18,
+  },
   toggleRow: {
+    minHeight: 56,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 8,
+    gap: 12,
+  },
+  toggleRowTall: {
+    minHeight: 64,
   },
   toggleTextCol: {
     flex: 1,
-    gap: 3,
   },
-  rowLabel: typography.rowLabel,
-  rowDesc: typography.caption,
+  rowLabel: {
+    fontSize: 15,
+    ...weight(600),
+  },
+  rowDesc: {
+    fontSize: 12,
+    marginTop: 3,
+  },
+  // 줄 바로 밑에 붙인다. 아래 여백 14가 다음 구분선까지의 숨 쉴 자리다.
   chipWrap: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
-    marginTop: 12,
+    marginTop: -4,
+    paddingBottom: 14,
   },
   quietRow: {
     flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: 10,
-    marginTop: 12,
+    alignItems: 'center',
+    gap: 8,
+    marginTop: -4,
+    paddingBottom: 16,
   },
   quietDash: {
-    ...typography.rowLabel,
-    marginBottom: 12,
+    fontSize: 15,
+    ...weight(600),
   },
-  timeCol: {
-    flex: 1,
-    gap: 6,
+  timeInput: {
+    width: 96,
   },
-  timeLabel: typography.label,
   previewRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -282,30 +301,34 @@ const styles = StyleSheet.create({
     height: 44,
   },
   previewText: {
-    ...typography.body,
+    fontSize: 14,
     flex: 1,
   },
   galleryRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 12,
+    marginTop: 14,
   },
   galleryCell: {
+    flex: 1,
     alignItems: 'center',
     gap: 6,
-    width: 56,
   },
   galleryCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    borderWidth: 1,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  galleryLabel: typography.micro,
+  galleryLabel: {
+    fontSize: 12,
+    textAlign: 'center',
+  },
   stageComment: {
-    ...typography.bodySm,
+    fontSize: 13,
+    ...weight(400),
+    lineHeight: 13 * 1.5,
+    textAlign: 'center',
     marginTop: 12,
   },
 });

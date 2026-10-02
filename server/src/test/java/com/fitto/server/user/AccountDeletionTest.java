@@ -70,7 +70,8 @@ class AccountDeletionTest {
 						    "diseases": ["diabetes"], "customDiseases": ["직접입력질환"],
 						    "preferredFoods": ["chicken"], "customPreferredFoods": ["직접입력음식"],
 						    "allergies": ["nuts"], "customAllergies": ["직접입력알레르기"]
-						  }
+						  },
+						  "agreements": { "terms": true, "privacy": true, "health": true, "version": "2026-10-01" }
 						}
 						"""))
 				.andReturn();
@@ -80,6 +81,13 @@ class AccountDeletionTest {
 		accessToken = json.get("accessToken").asString();
 		refreshToken = json.get("refreshToken").asString();
 		userId = UUID.fromString(json.get("user").get("userId").asString());
+
+		// 약관 동의는 서버 시각과 버전으로 남는다.
+		var agreed = jdbc.queryForMap(
+				"select terms_agreed_at, privacy_agreed_at, health_agreed_at, terms_version from users where id = ?",
+				userId);
+		assertTrue(agreed.get("terms_agreed_at") != null && agreed.get("health_agreed_at") != null);
+		assertEquals("2026-10-01", agreed.get("terms_version"));
 
 		// 한 번에 모든 표를 채운다. 개별 API로 하나씩 넣으면 표가 늘 때 여기에 추가하는 걸 또 잊는다.
 		MvcResult imported = mvc.perform(post("/me/import")
@@ -138,13 +146,28 @@ class AccountDeletionTest {
 		MvcResult result = mvc.perform(delete("/users/me")
 				.header("Authorization", "Bearer " + accessToken)
 				.contentType(MediaType.APPLICATION_JSON)
-				.content("{ \"password\": \"wrong1234\" }"))
+				.content("{ \"password\": \"wrong1234\", \"reason\": \"tedious\" }"))
 				.andReturn();
 
 		assertEquals(401, result.getResponse().getStatus());
 		assertEquals("INVALID_CREDENTIALS", body(result).get("code").asString());
 		assertTrue(rowsOf("users") > 0);
 		assertTrue(rowsOf("meal_items") > 0);
+		// 탈퇴가 안 됐으면 사유도 안 남는다.
+		assertEquals(0, jdbc.queryForObject("select count(*) from deletion_reasons", Integer.class));
+	}
+
+	@Test
+	@Order(2)
+	void 정해진_사유가_아니면_400이다() throws Exception {
+		MvcResult result = mvc.perform(delete("/users/me")
+				.header("Authorization", "Bearer " + accessToken)
+				.contentType(MediaType.APPLICATION_JSON)
+				.content("{ \"password\": \"fitto1234\", \"reason\": \"010-1234-5678로 연락 주세요\" }"))
+				.andReturn();
+
+		assertEquals(400, result.getResponse().getStatus());
+		assertTrue(rowsOf("users") > 0);
 	}
 
 	@Test
@@ -193,10 +216,13 @@ class AccountDeletionTest {
 		MvcResult result = mvc.perform(delete("/users/me")
 				.header("Authorization", "Bearer " + accessToken)
 				.contentType(MediaType.APPLICATION_JSON)
-				.content("{ \"password\": \"fitto5678\" }"))
+				.content("{ \"password\": \"fitto5678\", \"reason\": \"too_many_notifications\" }"))
 				.andReturn();
 
 		assertEquals(204, result.getResponse().getStatus());
+
+		// 사유는 남되 누구의 것인지는 없다. 표에 user_id 칸이 없으니 아래 검사에도 안 걸린다.
+		assertEquals("TOO_MANY_NOTIFICATIONS", jdbc.queryForObject("select reason from deletion_reasons", String.class));
 
 		for (String table : userTables()) {
 			assertEquals(0, rowsOf(table), table + "에 탈퇴한 사용자의 기록이 남았다");
@@ -222,7 +248,8 @@ class AccountDeletionTest {
 						{
 						  "email": "bye@fitto.app", "password": "fitto1234",
 						  "profile": { "name": "다시", "gender": "female", "age": 30, "height": 160.0,
-						    "weight": 52.0, "activityLevel": "light", "goal": "maintain", "personality": "friendly" }
+						    "weight": 52.0, "activityLevel": "light", "goal": "maintain", "personality": "friendly" },
+						  "agreements": { "terms": true, "privacy": true, "health": true, "version": "2026-10-01" }
 						}
 						"""))
 				.andReturn();

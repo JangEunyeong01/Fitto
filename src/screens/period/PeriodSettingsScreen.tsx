@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { tabBarSpace } from '../../navigation/TabBar';
 import ScreenBackground from '../../components/ScreenBackground';
 import GlassCard from '../../components/GlassCard';
 import TextField from '../../components/TextField';
@@ -11,7 +12,7 @@ import { useAppStore } from '../../store/useAppStore';
 import { useToastStore } from '../../store/useToastStore';
 import { dateKey } from '../../utils/timeOfDay';
 import { getUpcomingDates, parseDateKey, shiftYearMonth } from '../../utils/periodCycle';
-import { typography } from '../../theme/tokens';
+import { typography, weight } from '../../theme/tokens';
 
 // 통상 주기는 21~35일이라 여유를 두고 45일까지 받는다.
 const CYCLE_LIMITS = { min: 21, max: 45 };
@@ -68,7 +69,7 @@ export default function PeriodSettingsScreen() {
     <ScreenBackground showTimeGradient={false}>
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={[styles.content, { paddingTop: insets.top + 14, paddingBottom: insets.bottom + 40 }]}
+        contentContainerStyle={[styles.content, { paddingTop: insets.top + 14, paddingBottom: tabBarSpace(insets.bottom) }]}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
@@ -109,13 +110,16 @@ export default function PeriodSettingsScreen() {
         {setupDone && (
           <GlassCard style={styles.card}>
             <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>예상 날짜</Text>
-            <PreviewRow label="다음 생리 예정일" value={formatDate(upcoming.nextStart)} colors={colors} />
-            <PreviewRow
-              label="가임기"
-              value={`${formatDate(upcoming.fertileStart)} ~ ${formatDate(upcoming.fertileEnd)}`}
-              colors={colors}
-            />
-            <PreviewRow label="배란일" value={formatDate(upcoming.ovulation)} colors={colors} />
+            <View style={styles.previewList}>
+              <PreviewRow label="다음 생리 예정일" value={formatDate(upcoming.nextStart)} colors={colors} />
+              <PreviewRow
+                label="가임기"
+                value={`${formatDate(upcoming.fertileStart)} ~ ${formatDate(upcoming.fertileEnd)}`}
+                colors={colors}
+                divider
+              />
+              <PreviewRow label="배란일" value={formatDate(upcoming.ovulation)} colors={colors} divider />
+            </View>
             <Text style={[styles.notice, { color: colors.textSecondary }]}>
               평균 주기로 계산한 추정치예요. 실제와 다를 수 있고 의료 진단을 대체하지 않아요.
             </Text>
@@ -157,9 +161,24 @@ function NumField({
   );
 }
 
-function PreviewRow({ label, value, colors }: { label: string; value: string; colors: { textSecondary: string; textPrimary: string } }) {
+function PreviewRow({
+  label,
+  value,
+  colors,
+  divider,
+}: {
+  label: string;
+  value: string;
+  colors: { textSecondary: string; textPrimary: string; borderDivider: string };
+  divider?: boolean;
+}) {
   return (
-    <View style={styles.previewRow}>
+    <View
+      style={[
+        styles.previewRow,
+        divider && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.borderDivider },
+      ]}
+    >
       <Text style={[styles.previewLabel, { color: colors.textSecondary }]}>{label}</Text>
       <Text style={[styles.previewValue, { color: colors.textPrimary }]}>{value}</Text>
     </View>
@@ -180,13 +199,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   hint: {
-    ...typography.bodySm,
-    marginBottom: 10,
+    fontSize: 13,
+    ...weight(400),
+    lineHeight: 13 * 1.5,
+    paddingHorizontal: 4,
+    paddingBottom: 10,
   },
   card: {
     marginBottom: 12,
   },
-  cardTitle: typography.sectionTitle,
+  cardTitle: typography.cardTitle,
   numRow: {
     flexDirection: 'row',
     gap: 8,
@@ -196,17 +218,32 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   numLabel: typography.label,
-  numHint: typography.captionSm,
+  numHint: {
+    fontSize: 12,
+    ...weight(400),
+    textAlign: 'center',
+  },
+  previewList: {
+    marginTop: 4,
+  },
   previewRow: {
+    height: 44,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 10,
   },
-  previewLabel: typography.bodySm,
-  previewValue: typography.value,
+  previewLabel: {
+    fontSize: 13,
+    ...weight(500),
+  },
+  previewValue: {
+    fontSize: 14,
+    ...weight(700),
+  },
   notice: {
-    ...typography.caption,
-    marginTop: 14,
+    fontSize: 12,
+    ...weight(400),
+    lineHeight: 18,
+    marginTop: 8,
   },
 });

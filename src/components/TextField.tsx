@@ -1,8 +1,8 @@
 import React, { useRef, useState } from 'react';
-import { TextInput, View, Text, Pressable, StyleSheet, StyleProp, TextStyle, TextInputProps } from 'react-native';
-import Icon from './Icon';
+import { TextInput, View, Text, Pressable, Platform, StyleSheet, StyleProp, TextStyle, TextInputProps } from 'react-native';
+import Icon, { type IconName } from './Icon';
 import { useTheme } from '../theme/useTheme';
-import { typography } from '../theme/tokens';
+import { radius, typography } from '../theme/tokens';
 
 type FieldSize = 'md' | 'sm';
 
@@ -18,19 +18,29 @@ interface TextFieldProps extends Omit<TextInputProps, 'style' | 'placeholderText
   /** 값이 있을 때 오른쪽에 X를 띄워 한 번에 지운다(명세 F-003·F-040 이름 입력). */
   clearable?: boolean;
   /**
+   * 비밀번호 칸 안 오른쪽에 "보기" 버튼(눈 아이콘)을 둔다. secureTextEntry와 함께 쓴다.
+   * 폰 자판은 오타가 잦은데 가려진 채로는 확인할 방법이 없어, 로그인 실패의 상당수가 오타다.
+   */
+  revealable?: boolean;
+  /**
    * 오류 문구. 있으면 테두리를 바꾸고 **칸 아래에 문구를 함께 띄운다.**
    * 테두리 색만 바꾸면 색 구분이 어려운 사용자에게는 오류가 전달되지 않는다(UI 기준서 5-2).
    */
   error?: string | null;
   /** 칸 아래 도움말. 오류가 있으면 오류가 대신 보인다. */
   helper?: string;
+  /** 칸 안 왼쪽 아이콘. 검색 칸(돋보기)에만 쓴다(시안 13·14). */
+  leftIcon?: IconName;
   style?: StyleProp<TextStyle>;
 }
 
 /**
  * 앱의 모든 텍스트 입력.
  *
- * 상태: default → focus(focusRing 2px) → filled / error(오류 테두리 2px + 칸 아래 문구·아이콘).
+ * 모양(시안 규칙 14): **테두리 없는 옅은 회색 면.** 선은 입력할 때만 아래쪽에 나타난다.
+ * 가만히 있을 때는 선이 없고, 누르면 아래에 파란 선 2px, 오류면 오류색 선 2px + 칸 아래 문구.
+ *
+ * 상태: default → focus(아래 선 2px focusRing) → filled / error(아래 선 2px 오류색 + 칸 아래 문구·아이콘).
  * 오류는 입력하는 중에는 띄우지 않는다 — 호출부가 칸을 벗어날 때나 제출할 때 error를 넘긴다.
  * placeholder 색과 테마 색은 여기서 붙이므로 호출부에서 넘기지 않는다.
  */
@@ -39,8 +49,10 @@ export default function TextField({
   center,
   onBackground,
   clearable,
+  revealable,
   error,
   helper,
+  leftIcon,
   style,
   onFocus,
   onBlur,
@@ -50,16 +62,11 @@ export default function TextField({
   const { colors } = useTheme();
   const inputRef = useRef<TextInput>(null);
   const [focused, setFocused] = useState(false);
+  const [revealed, setRevealed] = useState(false);
 
-  const borderColor = !editable
-    ? colors.borderDivider
-    : error
-      ? colors.textDanger
-      : focused
-        ? colors.focusRing
-        : colors.borderInput;
-  // 포커스·오류는 두께도 바꾼다. 색만 바뀌면 알아채기 어렵다.
-  const borderWidth = editable && (error || focused) ? 2 : 1;
+  // 선은 입력 중이거나 오류일 때만. 두께는 늘 2로 두고 색만 바꿔서, 선이 생길 때 글씨가 밀리지 않게 한다.
+  const showLine = editable && (!!error || focused);
+  const lineColor = !showLine ? 'transparent' : error ? colors.textDanger : colors.focusRing;
 
   const input = (
     <TextInput
@@ -82,31 +89,57 @@ export default function TextField({
         sizeStyles[size],
         center && styles.center,
         {
-          backgroundColor: !editable ? colors.surfaceMuted : onBackground ? colors.surface : colors.surfaceSolid,
-          borderColor,
-          borderWidth,
-          // 테두리가 두꺼워질 때 글씨가 1px 밀리지 않게 안쪽 여백을 줄여 맞춘다.
-          paddingHorizontal: sizeStyles[size].paddingHorizontal - (borderWidth - 1),
+          // 그라데이션 바탕(온보딩) 위에서는 회색 면이 묻혀서 반투명 흰 면을 쓴다.
+          backgroundColor: !editable ? colors.surfaceMuted : onBackground ? colors.surface : colors.fillMuted,
+          borderBottomColor: lineColor,
+          borderBottomWidth: 2,
+          // 선이 보일 때만 아래 모서리를 편다. 둥근 채로 두면 선 끝이 휘어 보인다.
+          borderBottomLeftRadius: showLine ? 0 : radius.button,
+          borderBottomRightRadius: showLine ? 0 : radius.button,
           color: editable ? colors.textPrimary : colors.textDisabled,
         },
-        clearable && styles.clearablePad,
+        // 웹 브라우저가 입력칸에 그리는 기본 포커스 테두리(주황)를 끈다. 포커스는 위의 파란 선이 알린다.
+        Platform.OS === 'web' && ({ outlineStyle: 'none' } as unknown as TextStyle),
+        (clearable || revealable) && styles.clearablePad,
+        leftIcon && styles.iconPad,
         style,
       ]}
       {...rest}
+      secureTextEntry={rest.secureTextEntry && !revealed}
     />
   );
 
   const message = error ?? helper;
 
-  // 문구도 X도 없으면 감싸지 않는다. 한 줄에 여러 칸을 놓는 곳(키·몸무게, 탄단지)은
+  // 문구도 X도 아이콘도 없으면 감싸지 않는다. 한 줄에 여러 칸을 놓는 곳(키·몸무게, 탄단지)은
   // 호출부가 style={{ flex: 1 }}을 입력칸에 직접 주므로, View로 감싸면 폭이 무너진다.
-  if (!message && !clearable) return input;
+  if (!message && !clearable && !revealable && !leftIcon) return input;
+
+  // 아이콘은 누르는 대상이 아니라 칸의 뜻을 알리는 표시라서 터치를 칸으로 흘려보낸다.
+  const iconOverlay = leftIcon ? (
+    <View style={styles.leftIcon} pointerEvents="none">
+      <Icon name={leftIcon} size={20} color={colors.textSecondary} />
+    </View>
+  ) : null;
 
   return (
     <View>
-      {clearable ? (
+      {revealable ? (
         <View>
           {input}
+          <Pressable
+            onPress={() => setRevealed((v) => !v)}
+            style={styles.clearBtn}
+            accessibilityRole="button"
+            accessibilityLabel={revealed ? '비밀번호 가리기' : '비밀번호 보기'}
+          >
+            <Icon name={revealed ? 'eyeOff' : 'eye'} size={20} color={colors.textSecondary} />
+          </Pressable>
+        </View>
+      ) : clearable ? (
+        <View>
+          {input}
+          {iconOverlay}
           {!!rest.value && editable && (
             <Pressable
               // 지우는 건 대개 다시 쓰려는 거라 포커스를 입력창으로 되돌린다.
@@ -123,7 +156,10 @@ export default function TextField({
           )}
         </View>
       ) : (
-        input
+        <View>
+          {input}
+          {iconOverlay}
+        </View>
       )}
 
       {!!message && (
@@ -155,6 +191,16 @@ const styles = StyleSheet.create({
   clearablePad: {
     paddingRight: 44,
   },
+  iconPad: {
+    paddingLeft: 44,
+  },
+  leftIcon: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: 14,
+    justifyContent: 'center',
+  },
   // X는 44×44 영역을 통째로 누를 수 있게 한다. 예전에는 아이콘 14px + 여유 8이었다.
   clearBtn: {
     position: 'absolute',
@@ -176,16 +222,26 @@ const styles = StyleSheet.create({
   },
 });
 
-/** 높이는 UI 기준서 7-2 기준. 폼 입력 48, 좁은 자리 44. 예전 46·42는 44 미달이 있었다. */
+/**
+ * 높이는 UI 기준서 7-2 기준. 폼 입력 48, 좁은 자리 44. 예전 46·42는 44 미달이 있었다.
+ * 아래 모서리는 선이 있을 때만 펴므로 위에서 따로 정한다.
+ *
+ * 좌우 여백은 paddingHorizontal로 묶지 않고 따로 적는다. 웹에서는 묶음 값이 나중에 준 paddingLeft·paddingRight를
+ * 이겨서, X·눈·돋보기 자리를 비워 둔 게 먹지 않고 글씨가 아이콘 밑으로 들어갔다.
+ */
 const sizeStyles = {
   md: {
     height: 48,
-    borderRadius: 14,
-    paddingHorizontal: 14,
+    borderTopLeftRadius: radius.button,
+    borderTopRightRadius: radius.button,
+    paddingLeft: 14,
+    paddingRight: 14,
   },
   sm: {
     height: 44,
-    borderRadius: 14,
-    paddingHorizontal: 12,
+    borderTopLeftRadius: radius.button,
+    borderTopRightRadius: radius.button,
+    paddingLeft: 12,
+    paddingRight: 12,
   },
 } as const;

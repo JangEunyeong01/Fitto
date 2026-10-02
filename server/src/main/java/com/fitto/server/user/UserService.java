@@ -46,6 +46,8 @@ public class UserService {
 				or(request.activityLevel(), user.getActivityLevel()),
 				or(request.goal(), user.getGoal()),
 				or(request.personality(), user.getPersonality()),
+				// 생년월일은 세 칸을 한 묶음으로 갈아끼운다. 묶음을 안 보내면 그대로 둔다.
+				request.birthday() != null ? request.birthday().year() : user.getBirthYear(),
 				request.birthday() != null ? request.birthday().month() : user.getBirthdayMonth(),
 				request.birthday() != null ? request.birthday().day() : user.getBirthdayDay());
 
@@ -71,7 +73,7 @@ public class UserService {
 	@Transactional
 	public void resetProfile(UUID userId) {
 		User user = require(userId);
-		user.applyProfile(user.getName(), null, null, null, null, null, null, null, Personality.FRIENDLY, null, null);
+		user.applyProfile(user.getName(), null, null, null, null, null, null, null, Personality.FRIENDLY, null, null, null);
 		user.replaceTagLists(java.util.List.of(), java.util.List.of(), java.util.List.of(), java.util.List.of(),
 				java.util.List.of(), java.util.List.of());
 	}

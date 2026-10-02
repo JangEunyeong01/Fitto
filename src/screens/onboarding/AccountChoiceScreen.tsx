@@ -1,13 +1,13 @@
 import React from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import ScreenBackground from '../../components/ScreenBackground';
-import GlassCard from '../../components/GlassCard';
 import PrimaryButton from '../../components/PrimaryButton';
 import FittoCharacter from '../../components/FittoCharacter';
+import Icon from '../../components/Icon';
 import { useTheme } from '../../theme/useTheme';
-import { typography } from '../../theme/tokens';
+import { typography, weight } from '../../theme/tokens';
 import { useAppStore } from '../../store/useAppStore';
 
 /** 계정이 있으면 되는 것. 없으면 못 하는 것이 아니라, 있으면 더 되는 것으로 적는다. */
@@ -18,7 +18,7 @@ const BENEFITS = [
 ];
 
 /**
- * 온보딩을 마친 뒤 한 번 묻는 계정 선택(명세 3-2).
+ * 온보딩을 마친 뒤 한 번 묻는 계정 선택(명세 3-2, 시안 32).
  *
  * 가입은 기능을 여는 열쇠가 아니라 저장 위치를 서버로 옮기는 스위치다. 그래서
  * 여기서 "나중에 하기"를 골라도 앱의 모든 기능을 그대로 쓴다. 묻는 건 이 화면 한 번뿐이고,
@@ -33,10 +33,10 @@ export default function AccountChoiceScreen() {
   const dismiss = useAppStore((s) => s.dismissAccountPrompt);
 
   return (
-    <ScreenBackground>
+    <ScreenBackground showTimeGradient={false}>
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={[styles.content, { paddingTop: insets.top + 40, paddingBottom: insets.bottom + 30 }]}
+        contentContainerStyle={[styles.content, { paddingTop: insets.top + 80 }]}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.hero}>
@@ -47,26 +47,32 @@ export default function AccountChoiceScreen() {
           </Text>
         </View>
 
-        <GlassCard style={styles.card}>
-          <View style={styles.benefitList}>
-            {BENEFITS.map((item) => (
-              <Text key={item} style={[styles.benefit, { color: colors.textPrimary }]}>
-                · {item}
-              </Text>
-            ))}
-          </View>
+        {/* 좋은 점은 카드 없이 체크 줄로(시안 32). */}
+        <View style={styles.benefits}>
+          {BENEFITS.map((item) => (
+            <View key={item} style={styles.benefitRow}>
+              <Icon name="check" size={20} color={colors.textAccent} strokeWidth={2.2} />
+              <Text style={[styles.benefit, { color: colors.textPrimary }]}>{item}</Text>
+            </View>
+          ))}
           <Text style={[styles.note, { color: colors.textSecondary }]}>
             계정이 없어도 앱의 모든 기능을 쓸 수 있어요. 나중에 설정에서 만들어도 기록은 그대로 옮겨져요.
           </Text>
-        </GlassCard>
-
-        <View style={styles.actions}>
-          {/* 주 버튼은 한 화면에 하나. 로그인은 보조, 나중에 하기는 가장 가볍게. */}
-          <PrimaryButton label="계정 만들기" onPress={() => navigation.navigate('Signup')} />
-          <PrimaryButton label="이미 계정이 있어요" variant="secondary" onPress={() => navigation.navigate('Login')} />
-          <PrimaryButton label="나중에 하기" variant="text" onPress={dismiss} />
         </View>
       </ScrollView>
+
+      {/* 칠한 버튼은 하나. 로그인은 진한 글씨, 나중에 하기는 회색 글씨로 한 줄에. */}
+      <View style={[styles.actions, { paddingBottom: insets.bottom + 26 }]}>
+        <PrimaryButton label="계정 만들기" onPress={() => navigation.navigate('Signup')} />
+        <View style={styles.subRow}>
+          <Pressable onPress={() => navigation.navigate('Login')} accessibilityRole="button" style={styles.textBtn}>
+            <Text style={[styles.textBtnLabel, { color: colors.textPrimary }]}>이미 계정이 있어요</Text>
+          </Pressable>
+          <Pressable onPress={dismiss} accessibilityRole="button" style={styles.textBtn}>
+            <Text style={[styles.textBtnLabel, { color: colors.textSecondary }]}>나중에 하기</Text>
+          </Pressable>
+        </View>
+      </View>
     </ScreenBackground>
   );
 }
@@ -76,33 +82,57 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 24,
+    paddingBottom: 20,
   },
   hero: {
     alignItems: 'center',
-    gap: 12,
   },
   title: {
     ...typography.onboardingTitle,
     textAlign: 'center',
+    marginTop: 16,
   },
   desc: {
-    ...typography.body,
+    fontSize: 14,
+    ...weight(400),
+    lineHeight: 21,
     textAlign: 'center',
+    marginTop: 10,
   },
-  card: {
-    marginTop: 28,
+  benefits: {
+    marginTop: 26,
+    paddingHorizontal: 6,
   },
-  benefitList: {
-    gap: 8,
+  benefitRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    minHeight: 36,
   },
-  benefit: typography.bodySm,
+  benefit: {
+    fontSize: 14,
+  },
   note: {
-    ...typography.caption,
-    marginTop: 14,
+    fontSize: 12,
+    ...weight(400),
+    lineHeight: 18,
+    marginTop: 12,
   },
   actions: {
-    marginTop: 28,
-    gap: 10,
+    paddingHorizontal: 24,
+  },
+  subRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 6,
+  },
+  textBtn: {
+    minHeight: 44,
+    justifyContent: 'center',
+  },
+  textBtnLabel: {
+    fontSize: 15,
+    ...weight(600),
   },
 });

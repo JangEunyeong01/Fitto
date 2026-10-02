@@ -9,6 +9,7 @@ import com.fitto.server.user.Goal;
 import com.fitto.server.user.Personality;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -32,7 +33,20 @@ public record SignupRequest(
 
 		@NotNull @Valid Profile profile,
 
-		Instant startedAt) {
+		Instant startedAt,
+
+		@NotNull @Valid Agreements agreements) {
+
+	/**
+	 * 약관 동의. 셋 다 필수라 하나라도 false면 400이다.
+	 * 건강 정보는 민감정보라 개인정보와 따로 받는다. version은 동의한 약관의 시행일(예: 2026-10-01).
+	 */
+	public record Agreements(
+			@AssertTrue boolean terms,
+			@AssertTrue boolean privacy,
+			@AssertTrue boolean health,
+			@NotBlank @Size(max = 20) String version) {
+	}
 
 	public record Profile(
 			@NotBlank @Size(min = 1, max = 20) String name,
@@ -50,6 +64,7 @@ public record SignupRequest(
 			List<@Size(max = 30) String> allergies,
 			List<@Size(min = 1, max = 20) String> customAllergies,
 			@NotNull Personality personality,
+			@Min(1900) @Max(2100) Integer birthYear,
 			Integer birthdayMonth,
 			Integer birthdayDay) {
 	}

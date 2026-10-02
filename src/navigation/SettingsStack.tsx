@@ -12,6 +12,11 @@ import PasswordChangeScreen from '../screens/settings/PasswordChangeScreen';
 import DeleteAccountScreen from '../screens/settings/DeleteAccountScreen';
 import ForgotPasswordScreen from '../screens/settings/ForgotPasswordScreen';
 import EmailVerifyScreen from '../screens/settings/EmailVerifyScreen';
+import TermsListScreen from '../screens/settings/TermsListScreen';
+import TermsScreen from '../screens/settings/TermsScreen';
+import type { TermsId } from '../data/terms';
+import DeleteAccountConfirmScreen from '../screens/settings/DeleteAccountConfirmScreen';
+import type { DeletionReason } from '../api/auth';
 
 export type SettingsStackParamList = {
   SettingsMain: undefined;
@@ -23,8 +28,11 @@ export type SettingsStackParamList = {
   Login: { email?: string } | undefined;
   PasswordChange: undefined;
   DeleteAccount: undefined;
+  DeleteAccountConfirm: { reason?: DeletionReason } | undefined;
   ForgotPassword: { email?: string } | undefined;
   EmailVerify: undefined;
+  TermsList: undefined;
+  Terms: { id: TermsId };
 };
 
 const Stack = createNativeStackNavigator<SettingsStackParamList>();
@@ -42,8 +50,11 @@ export default function SettingsStack() {
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="PasswordChange" component={PasswordChangeScreen} />
       <Stack.Screen name="DeleteAccount" component={DeleteAccountScreen} />
+      <Stack.Screen name="DeleteAccountConfirm" component={DeleteAccountConfirmScreen} />
       <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
       <Stack.Screen name="EmailVerify" component={EmailVerifyScreen} />
+      <Stack.Screen name="TermsList" component={TermsListScreen} />
+      <Stack.Screen name="Terms" component={TermsScreen} />
     </Stack.Navigator>
   );
 }

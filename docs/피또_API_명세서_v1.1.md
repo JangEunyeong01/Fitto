@@ -4,7 +4,7 @@
 > Base URL: `https://api.fitto.com/v1`
 > 인증: JWT Bearer Token
 > Content-Type: `application/json`
-> 백엔드: Spring Boot (2차 도입). 1차 MVP는 기기 저장(AsyncStorage)만으로 동작한다.
+> 백엔드: Spring Boot 4 (배포됨). 앱은 로그인 없이도 기기 저장(AsyncStorage)만으로 동작하고, 로그인하면 서버와 동기화한다.
 
 ---
 
@@ -26,16 +26,16 @@
 
 ## 구현 현황
 
-*마지막 갱신: 2026-09-24*
+*마지막 갱신: 2026-09-26*
 
-서버는 PostgreSQL 17에 실제로 연결해 가입·기록·조회 흐름을 확인했고, H2 인메모리 DB로 같은 흐름을 24개 테스트로 자동화했다.
+서버는 PostgreSQL 17에 실제로 연결해 가입·기록·조회 흐름을 확인했고, H2 인메모리 DB로 같은 흐름을 테스트 56개로 자동화했다.
 앱은 로컬 우선 구조로 서버와 양방향 동기화한다 — 기록은 기기에 먼저 저장하고 대기열을 통해 올리며, 앱 시작·로그인·복귀 시점에 서버 값을 받아온다.
 
 | 영역 | 앱 | 서버 |
 |------|-----|------|
 | 인증 (4장) | ✅ 가입·로그인·로그아웃 화면 | ✅ signup·login·refresh·logout |
 | 계정 관리 (5장) | ✅ 비밀번호 변경·탈퇴 화면 | ✅ `PATCH /users/me/password`, `DELETE /users/me` |
-| 비밀번호 찾기·이메일 인증 (4-5, 5-4) | 진행 중 | ✅ 코드 발급·확인. 메일 서비스는 미정(로컬은 서버 로그로 확인) |
+| 비밀번호 찾기·이메일 인증 (4-5, 5-4) | ✅ 비밀번호 찾기·이메일 인증 화면 | ✅ 코드 발급·확인. 메일 서비스는 미정(로컬은 서버 로그로 확인) |
 | 유저 (5장) | 로컬 프로필 완료 | ✅ `GET·PATCH /users/me` |
 | 게스트 이전 (6장) | ✅ 가입·로그인 시 호출 | ✅ `POST /me/import` |
 | 식단 (7장) | 완료 (로컬) | ✅ 조회·추가·수정·삭제·메모·최근 음식 |
@@ -519,9 +519,13 @@ fertileEnd    = ovulation
     "customPreferredFoods": [],
     "allergies": ["nuts"],
     "customAllergies": ["오이"],
-    "personality": "friendly"
+    "personality": "friendly",
+    "birthYear": 2000,
+    "birthdayMonth": 3,
+    "birthdayDay": 14
   },
-  "startedAt": "2026-08-01T09:00:00Z"
+  "startedAt": "2026-08-01T09:00:00Z",
+  "agreements": { "terms": true, "privacy": true, "health": true, "version": "2026-10-01" }
 }
 ```
 
@@ -532,8 +536,14 @@ fertileEnd    = ovulation
 | profile.name | 필수, 1~20자 |
 | profile.gender, age, height, weight, activityLevel, goal, personality | 필수 |
 | profile.targetWeight | 선택, 25~250 |
+| profile.birthYear | 선택, 1900~2100. `age`는 앱이 생년월일로 계산해 함께 보낸다 |
+| profile.birthdayMonth, birthdayDay | 선택 |
 | custom* 배열 | 항목당 1~20자, 최대 10개 |
 | startedAt | 선택. 게스트로 앱을 처음 쓴 시각(피또 친근해지기 기준). 없으면 가입 시각 |
+| agreements | 필수. 이용약관·개인정보·건강 정보 셋 다 `true`여야 한다. 하나라도 빠지거나 `false`면 `400` |
+| agreements.version | 필수, 20자 이하. 동의한 약관의 시행일 |
+
+**약관 동의 기록** — 서버는 동의 시각을 `users.terms_agreed_at`·`privacy_agreed_at`·`health_agreed_at`에, 버전을 `terms_version`에 남긴다. 시각은 앱이 보낸 값이 아니라 서버 시계로 찍는다. 건강 정보는 민감정보라 개인정보와 따로 동의받는다. 동의 기록은 응답에 담지 않는다.
 
 **Response 201**
 
@@ -689,7 +699,7 @@ accessToken은 서버에 상태가 없어 만료까지 유효하다. 요청으�
   "height": 165.0,
   "weight": 55.0,
   "targetWeight": 52.0,
-  "birthday": { "month": 3, "day": 14 },
+  "birthday": { "year": 2000, "month": 3, "day": 14 },
   "activityLevel": "light",
   "goal": "lose_weight",
   "diseases": ["diabetes"],
@@ -717,7 +727,8 @@ accessToken은 서버에 상태가 없어 만료까지 유효하다. 요청으�
 | 필드 | 비고 |
 |------|------|
 | emailVerified | 읽기 전용. 이메일로 받은 코드를 맞혔는지(5-4). 가입 직후엔 false |
-| birthday | nullable. 연도는 받지 않는다(나이는 `age`로) |
+| birthday | nullable. 세 칸이 다 비면 null. 연도가 생기기 전에 가입한 사람은 `year`만 null일 수 있다. PATCH에서 보내면 세 칸을 통째로 갈아끼운다(`month: null`이면 월을 지운다) |
+| age | 앱이 생년월일로 계산한 만 나이. 목표 칼로리 계산은 계속 이 값을 쓴다 |
 | workoutPreference | 기본값 `normal` / `bodyweight` / `full` |
 | goals.targetCalorie | 읽기 전용. 서버 계산 |
 | goals.waterGoalCustom | 사용자가 물 목표를 직접 정했는지 |
@@ -836,10 +847,17 @@ JSON에서는 "필드를 안 보냄"과 "null을 보냄"이 서버에서 똑같�
 **Request**
 
 ```json
-{ "password": "fitto1234" }
+{ "password": "fitto1234", "reason": "too_many_notifications" }
 ```
 
 토큰만으로는 받지 않는다. 잠금 안 된 폰을 잠깐 만진 사람이 계정을 지울 수 있으면 안 된다.
+
+| 필드 | 규칙 |
+|------|------|
+| password | 필수 |
+| reason | 선택. `tedious`(기록이 번거로움) · `too_many_notifications` · `missing_feature` · `other_app` · `privacy` · `other` 중 하나. 그 밖의 값은 `400` |
+
+**탈퇴 사유** — `deletion_reasons` 표에 사유와 시각만 남긴다. `user_id`도 이메일도 없다. 사유만 세면 되고 누구인지는 몰라야 한다 — 사람을 가리키는 값이 없으니 탈퇴 뒤에 남겨도 개인정보가 아니다. 직접 쓰는 칸은 두지 않았다. 연락처나 병명을 적으면 익명이 깨진다. 계정 삭제와 같은 트랜잭션이라 비밀번호가 틀리면 사유도 남지 않는다.
 
 **Response 204** No Content
 
@@ -850,9 +868,10 @@ JSON에서는 "필드를 안 보냄"과 "null을 보냄"이 서버에서 똑같�
 | 오류 | 코드 |
 |------|------|
 | 비밀번호 불일치 | `401 INVALID_CREDENTIALS` (아무것도 지우지 않는다) |
+| 정해진 사유가 아님 | `400 INVALID_INPUT` |
 | 시도 초과 (10분 5회) | `429 TOO_MANY_REQUESTS` |
 
-**앱 동작** — 서버 삭제가 끝나면 기기 기록도 함께 지우고 온보딩부터 다시 시작한다. 계정을 없앴는데 폰에 기록이 남으면 무엇이 지워진 건지 알 수 없고, 다음에 가입할 때 남은 기록이 새 계정으로 올라간다.
+**앱 동작** — 세 단계다. 지워지는 것과 사유(선택) → 비밀번호 → 알림창에서 마지막 확인. 알림창의 칠한 버튼은 "취소"이고, 요청이 나간 뒤에는 취소를 받지 않는다. 서버 삭제가 끝나면 기기 기록도 함께 지우고 온보딩부터 다시 시작한다. 계정을 없앴는데 폰에 기록이 남으면 무엇이 지워진 건지 알 수 없고, 다음에 가입할 때 남은 기록이 새 계정으로 올라간다.
 
 ---
 

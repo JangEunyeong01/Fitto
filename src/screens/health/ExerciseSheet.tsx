@@ -7,7 +7,7 @@ import HighlightText from '../../components/HighlightText';
 import PrimaryButton from '../../components/PrimaryButton';
 import Icon from '../../components/Icon';
 import { useTheme } from '../../theme/useTheme';
-import { overlay, typography } from '../../theme/tokens';
+import { overlay, typography, weight } from '../../theme/tokens';
 import { useAppStore } from '../../store/useAppStore';
 import { useExerciseSheetStore } from '../../store/useExerciseSheetStore';
 import { useToastStore } from '../../store/useToastStore';
@@ -17,6 +17,8 @@ import { dateKey } from '../../utils/timeOfDay';
 import { EXERCISES, calcExerciseKcal, findExercise } from '../../data/workouts';
 
 const MAX_MINUTES = 600;
+/** 시트 좌우 여백. 카드 안쪽 여백(18)과 맞춘다(시안 14~16). */
+const SHEET_PAD = 18;
 
 // 명세 F-034: 운동 선택 → 시간 입력 → 소모 칼로리 자동 계산 → 메모 → 저장.
 export default function ExerciseSheet() {
@@ -28,7 +30,7 @@ export default function ExerciseSheet() {
 }
 
 function ExerciseForm({ date, onClose }: { date: string; onClose: () => void }) {
-  const { colors, radius: r, spacing } = useTheme();
+  const { colors, radius: r } = useTheme();
   const insets = useSafeAreaInsets();
   const weightKg = useAppStore((s) => s.profile.weight);
   const addExercise = useAppStore((s) => s.addExercise);
@@ -81,7 +83,7 @@ function ExerciseForm({ date, onClose }: { date: string; onClose: () => void }) 
             styles.sheet,
             {
               backgroundColor: colors.surfaceSolid,
-              paddingHorizontal: spacing.screenX,
+              paddingHorizontal: SHEET_PAD,
               paddingBottom: insets.bottom + 16,
               borderTopLeftRadius: r.sheetTop,
               borderTopRightRadius: r.sheetTop,
@@ -91,19 +93,23 @@ function ExerciseForm({ date, onClose }: { date: string; onClose: () => void }) 
           <View style={[styles.grabber, { backgroundColor: colors.borderDivider }]} />
           <View style={styles.headerRow}>
             <Text style={[styles.title, { color: colors.textPrimary }]}>운동 추가</Text>
-            <Pressable onPress={onClose} hitSlop={8} accessibilityRole="button" accessibilityLabel="닫기">
+            <Pressable onPress={onClose} accessibilityRole="button" accessibilityLabel="닫기" style={styles.closeBtn}>
               <Icon name="close" size={20} color={colors.textSecondary} />
             </Pressable>
           </View>
 
           <ScrollView style={styles.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-            <TextField
-              size="sm"
-              clearable
-              value={query}
-              onChangeText={setQuery}
-              placeholder="운동 이름 또는 초성 (예: ㄷㄹㄱ)"
-            />
+            {/* 초성 예시는 뺐다. 초성 검색은 그대로 되고, 안내가 길면 칸이 설명서처럼 보인다(시안 16). */}
+            <View style={styles.searchWrap}>
+              <TextField
+                leftIcon="search"
+                clearable
+                value={query}
+                onChangeText={setQuery}
+                placeholder="운동 검색"
+                accessibilityLabel="운동 검색"
+              />
+            </View>
             <View style={styles.chipWrap}>
               {results.map(({ item: e, match }) => (
                 <SelectChip
@@ -111,7 +117,6 @@ function ExerciseForm({ date, onClose }: { date: string; onClose: () => void }) 
                   label={<HighlightText text={e.name} match={match} />}
                   selected={picked === e.code}
                   onPress={() => setPicked(e.code)}
-                  size="sm"
                 />
               ))}
               {results.length === 0 && (
@@ -122,11 +127,11 @@ function ExerciseForm({ date, onClose }: { date: string; onClose: () => void }) 
             <Text style={[styles.label, { color: colors.textSecondary }]}>시간</Text>
             <View style={styles.minutesRow}>
               <TextField
-                size="sm"
                 value={minutes}
                 onChangeText={(t) => setMinutes(t.replace(/[^0-9]/g, ''))}
                 placeholder="30"
                 keyboardType="numeric"
+                accessibilityLabel="운동 시간(분)"
                 center
                 style={styles.minutesInput}
               />
@@ -135,7 +140,7 @@ function ExerciseForm({ date, onClose }: { date: string; onClose: () => void }) 
             </View>
 
             <Text style={[styles.label, { color: colors.textSecondary }]}>메모</Text>
-            <TextField size="sm" value={memo} onChangeText={setMemo} placeholder="선택 · 예: 무릎 조심" maxLength={60} />
+            <TextField value={memo} onChangeText={setMemo} placeholder="선택 · 예: 무릎 조심" maxLength={60} />
           </ScrollView>
 
           <PrimaryButton label="기록하기" onPress={save} inactive={!exercise || !validMins} style={styles.saveBtn} />
@@ -178,30 +183,40 @@ const styles = StyleSheet.create({
     width: 36,
     height: 4,
     borderRadius: 2,
-    marginBottom: 14,
+    marginBottom: 10,
   },
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    height: 44,
   },
   title: typography.sheetTitle,
+  closeBtn: {
+    width: 44,
+    height: 44,
+    marginRight: -12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   // 키보드가 올라와 시트가 줄어들면 목록 쪽이 줄고 저장 버튼은 남는다.
   scroll: {
     flexShrink: 1,
+  },
+  searchWrap: {
+    marginTop: 6,
   },
   chipWrap: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
-    marginTop: 10,
+    marginTop: 12,
   },
   empty: typography.bodySm,
   label: {
     ...typography.label,
-    marginTop: 16,
-    marginBottom: 8,
+    marginTop: 14,
+    marginBottom: 6,
   },
   minutesRow: {
     flexDirection: 'row',
@@ -211,13 +226,17 @@ const styles = StyleSheet.create({
   minutesInput: {
     width: 88,
   },
-  unit: typography.rowLabel,
+  unit: {
+    fontSize: 15,
+    ...weight(600),
+  },
   kcal: {
-    ...typography.value,
+    fontSize: 17,
+    ...weight(700),
     flex: 1,
     textAlign: 'right',
   },
   saveBtn: {
-    marginTop: 16,
+    marginTop: 12,
   },
 });

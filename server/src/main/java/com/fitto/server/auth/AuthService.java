@@ -79,7 +79,7 @@ public class AuthService {
 
 		SignupRequest.Profile p = request.profile();
 		user.applyProfile(p.name(), p.gender(), p.age(), p.height(), p.weight(), p.targetWeight(),
-				p.activityLevel(), p.goal(), p.personality(), p.birthdayMonth(), p.birthdayDay());
+				p.activityLevel(), p.goal(), p.personality(), p.birthYear(), p.birthdayMonth(), p.birthdayDay());
 		user.replaceTagLists(p.diseases(), p.customDiseases(), p.preferredFoods(), p.customPreferredFoods(),
 				p.allergies(), p.customAllergies());
 
@@ -87,6 +87,9 @@ public class AuthService {
 		if (request.startedAt() != null) {
 			user.changeStartedAt(request.startedAt());
 		}
+
+		// 동의 시각은 앱이 보낸 값이 아니라 서버 시계로 찍는다.
+		user.recordAgreements(request.agreements().version(), Instant.now());
 
 		userGoalService.recalculate(user);
 		userRepository.save(user);

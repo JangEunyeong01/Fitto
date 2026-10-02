@@ -225,6 +225,7 @@ export function fromUser(user: User): {
   return {
     profile: {
       nickname: user.name,
+      birthYear: user.birthday?.year ?? null,
       birthdayMonth: user.birthday?.month ?? null,
       birthdayDay: user.birthday?.day ?? null,
       gender: user.gender as Profile['gender'],

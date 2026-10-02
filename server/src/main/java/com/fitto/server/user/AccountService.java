@@ -69,7 +69,7 @@ public class AccountService {
 	}
 
 	@Transactional
-	public void delete(UUID userId, String password) {
+	public void delete(UUID userId, String password, DeletionReason reason) {
 		if (deleteAttempts.isBlocked(userId.toString())) {
 			log.warn("탈퇴 차단(시도 초과): userId={}", userId);
 			throw new ApiException(ErrorCode.TOO_MANY_REQUESTS);
@@ -96,6 +96,12 @@ public class AccountService {
 
 		// 마지막에 계정. 질환·알레르기·선호 음식 6개 표는 JPA가 함께 지운다.
 		userRepository.delete(user);
+
+		// 사유는 계정과 같은 트랜잭션에 남긴다. 비밀번호가 틀려 탈퇴가 안 되면 사유도 안 남는다.
+		// user_id는 일부러 넣지 않는다 — 사유만 세면 되고, 누구인지는 몰라야 한다.
+		if (reason != null) {
+			entityManager.persist(DeletionReasonLog.of(reason));
+		}
 
 		// 지워진 뒤에는 어떤 계정이었는지 확인할 방법이 없다. 삭제 사실 자체는 남겨야 문의에 답할 수 있다.
 		log.info("탈퇴 완료: userId={}", userId);

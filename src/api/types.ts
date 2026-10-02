@@ -36,7 +36,8 @@ export interface User {
   height: number | null;
   weight: number | null;
   targetWeight: number | null;
-  birthday: { month: number; day: number } | null;
+  /** 세 칸 다 비면 null. 연도가 생기기 전에 가입한 사람은 year만 null일 수 있다. */
+  birthday: { year: number | null; month: number | null; day: number | null } | null;
   activityLevel: string | null;
   goal: string | null;
   diseases: string[];

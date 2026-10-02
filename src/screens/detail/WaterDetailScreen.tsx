@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { ScrollView, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { tabBarSpace } from '../../navigation/TabBar';
 import ScreenBackground from '../../components/ScreenBackground';
 import DetailHeader from './DetailHeader';
 import PeriodChips, { Period } from './PeriodChips';
 import PeriodBar, { MonthPreset } from './PeriodBar';
 import DetailSummaryCard from './DetailSummaryCard';
-import DetailBarChart from './DetailBarChart';
+import DetailBarChart, { hasChartData } from './DetailBarChart';
 import GoalField from './GoalField';
 import CupSizeField from './CupSizeField';
 import { useAppStore } from '../../store/useAppStore';
@@ -92,7 +93,7 @@ export default function WaterDetailScreen() {
     <ScreenBackground showTimeGradient={false}>
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={[styles.content, { paddingTop: insets.top + 14, paddingBottom: insets.bottom + 40 }]}
+        contentContainerStyle={[styles.content, { paddingTop: insets.top + 14, paddingBottom: tabBarSpace(insets.bottom) }]}
         showsVerticalScrollIndicator={false}
       >
         <DetailHeader title="물 섭취" />
@@ -113,13 +114,17 @@ export default function WaterDetailScreen() {
           />
         )}
 
-        <DetailSummaryCard value={summaryValue} unit="ml" goal={goal} periodDesc={summaryDesc} />
-        <DetailBarChart
-          labels={chartLabels}
-          values={chartValues}
-          highlightIndex={highlightIndex}
-          emptyMessage={emptyMessage}
-        />
+        <DetailSummaryCard
+          value={summaryValue}
+          unit="ml"
+          goal={goal}
+          periodDesc={summaryDesc}
+          note={hasChartData(chartValues) ? undefined : emptyMessage}
+        >
+          {hasChartData(chartValues) && (
+            <DetailBarChart labels={chartLabels} values={chartValues} highlightIndex={highlightIndex} />
+          )}
+        </DetailSummaryCard>
 
         <GoalField
           title="물 목표"

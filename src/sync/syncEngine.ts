@@ -243,9 +243,10 @@ async function send(op: SyncOp, token: string): Promise<void> {
           activityLevel: p.activity,
           goal: p.goalType,
           personality: s.persona,
+          // 세 칸을 한 묶음으로 보낸다. 서버는 묶음이 오면 세 칸을 통째로 갈아끼우고, null이면 그대로 둔다.
           birthday:
-            p.birthdayMonth != null && p.birthdayDay != null
-              ? { month: p.birthdayMonth, day: p.birthdayDay }
+            p.birthYear != null || p.birthdayMonth != null || p.birthdayDay != null
+              ? { year: p.birthYear, month: p.birthdayMonth, day: p.birthdayDay }
               : null,
           diseases: p.conditions,
           customDiseases: p.customConditions,

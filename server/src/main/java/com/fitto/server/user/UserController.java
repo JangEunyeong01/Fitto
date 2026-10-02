@@ -68,7 +68,7 @@ public class UserController {
 
 	@DeleteMapping("/users/me")
 	public ResponseEntity<Void> deleteMe(@Valid @RequestBody AccountDeleteRequest request) {
-		accountService.delete(AuthenticatedUser.requireId(), request.password());
+		accountService.delete(AuthenticatedUser.requireId(), request.password(), request.reason());
 		return ResponseEntity.noContent().build();
 	}
 

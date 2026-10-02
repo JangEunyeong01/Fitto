@@ -3,12 +3,13 @@ import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import TextLink from '../../../components/TextLink';
 import GlassCard from '../../../components/GlassCard';
+import QuickWorkoutRow from '../../../components/QuickWorkoutRow';
 import { useTheme } from '../../../theme/useTheme';
 import { useAppStore } from '../../../store/useAppStore';
 import { newId } from '../../../utils/id';
 import { dateKey } from '../../../utils/timeOfDay';
 import { useToastStore } from '../../../store/useToastStore';
-import { QUICK_WORKOUTS, QUICK_WORKOUT_MINUTES, calcExerciseKcal, findExercise } from '../../../data/workouts';
+import { QUICK_WORKOUT_MINUTES, calcExerciseKcal, findExercise } from '../../../data/workouts';
 import { typography } from '../../../theme/tokens';
 
 // README: 최대 2개만 보여주고 나머지는 "+N개 더"로 접는다(명세 F-015).
@@ -49,7 +50,7 @@ export default function ExerciseCard() {
       </View>
 
       {exercises.length === 0 ? (
-        <Text style={[styles.empty, { color: colors.textSecondary }]}>오늘 운동 기록이 없어요. 아래에서 바로 남겨보세요.</Text>
+        <Text style={[styles.empty, { color: colors.textSecondary }]}>오늘 운동 기록이 없어요.</Text>
       ) : (
         <View style={styles.list}>
           {shown.map((e) => (
@@ -69,17 +70,7 @@ export default function ExerciseCard() {
         </View>
       )}
 
-      <View style={[styles.chipRow, { borderTopColor: colors.borderDivider }]}>
-        {QUICK_WORKOUTS.map((code) => (
-          <Pressable
-            key={code}
-            onPress={() => handleQuickAdd(code)}
-            style={[styles.chip, { borderColor: colors.borderInput }]}
-          >
-            <Text style={[styles.chipText, { color: colors.textPrimary }]}>+ {findExercise(code)?.name}</Text>
-          </Pressable>
-        ))}
-      </View>
+      <QuickWorkoutRow onAdd={handleQuickAdd} />
     </GlassCard>
   );
 }
@@ -90,7 +81,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  title: typography.sectionTitle,
+  title: typography.cardTitle,
   link: typography.label,
   empty: {
     ...typography.body,
@@ -115,20 +106,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   detail: typography.caption,
-  chipRow: {
-    flexDirection: 'row',
-    gap: 8,
-    marginTop: 14,
-    paddingTop: 12,
-    borderTopWidth: StyleSheet.hairlineWidth,
-  },
-  chip: {
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    borderRadius: 10,
-    borderWidth: 1,
-  },
-  chipText: typography.label,
   more: {
     ...typography.caption,
     paddingTop: 2,

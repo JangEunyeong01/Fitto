@@ -1,15 +1,14 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import ScreenBackground from '../../components/ScreenBackground';
-import GlassCard from '../../components/GlassCard';
+import ConsentSheet, { Agreed } from './ConsentSheet';
+import { TERMS_VERSION } from '../../data/terms';
 import TextLink from '../../components/TextLink';
 import TextField from '../../components/TextField';
 import PrimaryButton from '../../components/PrimaryButton';
-import DetailHeader from '../detail/DetailHeader';
+import AuthSheetLayout, { useGoHomeLater } from './AuthSheetLayout';
 import { useTheme } from '../../theme/useTheme';
-import { typography } from '../../theme/tokens';
+import { typography, weight } from '../../theme/tokens';
 import { useAppStore } from '../../store/useAppStore';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useToastStore } from '../../store/useToastStore';
@@ -25,8 +24,8 @@ import { useWakeNotice } from '../../hooks/useWakeNotice';
  * 가입에 성공하면 기기에 쌓아둔 기록을 서버로 올린다.
  */
 export default function SignupScreen() {
-  const insets = useSafeAreaInsets();
   const navigation = useNavigation<any>();
+  const goHomeLater = useGoHomeLater();
   const { colors } = useTheme();
 
   const profile = useAppStore((s) => s.profile);
@@ -53,9 +52,17 @@ export default function SignupScreen() {
     return !next.email && !next.password;
   };
 
-  const handleSignup = async () => {
+  /** 가입 버튼은 약관 시트를 연다. 실제 가입은 시트에서 셋 다 동의했을 때 한다. */
+  const [consentOpen, setConsentOpen] = useState(false);
+  const [agreed, setAgreed] = useState<Agreed>({ terms: false, privacy: false, health: false });
+  const openConsent = () => {
     if (busy) return;
     if (!validate()) return;
+    setConsentOpen(true);
+  };
+
+  const handleSignup = async () => {
+    if (busy) return;
     setBusy(true);
 
     try {
@@ -78,11 +85,17 @@ export default function SignupScreen() {
           allergies: profile.allergies,
           customAllergies: profile.customAllergies,
           personality: persona,
+          birthYear: profile.birthYear,
+          birthdayMonth: profile.birthdayMonth,
+          birthdayDay: profile.birthdayDay,
         },
         // 게스트로 쓴 기간을 이어받는다(F-008). 안 보내면 서버가 가입 시각을 시작일로 잡아
         // "피또와 함께한 지 N일"이 1일로 되돌아간다.
         startedAt: startDate ? new Date(`${startDate}T00:00:00`).toISOString() : undefined,
+        // 동의 시각은 서버가 찍는다. 앱은 무엇에, 어느 버전에 동의했는지만 보낸다.
+        agreements: { ...agreed, version: TERMS_VERSION },
       });
+      setConsentOpen(false);
 
       signIn({
         accessToken: result.accessToken,
@@ -116,6 +129,8 @@ export default function SignupScreen() {
       // 그때는 돌아갈 화면이 없으므로 확인하고 부른다.
       if (navigation.canGoBack()) navigation.goBack();
     } catch (e) {
+      // 칸 오류를 보여야 하니 시트를 내린다. 체크는 남겨 둬서 고친 뒤 바로 다시 누를 수 있다.
+      setConsentOpen(false);
       // 서버가 준 문장을 그대로 보여준다(명세 0-6). 칸에 속한 오류는 그 칸 아래로, 나머지는 토스트로.
       if (e instanceof ApiError && e.code === 'EMAIL_DUPLICATED') {
         setFieldErrors({ email: e.message });
@@ -137,92 +152,90 @@ export default function SignupScreen() {
   };
 
   return (
-    <ScreenBackground showTimeGradient={false}>
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={[styles.content, { paddingTop: insets.top + 14, paddingBottom: insets.bottom + 40 }]}
-        showsVerticalScrollIndicator={false}
-      >
-        <DetailHeader title="계정 만들기" />
+    <AuthSheetLayout
+      heading="계정 만들기"
+      title={'피또랑\n계속 기록해요'}
+      subtitle="지금까지 기록한 내용은 계정으로 함께 옮겨져요."
+      onBack={navigation.canGoBack() ? () => navigation.goBack() : undefined}
+    >
+      <Text style={[styles.label, styles.firstLabel, { color: colors.textSecondary }]}>이메일</Text>
+      <TextField
+        value={email}
+        onChangeText={(v) => {
+          setEmail(v);
+          // 다시 입력을 시작하면 오류를 걷는다. 치는 동안 빨간 칸이 계속 떠 있으면 압박이 된다.
+          if (fieldErrors.email) setFieldErrors((prev) => ({ ...prev, email: undefined }));
+        }}
+        placeholder="fitto@example.com"
+        autoCapitalize="none"
+        keyboardType="email-address"
+        maxLength={254}
+        error={fieldErrors.email}
+      />
 
-        <GlassCard style={styles.card}>
-          <Text style={[styles.desc, { color: colors.textSecondary }]}>
-            지금까지 기록한 내용은 계정으로 함께 옮겨져요. 다른 기기에서도 이어서 볼 수 있어요.
-          </Text>
+      <Text style={[styles.label, { color: colors.textSecondary }]}>비밀번호</Text>
+      {/* 비밀번호 조건은 칸 안 안내 글씨로 한 번만 말한다(시안 규칙 18). 조건을 못 채우면 누를 때 칸 아래 오류로 다시 알린다. */}
+      <TextField
+        value={password}
+        onChangeText={(v) => {
+          setPassword(v);
+          if (fieldErrors.password) setFieldErrors((prev) => ({ ...prev, password: undefined }));
+        }}
+        placeholder="영문과 숫자를 섞어 8자 이상"
+        autoCapitalize="none"
+        secureTextEntry
+        revealable
+        maxLength={64}
+        error={fieldErrors.password}
+      />
 
-          <Text style={[styles.label, { color: colors.textSecondary }]}>이메일</Text>
-          <TextField
-            value={email}
-            onChangeText={(v) => {
-              setEmail(v);
-              // 다시 입력을 시작하면 오류를 걷는다. 치는 동안 빨간 칸이 계속 떠 있으면 압박이 된다.
-              if (fieldErrors.email) setFieldErrors((prev) => ({ ...prev, email: undefined }));
-            }}
-            placeholder="fitto@example.com"
-            autoCapitalize="none"
-            keyboardType="email-address"
-            maxLength={254}
-            error={fieldErrors.email}
-          />
+      <View style={styles.buttonWrap}>
+        <PrimaryButton
+          label="계정 만들기"
+          onPress={openConsent}
+          loading={busy && !consentOpen}
+          inactive={!email.trim() || password.length < 8}
+        />
+      </View>
 
-          <Text style={[styles.label, { color: colors.textSecondary }]}>비밀번호</Text>
-          <TextField
-            value={password}
-            onChangeText={(v) => {
-              setPassword(v);
-              if (fieldErrors.password) setFieldErrors((prev) => ({ ...prev, password: undefined }));
-            }}
-            placeholder="영문과 숫자를 섞어 8자 이상"
-            autoCapitalize="none"
-            secureTextEntry
-            maxLength={64}
-            error={fieldErrors.password}
-            helper="영문과 숫자를 모두 포함해 8자 이상"
-          />
+      <ConsentSheet
+        visible={consentOpen}
+        agreed={agreed}
+        onChange={setAgreed}
+        onConfirm={handleSignup}
+        onClose={() => setConsentOpen(false)}
+        busy={busy}
+      />
 
-          <View style={styles.buttonWrap}>
-            <PrimaryButton
-              label="계정 만들기"
-              onPress={handleSignup}
-              loading={busy}
-              inactive={!email.trim() || password.length < 8}
-            />
-          </View>
+      {wakeNotice && <Text style={[styles.wakeNotice, { color: colors.textSecondary }]}>{wakeNotice}</Text>}
 
-          {wakeNotice && <Text style={[styles.wakeNotice, { color: colors.textSecondary }]}>{wakeNotice}</Text>}
+      <View style={styles.linkRow}>
+        <Text style={[styles.link, { color: colors.textSecondary }]}>이미 계정이 있나요?</Text>
+        <TextLink label="로그인" onPress={() => navigation.navigate('Login')} />
+      </View>
 
-          <View style={styles.linkRow}>
-            <Text style={[styles.link, { color: colors.textSecondary }]}>이미 계정이 있나요?</Text>
-            <TextLink label="로그인" onPress={() => navigation.navigate('Login')} />
-          </View>
-        </GlassCard>
+      {/* 가입은 선택이라는 걸 분명히 한다. 막다른 길처럼 보이지 않게 빠져나가는 길을 둔다. */}
+      {navigation.canGoBack() && (
+        <Pressable onPress={goHomeLater} accessibilityRole="button" style={styles.laterBtn}>
+          <Text style={[styles.laterLabel, { color: colors.textSecondary }]}>나중에 하기</Text>
+        </Pressable>
+      )}
 
-        <Text style={[styles.note, { color: colors.textSecondary }]}>
-          계정이 없어도 앱의 모든 기능을 쓸 수 있어요. 계정은 기록을 백업하고 기기를 옮길 때 필요해요.
-        </Text>
-      </ScrollView>
-    </ScreenBackground>
+      <Text style={[styles.note, { color: colors.textSecondary }]}>
+        계정이 없어도 앱의 모든 기능을 쓸 수 있어요. 계정은 기록을 백업하고 기기를 옮길 때 필요해요.
+      </Text>
+    </AuthSheetLayout>
   );
 }
 
 const styles = StyleSheet.create({
-  scroll: {
-    flex: 1,
-  },
-  content: {
-    paddingHorizontal: 16,
-  },
-  card: {
-    marginBottom: 12,
-  },
-  desc: {
-    ...typography.bodySm,
-    marginBottom: 4,
-  },
   label: {
     ...typography.label,
-    marginTop: 16,
-    marginBottom: 8,
+    marginTop: 14,
+    marginBottom: 6,
+  },
+  firstLabel: {
+    marginTop: 0,
   },
   buttonWrap: {
     marginTop: 20,
@@ -234,15 +247,27 @@ const styles = StyleSheet.create({
   },
   linkRow: {
     height: 44,
+    marginTop: 8,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
   },
-  link: typography.label,
+  link: typography.body,
+  laterBtn: {
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  laterLabel: {
+    ...typography.body,
+    ...weight(600),
+  },
   note: {
     ...typography.caption,
-    lineHeight: 11 * 1.6,
-    paddingHorizontal: 4,
+    lineHeight: 12 * 1.5,
+    marginTop: 6,
+    paddingHorizontal: 8,
+    textAlign: 'center',
   },
 });

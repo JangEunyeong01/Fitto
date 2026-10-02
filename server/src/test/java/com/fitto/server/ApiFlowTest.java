@@ -62,7 +62,8 @@ class ApiFlowTest {
 				    "diseases": ["diabetes"], "customDiseases": [], "preferredFoods": [], "customPreferredFoods": [],
 				    "allergies": ["nuts"], "customAllergies": ["오이"], "personality": "friendly"
 				  },
-				  "startedAt": "2026-08-01T09:00:00Z"
+				  "startedAt": "2026-08-01T09:00:00Z",
+				  "agreements": { "terms": true, "privacy": true, "health": true, "version": "2026-10-01" }
 				}
 				""";
 
@@ -94,7 +95,8 @@ class ApiFlowTest {
 				{
 				  "email": "flow@fitto.app", "password": "fitto1234",
 				  "profile": { "name": "은영", "gender": "female", "age": 26, "height": 165.0, "weight": 55.0,
-				    "activityLevel": "light", "goal": "lose_weight", "personality": "friendly" }
+				    "activityLevel": "light", "goal": "lose_weight", "personality": "friendly" },
+				  "agreements": { "terms": true, "privacy": true, "health": true, "version": "2026-10-01" }
 				}
 				""";
 
@@ -105,6 +107,29 @@ class ApiFlowTest {
 
 		assertEquals(409, result.getResponse().getStatus());
 		assertEquals("EMAIL_DUPLICATED", body(result).get("code").asString());
+	}
+
+	@Test
+	@Order(2)
+	void 약관_동의가_없거나_하나라도_빠지면_400이다() throws Exception {
+		String profile = """
+				"email": "noagree@fitto.app", "password": "fitto1234",
+				"profile": { "name": "동의", "gender": "female", "age": 26, "height": 165.0, "weight": 55.0,
+				  "activityLevel": "light", "goal": "maintain", "personality": "friendly" }
+				""";
+		String[] bodies = {
+				"{" + profile + "}",
+				"{" + profile + ", \"agreements\": { \"terms\": true, \"privacy\": true, \"health\": false, \"version\": \"2026-10-01\" } }",
+				"{" + profile + ", \"agreements\": { \"terms\": true, \"privacy\": true, \"health\": true, \"version\": \"\" } }",
+		};
+
+		for (String b : bodies) {
+			MvcResult result = mvc.perform(post("/auth/signup")
+					.contentType(MediaType.APPLICATION_JSON)
+					.content(b))
+					.andReturn();
+			assertEquals(400, result.getResponse().getStatus(), b);
+		}
 	}
 
 	@Test
@@ -281,5 +306,29 @@ class ApiFlowTest {
 		JsonNode back = body(cleared).get("goals");
 		assertEquals(2000, back.get("waterGoal").asInt());
 		assertTrue(!back.get("waterGoalCustom").asBoolean());
+	}
+
+	@Test
+	@Order(11)
+	void 생년월일은_연도까지_한_묶음으로_저장된다() throws Exception {
+		MvcResult result = mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+				.patch("/users/me")
+				.header("Authorization", "Bearer " + accessToken)
+				.contentType(MediaType.APPLICATION_JSON)
+				.content("{ \"birthday\": { \"year\": 1998, \"month\": 3, \"day\": 14 } }"))
+				.andReturn();
+
+		JsonNode birthday = body(result).get("birthday");
+		assertEquals(1998, birthday.get("year").asInt());
+		assertEquals(3, birthday.get("month").asInt());
+		assertEquals(14, birthday.get("day").asInt());
+
+		// 말이 안 되는 연도는 막는다.
+		assertEquals(400, mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+				.patch("/users/me")
+				.header("Authorization", "Bearer " + accessToken)
+				.contentType(MediaType.APPLICATION_JSON)
+				.content("{ \"birthday\": { \"year\": 1800, \"month\": 3, \"day\": 14 } }"))
+				.andReturn().getResponse().getStatus());
 	}
 }

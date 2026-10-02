@@ -15,7 +15,11 @@ export type IconName =
   | 'water'
   | 'weight'
   | 'arrowUp'
-  | 'arrowDown';
+  | 'arrowDown'
+  | 'eye'
+  | 'eyeOff'
+  | 'check'
+  | 'grip';
 
 /**
  * 아이콘 크기는 세 단계만 쓴다(UI 기준서 8장). 예전에는 13~20까지 8종이 섞여 있었다.
@@ -169,6 +173,37 @@ function renderPaths(name: IconName, p: StrokeProps) {
         <>
           <Path d="M12 5v13.5" {...p} />
           <Path d="M6.6 13.1 12 18.5l5.4-5.4" {...p} />
+        </>
+      );
+
+    // 비밀번호 보기 / 가리기.
+    case 'eye':
+      return (
+        <>
+          <Path d="M2.8 12S6.2 5.8 12 5.8 21.2 12 21.2 12 17.8 18.2 12 18.2 2.8 12 2.8 12Z" {...p} />
+          <Path d="M12 9.2a2.8 2.8 0 1 1 0 5.6 2.8 2.8 0 0 1 0-5.6Z" {...p} />
+        </>
+      );
+
+    case 'eyeOff':
+      return (
+        <>
+          <Path d="M2.8 12S6.2 5.8 12 5.8 21.2 12 21.2 12 17.8 18.2 12 18.2 2.8 12 2.8 12Z" {...p} />
+          <Path d="M12 9.2a2.8 2.8 0 1 1 0 5.6 2.8 2.8 0 0 1 0-5.6Z" {...p} />
+          <Path d="M4.5 4.5 19.5 19.5" {...p} />
+        </>
+      );
+
+    case 'check':
+      return <Path d="m5.5 12.5 4.2 4.2 8.8-9.4" {...p} />;
+
+    // 끌어서 옮기는 줄의 손잡이(≡).
+    case 'grip':
+      return (
+        <>
+          <Path d="M5 8h14" {...p} />
+          <Path d="M5 12h14" {...p} />
+          <Path d="M5 16h14" {...p} />
         </>
       );
   }

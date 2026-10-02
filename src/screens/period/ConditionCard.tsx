@@ -4,7 +4,7 @@ import GlassCard from '../../components/GlassCard';
 import SelectChip from '../../components/SelectChip';
 import TextField from '../../components/TextField';
 import { useTheme } from '../../theme/useTheme';
-import { typography } from '../../theme/tokens';
+import { typography, weight } from '../../theme/tokens';
 import { useAppStore, type DailyRecord } from '../../store/useAppStore';
 import { SYMPTOM_TAGS } from '../../constants/codes';
 
@@ -57,7 +57,6 @@ export default function ConditionCard({ dateKey, label }: ConditionCardProps) {
               label={c.label}
               selected={on}
               onPress={() => setDayCondition(dateKey, on ? undefined : c.value)}
-              size="lg"
               fill
             />
           );
@@ -79,7 +78,6 @@ export default function ConditionCard({ dateKey, label }: ConditionCardProps) {
       {/* 명세 F-036: 복용약과 메모. 입력칸을 벗어날 때 저장한다. */}
       <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>복용약</Text>
       <TextField
-        size="sm"
         clearable
         value={medication}
         onChangeText={setMedication}
@@ -91,7 +89,6 @@ export default function ConditionCard({ dateKey, label }: ConditionCardProps) {
 
       <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>메모</Text>
       <TextField
-        size="sm"
         clearable
         value={memo}
         onChangeText={setMemo}
@@ -108,10 +105,12 @@ const styles = StyleSheet.create({
   card: {
     marginBottom: 12,
   },
-  title: typography.sectionTitle,
+  title: typography.cardTitle,
   desc: {
-    ...typography.bodySm,
-    marginTop: 6,
+    fontSize: 13,
+    ...weight(400),
+    lineHeight: 13 * 1.5,
+    marginTop: 4,
   },
   conditionRow: {
     flexDirection: 'row',
@@ -120,8 +119,8 @@ const styles = StyleSheet.create({
   },
   sectionLabel: {
     ...typography.label,
-    marginTop: 16,
-    marginBottom: 8,
+    marginTop: 14,
+    marginBottom: 6,
   },
   symptomWrap: {
     flexDirection: 'row',

@@ -2,10 +2,10 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Svg, { Polyline, Circle, Line } from 'react-native-svg';
 import { useTheme } from '../../theme/useTheme';
-import { alpha, brand, typography } from '../../theme/tokens';
+import { alpha, brand, weight } from '../../theme/tokens';
 import { buildChartData, type WeightPoint } from '../../utils/weight';
 
-const HEIGHT = 120;
+const HEIGHT = 110;
 
 interface WeightChartProps {
   points: WeightPoint[];
@@ -64,7 +64,7 @@ export default function WeightChart({ points, targetWeight, width }: WeightChart
             cx={p.x}
             cy={p.y}
             // 마지막 기록만 크게 찍어 "지금 여기"를 보여준다.
-            r={i === xy.length - 1 ? 4.5 : 2.5}
+            r={i === xy.length - 1 ? 4.5 : 3}
             fill={i === xy.length - 1 ? brand.blue : colors.surfaceSolid}
             stroke={brand.blue}
             strokeWidth={1.5}
@@ -87,7 +87,10 @@ const styles = StyleSheet.create({
   axisRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 6,
+    marginTop: 8,
   },
-  axis: typography.captionSm,
+  axis: {
+    fontSize: 12,
+    ...weight(500),
+  },
 });

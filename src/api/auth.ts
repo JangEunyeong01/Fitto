@@ -22,6 +22,9 @@ export interface SignupProfile {
   allergies: string[];
   customAllergies: string[];
   personality: string;
+  birthYear: number | null;
+  birthdayMonth: number | null;
+  birthdayDay: number | null;
 }
 
 export interface AuthResult extends AuthTokens {
@@ -49,6 +52,8 @@ export function signup(params: {
   profile: SignupProfile;
   /** 게스트로 앱을 처음 쓴 시각. 가입했다고 "함께한 지 1일"로 돌아가지 않게 넘긴다(F-008). */
   startedAt?: string;
+  /** 필수 약관 셋과 동의한 약관 버전. 하나라도 false면 서버가 400을 준다. */
+  agreements: { terms: boolean; privacy: boolean; health: boolean; version: string };
 }): Promise<AuthResult> {
   return awake(() => request<AuthResult>('/auth/signup', { method: 'POST', body: params }));
 }
@@ -77,8 +82,17 @@ export function changePassword(
 }
 
 /** 탈퇴(명세 5장). 서버의 기록이 모두 지워진다. 되돌릴 수 없다. */
-export function deleteAccount(password: string, token: string): Promise<void> {
-  return awake(() => request<void>('/users/me', { method: 'DELETE', body: { password }, token }));
+/** 탈퇴 사유 코드(시안 40). 서버는 누가 골랐는지 없이 코드만 남긴다. */
+export type DeletionReason =
+  | 'tedious'
+  | 'too_many_notifications'
+  | 'missing_feature'
+  | 'other_app'
+  | 'privacy'
+  | 'other';
+
+export function deleteAccount(password: string, token: string, reason?: DeletionReason): Promise<void> {
+  return awake(() => request<void>('/users/me', { method: 'DELETE', body: { password, reason }, token }));
 }
 
 /**

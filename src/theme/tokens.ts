@@ -29,6 +29,8 @@ export interface ThemeColors {
   surfaceMuted: string;
   /** 게이지·막대의 빈 칸, 장식 원. 정보를 담지 않는다. */
   fillMuted: string;
+  /** 강조 안 한 차트 막대. fillMuted로는 카드 면에 묻혀서 한 단계 진하게(시안 07). */
+  fillStrong: string;
 
   /** 제목·본문·수치. */
   textPrimary: string;
@@ -66,6 +68,7 @@ export const lightColors: ThemeColors = {
   surfaceSolid: '#FFFFFF',
   surfaceMuted: '#EEF3F6',
   fillMuted: 'rgba(44,62,80,.06)',
+  fillStrong: 'rgba(44,62,80,.10)',
 
   textPrimary: '#2C3E50', // 10.3:1
   textSecondary: '#5C7282', // 4.7:1 (예전 #8FA3B1은 2.4:1)
@@ -93,6 +96,7 @@ export const darkColors: ThemeColors = {
   surfaceSolid: '#16202A',
   surfaceMuted: 'rgba(255,255,255,.05)',
   fillMuted: 'rgba(255,255,255,.07)',
+  fillStrong: 'rgba(255,255,255,.12)',
 
   textPrimary: '#E7F1F6', // 16.0:1
   textSecondary: '#8098A8', // 6.1:1
@@ -147,15 +151,7 @@ export function alpha(color: string, a: number): string {
   return `rgba(${r},${g},${b},${a})`;
 }
 
-export const primaryGradient = [brand.blue, brand.blueDeep] as const;
-export const primaryButtonShadow = alpha(brand.blue, 0.45);
-export const primaryButtonShadowSmall = alpha(brand.blue, 0.4);
-
-/** 로고 사각형·온보딩 진행 점에 쓰는 블루→민트 그라데이션. */
-export const accentGradient = [brand.blue, brand.mint] as const;
-
-/** 생리 주기 배지 그라데이션 (README: lavender .9 → peach .75). */
-export const periodBadgeGradient = [alpha(brand.lavender, 0.9), alpha(brand.peach, 0.75)] as const;
+// 버튼·로고·배지 그라데이션과 버튼 그림자는 개편 때 뺐다(시안 규칙 1·10). 그라데이션은 홈·로그인 배경과 물컵에만 남는다.
 
 /** 선택 상태 (README 온보딩 옵션 행). */
 export const selection = {
@@ -167,8 +163,6 @@ export const selection = {
 const SCRIM_BASE = '#101A24';
 
 export const overlay = {
-  /** 토스트 배경 (README: rgba(28,42,54,.9) + blur(10)). */
-  toastBg: 'rgba(28,42,54,.9)',
   /** 튜토리얼 딤 (README 명시값). */
   tutorialDim: alpha(SCRIM_BASE, 0.62),
   /** 바텀시트 배경 딤. README에 값이 없어 튜토리얼 딤과 같은 색을 옅게 썼다. */
@@ -178,35 +172,10 @@ export const overlay = {
 /** 탭바 그림자 (README: 0 12px 30px rgba(44,62,80,.16)). */
 export const tabBarShadowColor = alpha(lightColors.textPrimary, 0.16);
 
-/**
- * 생일 배너·모달.
- * README 토큰 표에는 없고 원본 프로토타입에만 있는 값이라 따로 모아둔다.
- * 옅은 복숭아색은 아침 시간대 색(#FFCBB6)과 같은 값을 쓴다.
- */
-const BIRTHDAY_PEACH = '#FFCBB6';
-const BIRTHDAY_MODAL_INK = '#14202A';
-
+// 생일 모달의 장식 원·그라데이션 버튼, 배너의 라벤더→피치 면은 개편 때 뺐다(시안 38, 규칙 10).
 export const birthday = {
-  bannerGradient: [alpha(brand.lavender, 0.35), alpha(BIRTHDAY_PEACH, 0.35)] as const,
-  avatarGradient: [brand.lavender, BIRTHDAY_PEACH] as const,
-  confirmGradient: [brand.lavender, brand.blue] as const,
-  modalBackdrop: alpha(BIRTHDAY_MODAL_INK, 0.44),
-  modalShadow: alpha(BIRTHDAY_MODAL_INK, 0.32),
-  glowLavender: alpha(brand.lavender, 0.55),
-  glowPeach: alpha(BIRTHDAY_PEACH, 0.6),
   /** 모달 캐릭터 부유 주기 (프로토타입: fbob 3.4s). */
   floatDuration: 3400,
-} as const;
-
-/**
- * 캐릭터 5단계 필터 근사용 오버레이 색.
- * RN Image에 CSS filter를 걸 수 없어 반투명 레이어로 대체한다.
- * 최종 5단계 일러스트가 준비되면 이미지 스왑으로 바뀌면서 함께 제거된다.
- */
-export const characterOverlay = {
-  desaturate: '#8FA3B1',
-  vivid: brand.blue,
-  brighten: white,
 } as const;
 
 /**
@@ -236,8 +205,6 @@ export const motion = {
   tab: 220,
   /** fpulse — 튜토리얼 하이라이트 (2.2s). */
   pulse: 2200,
-  /** fwave — 컵 수면 물결 (2.6s). */
-  wave: 2600,
   /** 토스트 자동 소멸까지 유지 시간. 1.9초는 두 줄 문구를 다 읽기 전에 사라졌다(UI 기준서 5-7). */
   toastVisible: 3000,
 } as const;
@@ -281,6 +248,8 @@ export function weight(w: FontWeightKey) {
  * 9.5·10.5px 글자는 폰에서 읽기 어려웠다.
  */
 const TYPE_SCALE = {
+  /** 홈 칼로리 카드의 섭취 숫자 하나. 화면에서 가장 먼저 읽혀야 하는 값이라 한 단계를 따로 둔다(시안 02). */
+  displayXl: 36,
   displayLg: 28,
   displayMd: 24,
   heading1: 20,
@@ -299,11 +268,14 @@ const TYPE_SCALE = {
  */
 export const typography = {
   // Heading
-  screenTitle: { fontSize: TYPE_SCALE.heading1, ...weight(700), letterSpacing: -0.6, lineHeight: 20 * 1.35 },
-  subScreenTitle: { fontSize: TYPE_SCALE.heading2, ...weight(700), letterSpacing: -0.4, lineHeight: 17 * 1.4 },
+  /** 탭 화면 제목(식단·헬스·설정). 시안 규칙 7: 24. */
+  screenTitle: { fontSize: TYPE_SCALE.displayMd, ...weight(700), letterSpacing: -0.7, lineHeight: 24 * 1.25 },
+  /** 상세 화면 제목(뒤로가기 옆). 시안은 19인데 단계에 없는 값이라 20으로 맞췄다. */
+  subScreenTitle: { fontSize: TYPE_SCALE.heading1, ...weight(700), letterSpacing: -0.5, lineHeight: 20 * 1.35 },
   onboardingTitle: { fontSize: TYPE_SCALE.displayMd, ...weight(700), letterSpacing: -0.7, lineHeight: 24 * 1.32 },
 
   // Display — 대표 수치. 카드별 크기가 따로 필요한 곳은 화면에서 fontSize만 덮어쓴다.
+  heroNumber: { fontSize: TYPE_SCALE.displayXl, ...weight(700), letterSpacing: -1.4, fontVariant: tabularNums },
   bigNumber: { fontSize: TYPE_SCALE.displayLg, ...weight(700), letterSpacing: -1.05, fontVariant: tabularNums },
   midNumber: { fontSize: TYPE_SCALE.displayMd, ...weight(700), letterSpacing: -0.9, fontVariant: tabularNums },
 
@@ -354,7 +326,8 @@ export const spacing = {
   bottomSubScreen: 40,
   cardGap: 12,
   cardGapCompact: 10,
-  cardPadding: 16,
+  /** 시안 규칙 8: 카드 여백 18. */
+  cardPadding: 18,
 };
 
 /**
@@ -394,20 +367,24 @@ export const gauge = {
 
 export const minTouchTarget = 44;
 
+/**
+ * 카드 그림자. 시안 규칙 8 "그림자 약하게" — 0 4px 16px rgba(44,62,80,.06).
+ * 예전 0 10px 30px은 카드마다 떠 보여서, 바탕을 조용히 두려는 방향(Quiet Base)과 맞지 않았다.
+ */
 export const glassShadow = {
   light: {
-    shadowColor: lightColors.shadowColor,
-    shadowOffset: { width: 0, height: 10 },
+    shadowColor: 'rgba(44,62,80,.06)',
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 1,
-    shadowRadius: 30,
-    elevation: 6,
+    shadowRadius: 16,
+    elevation: 2,
   },
   dark: {
     shadowColor: darkColors.shadowColor,
-    shadowOffset: { width: 0, height: 10 },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 1,
-    shadowRadius: 30,
-    elevation: 6,
+    shadowRadius: 16,
+    elevation: 2,
   },
 };
 
