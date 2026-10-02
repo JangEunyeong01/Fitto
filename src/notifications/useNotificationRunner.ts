@@ -1,9 +1,7 @@
 import { useEffect } from 'react';
 import { AppState } from 'react-native';
-import * as Notifications from 'expo-notifications';
 import { useAppStore } from '../store/useAppStore';
-import { NOTIFICATIONS_SUPPORTED, openTarget, reschedule } from './schedule';
-import type { NotifyTarget } from './plan';
+import { NOTIFICATIONS_SUPPORTED, listenTaps, reschedule } from './schedule';
 
 /**
  * 알림 예약을 언제 다시 걸지 정하는 곳. App에서 한 번만 부른다(동기화의 useSyncRunner와 같은 자리).
@@ -11,6 +9,8 @@ import type { NotifyTarget } from './plan';
  * - 앱을 켤 때, 다시 앞으로 나올 때 — 사흘치만 걸어두니 열 때마다 앞으로 민다
  * - 알림 설정·성격·목표·기록이 바뀔 때 — "목표까지 ○ml"와 이미 기록한 끼니를 반영한다
  * - 알림을 눌렀을 때 — 관련 화면으로 간다
+ *
+ * expo-notifications는 schedule.ts만 불러온다. Expo Go 안드로이드에선 불러오기만 해도 멈추기 때문이다.
  */
 export function useNotificationRunner(): void {
   useEffect(() => {
@@ -41,19 +41,13 @@ export function useNotificationRunner(): void {
       if (next === 'active') reschedule();
     });
 
-    const open = (r: Notifications.NotificationResponse) => {
-      const target = r.notification.request.content.data?.target as NotifyTarget | undefined;
-      if (target) openTarget(target);
-    };
-    // 앱이 꺼진 상태에서 알림을 눌러 켜진 경우.
-    Notifications.getLastNotificationResponseAsync().then((r) => r && open(r));
-    const tap = Notifications.addNotificationResponseReceivedListener(open);
+    const stopTaps = listenTaps();
 
     return () => {
       if (timer) clearTimeout(timer);
       unsubscribe();
       appState.remove();
-      tap.remove();
+      stopTaps();
     };
   }, []);
 }

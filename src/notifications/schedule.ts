@@ -1,5 +1,6 @@
 import { Platform, Linking } from 'react-native';
-import * as Notifications from 'expo-notifications';
+import Constants, { ExecutionEnvironment } from 'expo-constants';
+import type * as NotificationsModule from 'expo-notifications';
 import { useAppStore } from '../store/useAppStore';
 import { toDateKey } from '../utils/periodCycle';
 import { navigationRef } from '../navigation/navigationRef';
@@ -10,13 +11,28 @@ import { planNotifications, type NotifyTarget } from './plan';
  *
  * 매번 전부 지우고 다시 건다. 하나씩 고치는 것보다 단순하고, 많아야 50개라 금방 끝난다.
  * 웹에는 기기 알림이 없어서 아무것도 하지 않는다(설정 화면에 "앱에서만"으로 표시).
+ *
+ * 안드로이드 Expo Go는 SDK 53부터 expo-notifications를 **불러오기만 해도** 에러로 멈춘다(원격 푸시를 빼면서 생긴 제약,
+ * 로컬 알림만 써도 걸린다). 그래서 import 대신 필요할 때만 require하고, Expo Go 안드로이드에서는 아예 안 부른다.
+ * 실제 알림은 개발용 빌드(development build)에서 확인한다.
  */
-export const NOTIFICATIONS_SUPPORTED = Platform.OS !== 'web';
+const IS_ANDROID_EXPO_GO =
+  Platform.OS === 'android' && Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
+
+export const NOTIFICATIONS_SUPPORTED = Platform.OS !== 'web' && !IS_ANDROID_EXPO_GO;
+
+/** 알림이 안 되는 이유. 설정 화면 안내 문구에 쓴다. */
+export const UNSUPPORTED_REASON = IS_ANDROID_EXPO_GO
+  ? '알림은 개발용 빌드에서 울려요. Expo Go 안드로이드에서는 꺼져 있어요.'
+  : '알림은 휴대폰 앱에서만 울려요.';
+
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const Notifications: typeof NotificationsModule | null = NOTIFICATIONS_SUPPORTED ? require('expo-notifications') : null;
 
 const ANDROID_CHANNEL = 'reminders';
 
 // 앱을 보고 있을 때도 알림을 띄운다. 물 알림은 앱 안에 있어도 놓치기 쉽다.
-if (NOTIFICATIONS_SUPPORTED) {
+if (Notifications) {
   Notifications.setNotificationHandler({
     handleNotification: async () => ({
       shouldShowBanner: true,
@@ -30,14 +46,14 @@ if (NOTIFICATIONS_SUPPORTED) {
 export type PermissionState = 'granted' | 'denied' | 'undetermined' | 'unsupported';
 
 export async function getPermission(): Promise<PermissionState> {
-  if (!NOTIFICATIONS_SUPPORTED) return 'unsupported';
+  if (!Notifications) return 'unsupported';
   const { status } = await Notifications.getPermissionsAsync();
   return status;
 }
 
 /** 알림을 처음 켤 때만 묻는다. 이미 거절했으면 OS가 다시 묻지 않으니 설정 앱으로 보내야 한다. */
 export async function requestPermission(): Promise<PermissionState> {
-  if (!NOTIFICATIONS_SUPPORTED) return 'unsupported';
+  if (!Notifications) return 'unsupported';
   if (Platform.OS === 'android') {
     await Notifications.setNotificationChannelAsync(ANDROID_CHANNEL, {
       name: '기록 알림',
@@ -52,7 +68,7 @@ export const openSystemSettings = () => Linking.openSettings();
 
 /** 지금 설정·기록으로 예약을 갈아끼운다. 권한이 없으면 지우기만 한다. */
 export async function reschedule(): Promise<void> {
-  if (!NOTIFICATIONS_SUPPORTED) return;
+  if (!Notifications) return;
   await Notifications.cancelAllScheduledNotificationsAsync();
   if ((await getPermission()) !== 'granted') return;
 
@@ -84,6 +100,21 @@ export async function reschedule(): Promise<void> {
       trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: n.at, channelId: ANDROID_CHANNEL },
     });
   }
+}
+
+/**
+ * 알림을 눌렀을 때 화면을 옮기도록 듣는다. 앱이 꺼진 상태에서 알림으로 켜진 경우도 한 번 처리한다.
+ * 해제 함수를 돌려준다. 알림이 안 되는 환경에선 아무것도 하지 않는다.
+ */
+export function listenTaps(): () => void {
+  if (!Notifications) return () => {};
+  const open = (r: NotificationsModule.NotificationResponse) => {
+    const target = r.notification.request.content.data?.target as NotifyTarget | undefined;
+    if (target) openTarget(target);
+  };
+  Notifications.getLastNotificationResponseAsync().then((r) => r && open(r));
+  const sub = Notifications.addNotificationResponseReceivedListener(open);
+  return () => sub.remove();
 }
 
 /** 알림을 누르면 관련 화면으로. 앱이 꺼져 있다 켜지는 경우는 화면이 준비된 뒤에 옮긴다. */

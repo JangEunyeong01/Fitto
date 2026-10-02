@@ -15,6 +15,7 @@ import { useAppStore, type Alarms } from '../../store/useAppStore';
 import TextLink from '../../components/TextLink';
 import {
   NOTIFICATIONS_SUPPORTED,
+  UNSUPPORTED_REASON,
   getPermission,
   requestPermission,
   openSystemSettings,
@@ -78,7 +79,7 @@ export default function NotificationsScreen() {
 
         {/* 웹엔 기기 알림이 없다. 권한을 거절했으면 OS가 다시 묻지 않으니 설정 앱으로 보낸다. */}
         {!NOTIFICATIONS_SUPPORTED ? (
-          <Text style={[styles.notice, { color: colors.textSecondary }]}>알림은 휴대폰 앱에서만 울려요.</Text>
+          <Text style={[styles.notice, { color: colors.textSecondary }]}>{UNSUPPORTED_REASON}</Text>
         ) : permission === 'denied' && anyOn ? (
           <View style={styles.noticeRow}>
             <Text style={[styles.notice, styles.noticeText, { color: colors.textDanger }]}>
