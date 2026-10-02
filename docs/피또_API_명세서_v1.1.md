@@ -1567,7 +1567,7 @@ F-035 "사용" 버튼. 루틴 안의 운동을 그날 기록으로 한꺼번에 
 
 ---
 
-### PUT /period/daily/{date} — 날짜별 컨디션 저장
+### PUT /period/daily/{date} — 날짜별 생리 기록 저장
 
 같은 날짜는 덮어쓴다.
 
@@ -1584,12 +1584,26 @@ F-035 "사용" 버튼. 루틴 안의 운동을 그날 기록으로 한꺼번에 
 
 | 필드 | 규칙 |
 |------|------|
-| condition | nullable |
-| symptoms | 코드 배열, 중복 불가 |
+| condition | nullable. **앱은 더 쓰지 않는다**(아래) |
+| symptoms | 기록 칩 코드 배열, 최대 60개, 코드 30자 이하, 중복은 서버가 하나로 |
 | medication | 50자 이하, nullable |
 | memo | 200자 이하, nullable |
 
 네 필드가 모두 비어 있으면(`null`, `[]`) 그 날짜 기록을 삭제한다.
+
+**symptoms에 들어가는 코드** — 이름은 `symptoms`지만 그날의 기록 칩이 모두 들어간다. 항목이 늘어도 표·API를 바꾸지 않으려고 "분류.값" 꼴로 한 배열에 담는다.
+
+| 분류 | 코드 | 비고 |
+|---|---|---|
+| 증상 | `period_pain`, `cramp`, `headache`, `bloating`, `fatigue`, `irritability`, `back_pain`, `appetite`, `acne`, `breast_pain`, `libido`, `constipation`, `pelvic_pain`, `nausea`, `abdominal_bloating` | 접두어 없음(처음부터 있던 코드와 같은 꼴) |
+| 기분 | `mood.tired` `mood.stressed` `mood.happy` `mood.calm` `mood.irritated` `mood.swings` `mood.anxious` `mood.normal` `mood.energetic` `mood.lethargic` `mood.excited` `mood.tense` | 여러 개 |
+| 성생활 | `sex.yes` | |
+| 자궁경부 점액 | `mucus.egg_white` `mucus.watery` `mucus.creamy` `mucus.sticky` `mucus.dry` | 앱에서 하나만 |
+| 부정 출혈 | `spotting.yes` | |
+| 배란 테스트 | `ovtest.positive` `ovtest.negative` | 앱에서 하나만 |
+| 직접 입력 | `custom.<글자 20자 이하>` | |
+
+**condition(컨디션 3택)은 기분 칩으로 옮겼다.** 앱은 `null`을 보내고, 서버에 남은 옛 값은 받아올 때 `good→mood.happy`, `normal→mood.normal`, `bad→mood.tired`로 바꿔 읽는다(기기 저장소도 같은 규칙으로 한 번 옮김). 그날을 다시 저장하면 서버의 옛 값도 비워진다.
 
 **Response 200**
 
