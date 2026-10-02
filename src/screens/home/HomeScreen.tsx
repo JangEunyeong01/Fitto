@@ -1,5 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { ScrollView, View, Pressable, StyleSheet } from 'react-native';
+import { View, Pressable, StyleSheet } from 'react-native';
+// 물 컵을 위아래로 끄는 제스처와 화면 스크롤이 같은 세로 방향이다.
+// 제스처 핸들러의 ScrollView여야 컵을 끌 때 화면이 같이 안 밀린다.
+import { ScrollView } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import ScreenBackground from '../../components/ScreenBackground';
 import HomeHeader from './HomeHeader';
