@@ -5,6 +5,7 @@ import { useAppStore } from '../store/useAppStore';
 import { toDateKey } from '../utils/periodCycle';
 import { navigationRef } from '../navigation/navigationRef';
 import { planNotifications, type NotifyTarget } from './plan';
+import { personaCopy } from '../copy/persona';
 
 /**
  * 기기 알림 예약(plan.ts가 만든 목록대로).
@@ -100,6 +101,26 @@ export async function reschedule(): Promise<void> {
       trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: n.at, channelId: ANDROID_CHANNEL },
     });
   }
+}
+
+/**
+ * 개발 확인용: 10초 뒤 물 알림 하나. 정각까지 기다리지 않고 표시·누르면 이동을 본다.
+ * 화면에서는 __DEV__일 때만 버튼을 보여준다.
+ */
+export async function scheduleTestNotification(): Promise<boolean> {
+  if (!Notifications || (await getPermission()) !== 'granted') return false;
+  const s = useAppStore.getState();
+  const remain = Math.max(0, s.goals.water - (s.dailyRecords[toDateKey(new Date())]?.water ?? 0));
+  await Notifications.scheduleNotificationAsync({
+    identifier: 'dev-test',
+    content: {
+      title: '물 마시기 (테스트)',
+      body: (personaCopy.waterAlarm[s.persona] as (v: { remain: number }) => string)({ remain }),
+      data: { target: 'home' },
+    },
+    trigger: { type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL, seconds: 10, channelId: ANDROID_CHANNEL },
+  });
+  return true;
 }
 
 /**

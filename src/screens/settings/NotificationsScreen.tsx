@@ -13,11 +13,13 @@ import { useTheme } from '../../theme/useTheme';
 import { brand, typography, weight } from '../../theme/tokens';
 import { useAppStore, type Alarms } from '../../store/useAppStore';
 import TextLink from '../../components/TextLink';
+import { useToastStore } from '../../store/useToastStore';
 import {
   NOTIFICATIONS_SUPPORTED,
   UNSUPPORTED_REASON,
   getPermission,
   requestPermission,
+  scheduleTestNotification,
   openSystemSettings,
   type PermissionState,
 } from '../../notifications/schedule';
@@ -34,6 +36,7 @@ export default function NotificationsScreen() {
   const setAlarms = useAppStore((s) => s.setAlarms);
   const persona = useAppStore((s) => s.persona);
   const periodOn = useAppStore((s) => s.periodOn);
+  const showToast = useToastStore((s) => s.show);
 
   const [permission, setPermission] = useState<PermissionState>('undetermined');
   useEffect(() => {
@@ -88,6 +91,20 @@ export default function NotificationsScreen() {
             <TextLink label="설정 열기" onPress={openSystemSettings} />
           </View>
         ) : null}
+
+        {/* 개발 빌드에서만. 정각까지 기다리지 않고 알림 표시와 누르면 이동을 확인한다. */}
+        {__DEV__ && NOTIFICATIONS_SUPPORTED && (
+          <View style={styles.noticeRow}>
+            <Text style={[styles.notice, styles.noticeText, { color: colors.textSecondary }]}>개발 확인용</Text>
+            <TextLink
+              label="10초 뒤 테스트 알림"
+              onPress={async () => {
+                const ok = await scheduleTestNotification();
+                showToast(ok ? '10초 뒤에 알림이 와요. 앱을 닫고 기다려 보세요' : '알림 권한을 먼저 허용해 주세요');
+              }}
+            />
+          </View>
+        )}
 
         {/* 알림 여섯 개를 카드 한 장에 줄로 모은다(시안 19). 카드 여섯 장이면 스위치만 줄지어 떠 있는 화면이 된다. */}
         <GlassCard style={styles.card} noPadding>
