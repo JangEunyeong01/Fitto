@@ -52,6 +52,28 @@ export const personaCopy = {
     strict: () => '수분 섭취가 2시간째 없습니다. 지금 250ml 채우세요.',
     neutral: (v: { remain: number }) => `물 섭취 알림 · 목표까지 ${v.remain}ml 남음`,
   },
+  // 아래 넷은 기기 알림 문구(src/notifications/plan.ts). 잠금화면에 한 줄로 보이니 짧게.
+  mealAlarm: {
+    friendly: (v: { meal: string }) => `${v.meal} 드셨어요? 한 줄만 남겨주면 제가 기억할게요`,
+    strict: (v: { meal: string }) => `${v.meal} 기록이 없습니다. 지금 남기세요.`,
+    neutral: (v: { meal: string }) => `${v.meal} 기록 알림`,
+  },
+  weighAlarm: {
+    friendly: () => '월요일이에요! 체중 한 번 재볼까요?',
+    strict: () => '주간 체중 측정일입니다. 아침 공복에 기록하세요.',
+    neutral: () => '주간 체중 기록 알림',
+  },
+  reportAlarm: {
+    friendly: () => '이번 주도 수고했어요. 한 주 돌아보러 올래요?',
+    strict: () => '주간 리포트가 준비됐습니다. 다음 주 계획을 점검하세요.',
+    neutral: () => '이번 주 요약이 준비됐습니다',
+  },
+  /** 생리 예정 하루 전. 내용을 잠금화면에 보여도 된다고 고른 사람에게만 쓴다. */
+  periodAlarm: {
+    friendly: () => '내일 생리 예정일이에요. 오늘은 몸을 조금 아껴줘요',
+    strict: () => '내일 생리 예정일입니다. 일정과 컨디션을 미리 조정하세요.',
+    neutral: () => '내일 생리 예정일입니다',
+  },
   birthdayMessage: {
     friendly: (v: { name: string }) => `${v.name}님, 생일 축하해요! 오늘은 케이크 한 조각쯤 괜찮아요. 목표도 살짝 늘려뒀어요 🎂`,
     strict: (v: { name: string }) => `${v.name}님, 생일 축하합니다. 오늘은 목표를 조금 여유롭게 잡아두었습니다.`,

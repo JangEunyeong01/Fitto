@@ -17,6 +17,8 @@ import { useTheme } from './src/theme/useTheme';
 import { useFittoFonts } from './src/theme/fonts';
 import { lightColors } from './src/theme/tokens';
 import { useSyncRunner } from './src/sync/useSyncRunner';
+import { useNotificationRunner } from './src/notifications/useNotificationRunner';
+import { navigationRef } from './src/navigation/navigationRef';
 
 /**
  * 한글이 단어 중간에서 끊기지 않게 한다("드릴게 / 요.").
@@ -38,11 +40,13 @@ function AppShell() {
   const { mode } = useTheme();
   // 로그인 상태라면 기기에 쌓인 기록을 서버로 올린다. 게스트면 아무 일도 하지 않는다.
   useSyncRunner();
+  // 기기 알림 예약. 웹에서는 아무것도 하지 않는다.
+  useNotificationRunner();
   return (
     <>
       {/* 시트들은 화면 전체를 덮는 오버레이지만 useNavigation을 쓰므로
           NavigationContainer 안에 둔다. */}
-      <NavigationContainer>
+      <NavigationContainer ref={navigationRef}>
         <View style={{ flex: 1 }}>
           <RootNavigator />
           <QuickLogSheet />

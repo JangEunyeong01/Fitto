@@ -12,6 +12,7 @@
     "expo-font": "~57.0.1",
     "expo-linear-gradient": "~57.0.2",
     "expo-local-authentication": "~57.0.3",
+    "expo-notifications": "~57.0.21",
     "expo-secure-store": "~57.0.4",
     "expo-status-bar": "~57.0.1",
     "react": "19.2.3",
@@ -37,6 +38,7 @@
     "web": "expo start --web",
     "check:api": "node scripts/check-mappers.mjs",
     "check:copy": "node scripts/check-briefing.mjs",
+    "check:notify": "node scripts/check-notify.mjs",
     "check:search": "node scripts/check-hangul.mjs"
   },
   "private": true
