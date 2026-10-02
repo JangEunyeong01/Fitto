@@ -19,12 +19,16 @@ import {
 
 const WEEKDAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
 
-/** 기록한 생리는 진하게, 예측은 옅게. 띠 모양은 같고 진하기로만 나눈다. */
-const PERIOD_RECORDED = alpha(brand.peach, 0.6);
-const PERIOD_PREDICTED = alpha(brand.peach, 0.24);
-const FERTILE_FILL = alpha(brand.lavender, 0.34);
-/** 배란일. 라벤더 그대로는 흰 카드 위에서 가임기 띠와 구분이 안 돼 한 단계 진하게(시안 10). */
-const OVULATION_FILL = alpha('#A996D8', 0.75);
+/**
+ * 기록한 생리는 진하게, 예측은 옅게. 띠 모양은 같고 진하기로만 나눈다.
+ * 복숭아·라벤더는 피또 화면에서 혼자 튀어서(사용자 피드백) 생리는 피또 팔레트와 같은 밝기의 장미색,
+ * 가임기는 피또 하늘색, 배란일은 피또 팔다리 색(#61A1B9)으로 맞췄다.
+ */
+const ROSE = '#EBA3B5';
+const PERIOD_RECORDED = alpha(ROSE, 0.6);
+const PERIOD_PREDICTED = alpha(ROSE, 0.22);
+const FERTILE_FILL = alpha(brand.blue, 0.26);
+const OVULATION_FILL = alpha('#61A1B9', 0.7);
 
 interface PeriodCalendarProps {
   year: number;
@@ -130,8 +134,6 @@ export default function PeriodCalendar({ year, month, onShiftMonth, selected, on
               <View
                 style={[
                   styles.dayCircle,
-                  // 배란일은 가임기 띠의 끝에 진한 점으로 찍는다.
-                  band?.type === 'ovulation' && { backgroundColor: OVULATION_FILL },
                   isToday && { borderWidth: 1.5, borderColor: colors.textSecondary },
                   isSelected && { borderWidth: 2, borderColor: themeBrand.blue },
                 ]}
@@ -152,7 +154,8 @@ const TYPE_LABEL = { period: '생리', fertile: '가임기', ovulation: '배란�
 
 function bandColor(b: BandDay) {
   if (b.type === 'period') return b.predicted ? PERIOD_PREDICTED : PERIOD_RECORDED;
-  return FERTILE_FILL;
+  // 배란일은 가임기 띠의 마지막 칸을 진하게. 동그라미를 따로 얹으면 띠와 크기가 어긋난다.
+  return b.type === 'ovulation' ? OVULATION_FILL : FERTILE_FILL;
 }
 
 const md = (key: string) => {
@@ -258,22 +261,27 @@ const styles = StyleSheet.create({
     ...weight(500),
   },
   // 띠는 칸 폭을 꽉 채워 옆 칸과 붙는다. 시작·끝 칸만 둥글게 닫고 살짝 들여 다음 묶음과 떨어뜨린다.
+  // 높이는 날짜 동그라미와 같은 36(칸 38에서 위아래 1). 오늘·고른 날 테두리가 띠 가장자리와 딱 겹친다.
   band: {
     position: 'absolute',
-    top: 3,
-    bottom: 3,
+    top: 1,
+    bottom: 1,
     left: 0,
     right: 0,
   },
+  // 닫히는 쪽은 칸 가장자리가 아니라 동그라미 가장자리(가운데 ±18)에서 끝난다.
+  // 칸 폭은 화면마다 달라서, 가장자리 기준이면 넓은 화면에서 띠 끝이 동그라미보다 삐져나온다.
   bandStart: {
-    left: 3,
-    borderTopLeftRadius: 16,
-    borderBottomLeftRadius: 16,
+    left: '50%',
+    marginLeft: -18,
+    borderTopLeftRadius: 18,
+    borderBottomLeftRadius: 18,
   },
   bandEnd: {
-    right: 3,
-    borderTopRightRadius: 16,
-    borderBottomRightRadius: 16,
+    right: '50%',
+    marginRight: -18,
+    borderTopRightRadius: 18,
+    borderBottomRightRadius: 18,
   },
   summary: {
     flexDirection: 'row',
