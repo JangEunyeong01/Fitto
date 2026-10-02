@@ -98,8 +98,16 @@ class PeriodLogsTest {
 		return mapper.readTree(result.getResponse().getContentAsString(StandardCharsets.UTF_8)).get("items");
 	}
 
+	/**
+	 * 가입은 IP마다 횟수 제한이 있다(SignupThrottle). 테스트 클래스들이 스프링 컨텍스트를 함께 써서
+	 * 모두 127.0.0.1로 가입하면 다른 테스트의 가입이 429로 막힌다. 이 테스트는 따로 주소를 쓴다.
+	 */
 	private String signup(String email) throws Exception {
 		MvcResult signup = mvc.perform(post("/auth/signup")
+				.with(request -> {
+					request.setRemoteAddr("10.0.0.12");
+					return request;
+				})
 				.contentType(MediaType.APPLICATION_JSON)
 				.content("""
 						{
