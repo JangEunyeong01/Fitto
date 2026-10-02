@@ -11,7 +11,8 @@ import { useTheme } from '../../theme/useTheme';
 import { useAppStore } from '../../store/useAppStore';
 import { personaCopy } from '../../copy/persona';
 import { dateKey } from '../../utils/timeOfDay';
-import { getCycleDayNumber, parseDateKey, shiftYearMonth } from '../../utils/periodCycle';
+import { getCycleDayNumber, getPeriodHeadline, parseDateKey, shiftYearMonth } from '../../utils/periodCycle';
+import { weight } from '../../theme/tokens';
 
 export default function PeriodDetailScreen() {
   const insets = useSafeAreaInsets();
@@ -41,6 +42,11 @@ export default function PeriodDetailScreen() {
       >
         <DetailHeader title="생리 주기" />
 
+        {/* 이 화면에서 제일 궁금한 건 "언제"라서 달력보다 먼저 한 줄로 답한다. */}
+        <Text style={[styles.headline, { color: colors.textPrimary }]} accessibilityRole="header">
+          {getPeriodHeadline(today, settings)}
+        </Text>
+
         <PeriodCalendar
           year={view.year}
           month={view.month}
@@ -68,6 +74,13 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: 16,
+  },
+  headline: {
+    fontSize: 22,
+    ...weight(700),
+    textAlign: 'center',
+    marginTop: 4,
+    marginBottom: 16,
   },
   characterRow: {
     flexDirection: 'row',

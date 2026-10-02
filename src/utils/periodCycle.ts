@@ -54,6 +54,44 @@ export function getDayType(dateKey: string, settings: PeriodSettings): DayType {
   return null;
 }
 
+export interface BandDay {
+  type: 'period' | 'fertile' | 'ovulation';
+  /** 예측이면 옅게. 사용자가 입력한 마지막 생리(시작일 ~ 기간)만 기록으로 본다. */
+  predicted: boolean;
+}
+
+/**
+ * 달력 띠용. getDayType과 같은 규칙이지만 두 가지가 다르다.
+ * - 마지막 시작일 **이전**은 비운다. 거기 칠하던 건 평균 주기를 뒤로 되풀이한 가짜 기록이었다
+ * - 기록(마지막 생리)과 예측(그 뒤 주기, 가임기·배란일)을 나눈다
+ */
+export function getBandDay(dateKey: string, s: PeriodSettings): BandDay | null {
+  const diff = daysBetween(s.lastStartDate, dateKey);
+  if (diff < 0) return null;
+  const type = getDayType(dateKey, s);
+  if (!type) return null;
+  const firstCycle = diff < s.cycleLength;
+  return { type, predicted: !(firstCycle && type === 'period') };
+}
+
+/** 띠가 이어지는 묶음. 배란일은 가임기 띠의 끝이라 같은 묶음이다. */
+export function bandGroup(b: BandDay | null): string | null {
+  if (!b) return null;
+  return `${b.type === 'period' ? 'period' : 'fertile'}-${b.predicted ? 'p' : 'r'}`;
+}
+
+/** 생리 화면 맨 위 한 줄. 생리 중이면 며칠째, 아니면 다음 예정일까지. */
+export function getPeriodHeadline(today: string, s: PeriodSettings): string {
+  const band = getBandDay(today, s);
+  if (band?.type === 'period') {
+    const n = getCycleDayNumber(today, s);
+    // 예측한 날을 "생리 중"이라고 단정하지 않는다. 아직 입력이 없으면 예정일 뿐이다.
+    if (!band.predicted) return `생리 ${n}일째`;
+    return n === 1 ? '오늘 생리 예정일이에요' : `생리 예정 ${n}일째`;
+  }
+  return `다음 생리까지 ${daysBetween(today, getUpcomingDates(today, s).nextStart)}일`;
+}
+
 /** 홈 카드의 "D+3" 배지 — 이번 주기 며칠째인지(시작일 = 1일차). */
 export function getCycleDayNumber(today: string, settings: PeriodSettings): number {
   return cycleOffset(today, settings.lastStartDate, settings.cycleLength) + 1;
