@@ -245,6 +245,11 @@ interface AppState {
    * 예전엔 "최근 7일 걸음이 다 0이면 연결 전"으로 추측했는데, 연결하고 아직 안 걸은 날도 "연결 전"이 됐다.
    */
   stepSource: StepSource;
+  /**
+   * 연결은 됐는데 마지막으로 읽은 기간의 걸음이 전부 0인지. 삼성 헬스가 권한을 받고도 걸음을
+   * 헬스 커넥트로 안 넘기는 경우가 있어서(실기기에서 겪음), 그때 "어디를 켜야 하는지" 안내를 띄운다.
+   */
+  stepsSourceEmpty: boolean;
   timeSlotOverride: string | null;
 
   /** 온보딩 끝 계정 선택을 지나갔다고 표시한다. 가입했든 나중에 하기를 골랐든 같다. */
@@ -414,6 +419,7 @@ export const useAppStore = create<AppState>()(
       birthdayShownYear: null,
       layDownShownDate: null,
       stepSource: 'none',
+      stepsSourceEmpty: false,
       timeSlotOverride: null,
 
       dismissAccountPrompt: () => set({ accountPromptSeen: true }),
@@ -645,6 +651,8 @@ export const useAppStore = create<AppState>()(
           return changed.length ? { dailyRecords: records } : {};
         });
         changed.forEach((date) => enqueueSync({ kind: 'steps.put', date }));
+        const values = Object.values(byDate);
+        set({ stepsSourceEmpty: values.length > 0 && values.every((v) => v === 0) });
       },
 
       setStepSource: (source) => set({ stepSource: source }),

@@ -42,6 +42,15 @@ export async function getAvailability(): Promise<StepAvailability> {
   return 'unsupported';
 }
 
+/** 헬스 커넥트 설정 화면(어느 앱이 무엇을 보내는지 보는 곳). 안드로이드 전용. */
+export const openHealthConnect = () => HC?.openHealthConnectSettings();
+
+/** 걸음이 하나도 안 들어올 때 무엇을 켜면 되는지. 플랫폼마다 다르다. */
+export const EMPTY_SOURCE_HINT =
+  Platform.OS === 'android'
+    ? '헬스 커넥트에 걸음이 아직 없어요. 삼성 헬스 › 설정 › 헬스 커넥트에서 걸음 보내기를 켜고, 삼성 헬스를 한 번 열어 주세요.'
+    : '최근 7일 걸음이 없어요. 설정 › 개인정보 보호 › 동작 및 피트니스에서 피또를 허용했는지 확인해 주세요.';
+
 export const openInstallPage = () =>
   Linking.openURL('market://details?id=com.google.android.apps.healthdata').catch(() =>
     Linking.openURL('https://play.google.com/store/apps/details?id=com.google.android.apps.healthdata'),
@@ -97,6 +106,32 @@ export function dayRanges(today: Date, days: number): { day: string; start: Date
   return out;
 }
 
+/**
+ * 개발 빌드 진단: 오늘 걸음이 0일 때 "헬스 커넥트에 걸음이 없는 것"과 "피또가 못 읽는 것"을 가른다.
+ * 합계·원본 기록 수·어느 앱이 썼는지(dataOrigins)·받은 권한을 Metro 터미널에 찍는다.
+ */
+async function logStepDiagnostics(today: { day: string; start: Date; end: Date }): Promise<void> {
+  if (!HC) return;
+  try {
+    const filter = { operator: 'between' as const, startTime: today.start.toISOString(), endTime: today.end.toISOString() };
+    const agg = await HC.aggregateRecord({ recordType: 'Steps', timeRangeFilter: filter });
+    const raw = await HC.readRecords('Steps', { timeRangeFilter: filter });
+    const granted = await HC.getGrantedPermissions();
+    console.log('[걸음 진단]', JSON.stringify({
+      day: today.day,
+      range: [filter.startTime, filter.endTime],
+      aggregateTotal: agg.COUNT_TOTAL,
+      aggregateOrigins: agg.dataOrigins,
+      rawCount: raw.records.length,
+      rawSum: raw.records.reduce((a, r) => a + r.count, 0),
+      rawOrigins: [...new Set(raw.records.map((r) => r.metadata?.dataOrigin))],
+      granted,
+    }));
+  } catch (e) {
+    console.log('[걸음 진단] 실패', String(e));
+  }
+}
+
 /** 지난 days일(오늘 포함)의 날짜별 걸음. 읽을 수 없는 날은 결과에서 빠진다. */
 export async function readDailySteps(days: number): Promise<Record<string, number>> {
   const out: Record<string, number> = {};
@@ -111,6 +146,7 @@ export async function readDailySteps(days: number): Promise<Record<string, numbe
       });
       out[r.day] = res.COUNT_TOTAL ?? 0;
     }
+    if (__DEV__) await logStepDiagnostics(ranges[ranges.length - 1]);
     return out;
   }
 

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { ScrollView, View, StyleSheet } from 'react-native';
 import TextLink from '../../components/TextLink';
 import { useConnectSteps } from '../../health/useConnectSteps';
+import StepsEmptyHint from '../../health/StepsEmptyHint';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { tabBarSpace } from '../../navigation/TabBar';
 import ScreenBackground from '../../components/ScreenBackground';
@@ -128,6 +129,8 @@ export default function StepsDetailScreen() {
             <DetailBarChart labels={chartLabels} values={chartValues} highlightIndex={highlightIndex} />
           )}
         </DetailSummaryCard>
+
+        <StepsEmptyHint />
 
         {!connected && (
           <View style={styles.connectRow}>

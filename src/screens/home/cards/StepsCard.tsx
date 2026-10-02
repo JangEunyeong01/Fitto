@@ -20,6 +20,7 @@ export default function StepsCard() {
   const records = useAppStore((s) => s.dailyRecords);
   const steps = records[dateKey()]?.steps ?? 0;
   const connected = useAppStore((s) => s.stepSource) !== 'none';
+  const sourceEmpty = useAppStore((s) => s.stepsSourceEmpty);
   const { connect, busy } = useConnectSteps();
 
   const { labels, values: week } = recentDays(records, 'steps');
@@ -64,6 +65,13 @@ export default function StepsCard() {
           <ProgressBar progress={steps / goal} height={8} radius={5} color={brand.blue} />
         </View>
 
+        {/* 연결은 됐는데 걸음이 하나도 안 들어오면 빈 막대 대신 짧게 알린다. 자세한 안내는 걸음 상세에. */}
+        {sourceEmpty ? (
+          <Text style={[styles.caption, styles.emptyNote, { color: colors.textSecondary }]}>
+            걸음이 아직 안 들어와요.{'\n'}눌러서 확인해 주세요.
+          </Text>
+        ) : (
+        <>
         <View style={styles.chartRow}>
           {week.map((v, i) => {
             const isToday = i === week.length - 1;
@@ -80,6 +88,8 @@ export default function StepsCard() {
           })}
         </View>
         <Text style={[styles.caption, { color: colors.textSecondary }]}>최근 7일 · 평균 {avg.toLocaleString()}</Text>
+        </>
+        )}
       </GlassCard>
     </Pressable>
   );
@@ -88,6 +98,10 @@ export default function StepsCard() {
 const styles = StyleSheet.create({
   pressFill: {
     flex: 1,
+  },
+  emptyNote: {
+    marginTop: 'auto',
+    lineHeight: 18,
   },
   topRow: {
     flexDirection: 'row',
