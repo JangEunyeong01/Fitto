@@ -18,10 +18,12 @@ const out = mkdtempSync(join(tmpdir(), 'fitto-check-'));
 try {
   execFileSync(
     process.execPath,
-    ['node_modules/typescript/bin/tsc', 'src/utils/periodCycle.ts', '--outDir', out, '--target', 'es2020', '--module', 'commonjs', '--skipLibCheck', '--ignoreConfig'],
+    ['node_modules/typescript/bin/tsc', 'src/utils/periodCycle.ts', 'src/constants/periodTags.ts', '--outDir', out, '--rootDir', 'src', '--target', 'es2020', '--module', 'commonjs', '--skipLibCheck', '--ignoreConfig'],
     { stdio: 'inherit' }
   );
-  const p = createRequire(import.meta.url)(join(out, 'periodCycle.js'));
+  const req = createRequire(import.meta.url);
+  const p = req(join(out, 'utils', 'periodCycle.js'));
+  const tags = req(join(out, 'constants', 'periodTags.js'));
   const today = '2026-10-03';
 
   // 1. 기록 검사 — 서버와 같은 규칙.
@@ -72,6 +74,21 @@ try {
   // 5. 맨 위 한 줄.
   assert.equal(p.getPeriodHeadline('2026-09-08', s, ok), '생리 3일째');
   assert.equal(p.getPeriodHeadline('2026-09-20', s2, ended), '다음 생리까지 14일');
+
+  // 6. 일일 기록 칩.
+  assert.equal(tags.periodTagLabel('mood.happy'), '행복함');
+  assert.equal(tags.periodTagLabel('custom.허벅지 당김'), '허벅지 당김', '직접 입력은 접두어를 뺀다');
+  assert.equal(tags.periodTagLabel('cramp'), '복통', '예전 증상 코드도 그대로 읽힌다');
+  assert.equal(tags.isRoughDay(['mood.tired']), true);
+  assert.equal(tags.isRoughDay(['mood.happy', 'acne']), false);
+  assert.deepEqual(
+    tags.frequentTags([['cramp', 'mood.tired'], ['cramp'], ['mood.tired', 'acne'], ['cramp']]),
+    ['cramp', 'mood.tired'],
+    '두 번 이상, 많은 순'
+  );
+  // 코드는 서버 칸(30자)에 들어가야 한다.
+  tags.PERIOD_TAG_GROUPS.flatMap((g) => g.options).forEach((o) => assert.ok(o.code.length <= 30, o.code));
+  assert.ok(tags.CUSTOM_PREFIX.length + tags.CUSTOM_MAX <= 30);
 
   console.log('check-period: 모두 통과');
 } finally {

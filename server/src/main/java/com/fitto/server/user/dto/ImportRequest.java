@@ -107,7 +107,7 @@ public record ImportRequest(
 		public record Daily(
 				@NotNull LocalDate date,
 				PeriodCondition condition,
-				@Size(max = 20) List<@Size(max = 30) String> symptoms,
+				@Size(max = 60) List<@Size(max = 30) String> symptoms,
 				@Size(max = 50) String medication,
 				@Size(max = 200) String memo) {
 		}

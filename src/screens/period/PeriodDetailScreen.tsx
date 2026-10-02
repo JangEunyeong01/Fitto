@@ -6,7 +6,7 @@ import ScreenBackground from '../../components/ScreenBackground';
 import FittoCharacter from '../../components/FittoCharacter';
 import DetailHeader from '../detail/DetailHeader';
 import PeriodCalendar from './PeriodCalendar';
-import ConditionCard from './ConditionCard';
+import DailyRecordCard from './DailyRecordCard';
 import RegularityCard from './RegularityCard';
 import PeriodLogSheet from './PeriodLogSheet';
 import PrimaryButton from '../../components/PrimaryButton';
@@ -15,7 +15,7 @@ import { useTheme } from '../../theme/useTheme';
 import { useAppStore } from '../../store/useAppStore';
 import { personaCopy } from '../../copy/persona';
 import { dateKey } from '../../utils/timeOfDay';
-import { findLog, getCycleDayNumber, getPeriodHeadline, parseDateKey, shiftYearMonth } from '../../utils/periodCycle';
+import { findLog, getBandDay, getCycleDayNumber, getPeriodHeadline, parseDateKey, shiftYearMonth } from '../../utils/periodCycle';
 import { weight } from '../../theme/tokens';
 
 export default function PeriodDetailScreen() {
@@ -36,6 +36,7 @@ export default function PeriodDetailScreen() {
 
   const cycleDay = getCycleDayNumber(today, settings);
   const comment = personaCopy.periodComment[persona]({ day: cycleDay });
+  const onPeriod = getBandDay(today, settings, logs, today)?.type === 'period';
 
   const selectedDate = parseDateKey(selected);
   const selectedLabel = `${selectedDate.getMonth() + 1}월 ${selectedDate.getDate()}일`;
@@ -79,13 +80,16 @@ export default function PeriodDetailScreen() {
 
         <RegularityCard onOpenHistory={() => navigation.navigate('PeriodHistory')} />
 
-        <ConditionCard dateKey={selected} label={selectedLabel} />
+        <DailyRecordCard dateKey={selected} label={selectedLabel} />
 
-        {/* 피또 한마디는 카드 없이 한 줄로(시안 10). 카드를 씌우면 입력 카드와 무게가 같아진다. */}
-        <View style={styles.characterRow}>
-          <FittoCharacter current={3} goal={5} size={52} variant="face" glow={false} />
-          <Text style={[styles.comment, { color: colors.textPrimary }]}>{comment}</Text>
-        </View>
+        {/* 피또 한마디는 카드 없이 한 줄로(시안 10). 카드를 씌우면 입력 카드와 무게가 같아진다.
+            문구가 "N일차, 무리하지 말고 따뜻하게"라 생리 중일 때만 보인다. 주기 17일째에 그 말을 하면 틀린 말이 된다. */}
+        {onPeriod && (
+          <View style={styles.characterRow}>
+            <FittoCharacter current={3} goal={5} size={52} variant="face" glow={false} />
+            <Text style={[styles.comment, { color: colors.textPrimary }]}>{comment}</Text>
+          </View>
+        )}
       </ScrollView>
 
       <PeriodLogSheet

@@ -94,12 +94,12 @@ export function toImportPayload(s: LocalSnapshot): ImportPayload {
     if (rec.water > 0) water.push({ date, amount: rec.water });
     if (rec.steps > 0) steps.push({ date, steps: rec.steps });
 
-    const hasPeriodNote =
-      rec.periodCondition || (rec.periodSymptoms?.length ?? 0) > 0 || rec.periodMedication || rec.periodMemo;
+    const hasPeriodNote = (rec.periodSymptoms?.length ?? 0) > 0 || rec.periodMedication || rec.periodMemo;
     if (hasPeriodNote) {
       periodDaily.push({
         date,
-        condition: rec.periodCondition ?? null,
+        // 컨디션 3택은 기분 칩(symptoms 안 mood.*)으로 옮겨 더 보내지 않는다.
+        condition: null,
         symptoms: rec.periodSymptoms ?? [],
         medication: rec.periodMedication ?? null,
         memo: rec.periodMemo ?? null,

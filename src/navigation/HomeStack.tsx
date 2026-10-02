@@ -7,6 +7,7 @@ import StepsDetailScreen from '../screens/detail/StepsDetailScreen';
 import ActivityDetailScreen from '../screens/detail/ActivityDetailScreen';
 import PeriodDetailScreen from '../screens/period/PeriodDetailScreen';
 import PeriodHistoryScreen from '../screens/period/PeriodHistoryScreen';
+import PeriodRecordScreen from '../screens/period/PeriodRecordScreen';
 
 export type HomeStackParamList = {
   HomeMain: undefined;
@@ -15,6 +16,7 @@ export type HomeStackParamList = {
   ActivityDetail: undefined;
   PeriodDetail: undefined;
   PeriodHistory: undefined;
+  PeriodRecord: { date: string };
 };
 
 const Stack = createNativeStackNavigator<HomeStackParamList>();
@@ -31,6 +33,7 @@ export default function HomeStack() {
       <Stack.Screen name="ActivityDetail" component={ActivityDetailScreen} />
       <Stack.Screen name="PeriodDetail" component={PeriodDetailScreen} />
       <Stack.Screen name="PeriodHistory" component={PeriodHistoryScreen} />
+      <Stack.Screen name="PeriodRecord" component={PeriodRecordScreen} />
     </Stack.Navigator>
   );
 }

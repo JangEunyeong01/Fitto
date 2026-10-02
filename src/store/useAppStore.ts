@@ -5,6 +5,7 @@ import { ageFromBirth, calculateGoals } from '../utils/goals';
 // 기록이 바뀌면 동기화 대기열에 알린다. 게스트면 아무 일도 일어나지 않는다(sync/enqueue.ts).
 import { enqueueSync } from '../sync/enqueue';
 import { isUuid, newId } from '../utils/id';
+import { CONDITION_TO_MOOD } from '../constants/periodTags';
 import { addDays, deriveSettings, sortLogs, toDateKey, type PeriodLog, type PeriodSettings } from '../utils/periodCycle';
 import type { WorkoutPreference } from '../utils/workoutRecommend';
 import {
@@ -101,7 +102,7 @@ export interface DailyRecord {
   meals: Record<MealSlot, MealItem[]>;
   exercises: ExerciseEntry[];
   steps: number;
-  periodCondition?: 'good' | 'normal' | 'bad';
+  /** 그날 고른 생리 기록 칩 코드(증상·기분·점액 …, constants/periodTags). */
   periodSymptoms?: string[];
   /** 그날 먹은 약과 메모(명세 F-036). 비우면 키를 지운다. */
   periodMedication?: string;
@@ -258,9 +259,7 @@ interface AppState {
   setPeriodSettings: (patch: Partial<PeriodSettings>) => void;
   /** 생리 기록 목록을 통째로 바꾼다. 검사(checkLogs)는 부르는 쪽에서 먼저 한다. */
   setPeriodLogs: (logs: PeriodLog[]) => void;
-  setDayCondition: (dateKey: string, condition: DailyRecord['periodCondition']) => void;
-  toggleDaySymptom: (dateKey: string, symptom: string) => void;
-  setDayPeriodNote: (dateKey: string, patch: { medication?: string; memo?: string }) => void;
+  setDayPeriodRecord: (dateKey: string, record: { symptoms: string[]; medication?: string; memo?: string }) => void;
   setCardOrder: (order: CardId[]) => void;
   setCardHidden: (hidden: CardId[]) => void;
   resetCardOrder: () => void;
@@ -498,37 +497,19 @@ export const useAppStore = create<AppState>()(
         enqueueSync({ kind: 'period.logs' });
         if (sorted.length) enqueueSync({ kind: 'period.settings' });
       },
-      setDayCondition: (dateKey, condition) => {
+      // 기록 화면에서 "완료"를 누를 때 하루치를 통째로 바꾼다. 칩 하나마다 저장하면 취소가 안 되고 동기화도 여러 번 나간다.
+      // 빈 문자열·빈 목록이면 키를 지운다. 빈 메모가 남으면 "쓴 적 있음"처럼 보인다.
+      setDayPeriodRecord: (dateKey, record) => {
         set((s) => {
-          const rec = s.dailyRecords[dateKey] ?? emptyRecord();
-          return { dailyRecords: { ...s.dailyRecords, [dateKey]: { ...rec, periodCondition: condition } } };
-        });
-        enqueueSync({ kind: 'period.daily', date: dateKey });
-      },
-      toggleDaySymptom: (dateKey, symptom) => {
-        set((s) => {
-          const rec = s.dailyRecords[dateKey] ?? emptyRecord();
-          const cur = rec.periodSymptoms ?? [];
-          const next = cur.includes(symptom) ? cur.filter((v) => v !== symptom) : [...cur, symptom];
-          return { dailyRecords: { ...s.dailyRecords, [dateKey]: { ...rec, periodSymptoms: next } } };
-        });
-        enqueueSync({ kind: 'period.daily', date: dateKey });
-      },
-      // 빈 문자열이면 지운다. 빈 메모가 기록에 남으면 "쓴 적 있음"처럼 보인다.
-      setDayPeriodNote: (dateKey, patch) => {
-        set((s) => {
-          const rec = s.dailyRecords[dateKey] ?? emptyRecord();
-          const next: DailyRecord = { ...rec };
-          if ('medication' in patch) {
-            const v = patch.medication?.trim();
-            if (v) next.periodMedication = v;
-            else delete next.periodMedication;
-          }
-          if ('memo' in patch) {
-            const v = patch.memo?.trim();
-            if (v) next.periodMemo = v;
-            else delete next.periodMemo;
-          }
+          const next: DailyRecord = { ...(s.dailyRecords[dateKey] ?? emptyRecord()) };
+          const medication = record.medication?.trim();
+          const memo = record.memo?.trim();
+          if (record.symptoms.length) next.periodSymptoms = record.symptoms;
+          else delete next.periodSymptoms;
+          if (medication) next.periodMedication = medication;
+          else delete next.periodMedication;
+          if (memo) next.periodMemo = memo;
+          else delete next.periodMemo;
           return { dailyRecords: { ...s.dailyRecords, [dateKey]: next } };
         });
         enqueueSync({ kind: 'period.daily', date: dateKey });
@@ -754,7 +735,7 @@ export const useAppStore = create<AppState>()(
     {
       name: 'fitto-app-storage',
       storage: createJSONStorage(() => AsyncStorage),
-      version: 8,
+      version: 9,
       // 기본 병합은 얕은 병합이라 profile 같은 객체는 저장본이 통째로 덮어쓴다.
       // 그러면 나중에 필드를 추가했을 때 기존 사용자에게만 undefined가 남으므로,
       // 객체 필드는 기본값 위에 저장본을 얹는다.
@@ -957,6 +938,18 @@ export const useAppStore = create<AppState>()(
           const { lastStartDate, periodLength } = state.periodSettings;
           const end = addDays(lastStartDate, periodLength - 1);
           state.periodLogs = [{ start: lastStartDate, end: end < toDateKey(new Date()) ? end : null }];
+        }
+
+        // v9: 컨디션 3택(좋음·보통·나쁨)을 기분 칩으로 옮긴다(사용자 결정). 이미 기분을 고른 날은 건드리지 않는다.
+        if (version < 9) {
+          Object.values(state.dailyRecords ?? {}).forEach((rec: any) => {
+            const mood = rec?.periodCondition && CONDITION_TO_MOOD[rec.periodCondition as keyof typeof CONDITION_TO_MOOD];
+            if (mood) {
+              const codes: string[] = rec.periodSymptoms ?? [];
+              if (!codes.some((c) => c.startsWith('mood.'))) rec.periodSymptoms = [...codes, mood];
+            }
+            if (rec) delete rec.periodCondition;
+          });
         }
 
         return state as AppState;

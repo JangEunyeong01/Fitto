@@ -108,13 +108,23 @@ export const FOCUS_OPTIONS = [
 ] as const;
 export type FocusCode = (typeof FOCUS_OPTIONS)[number]['code'];
 
+// 앞 여섯 개는 처음부터 있던 코드라 이름을 바꾸지 않는다(이미 저장된 기록·서버 값).
 export const SYMPTOM_TAGS: TagOption[] = [
+  { code: 'period_pain', label: '생리통' },
   { code: 'cramp', label: '복통' },
   { code: 'headache', label: '두통' },
-  { code: 'bloating', label: '부기' },
+  { code: 'bloating', label: '붓기' },
   { code: 'fatigue', label: '피로' },
   { code: 'irritability', label: '예민' },
   { code: 'back_pain', label: '허리 통증' },
+  { code: 'appetite', label: '식욕 증가' },
+  { code: 'acne', label: '여드름' },
+  { code: 'breast_pain', label: '가슴 통증' },
+  { code: 'libido', label: '성욕 증가' },
+  { code: 'constipation', label: '변비' },
+  { code: 'pelvic_pain', label: '골반 통증' },
+  { code: 'nausea', label: '메스꺼움' },
+  { code: 'abdominal_bloating', label: '복부 팽만' },
 ];
 
 /** 코드를 화면용 라벨로. 목록에 없는 코드(직접 입력한 값)는 그대로 보여준다. */
