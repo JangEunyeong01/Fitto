@@ -19,6 +19,8 @@ import { SCREEN_LOCK_SUPPORTED, confirmOwner } from '../../utils/deviceAuth';
 import { useTutorialStore } from '../../store/useTutorialStore';
 import { useFoodSearchStore } from '../../store/useFoodSearchStore';
 import { useAuthStore } from '../../store/useAuthStore';
+import { deleteAllRecords } from '../../api/auth';
+import { ApiError, NetworkError } from '../../api/client';
 import { PERSONA_OPTIONS } from '../onboarding/onboardingData';
 import { GOAL_OPTIONS, labelOf } from '../../constants/codes';
 import { daysBetween, toDateKey } from '../../utils/periodCycle';
@@ -68,7 +70,25 @@ export default function SettingsScreen() {
   // 명세 F-043 데이터 초기화. 되돌릴 수 없어서 탈퇴와 같은 확인창을 띄운다(시안 규칙 24).
   // 예전엔 카드 안에서 "지울까요?" → "정말요?"를 두 번 물었는데, 두 번 묻는 것보다 무엇이 지워지는지 한 번 정확히 말하는 게 낫다.
   const [resetOpen, setResetOpen] = useState(false);
-  const confirmReset = () => {
+  const [resetBusy, setResetBusy] = useState(false);
+  const confirmReset = async () => {
+    if (resetBusy) return;
+    // 회원이면 서버 기록부터 지운다. 기기만 지우면 다음 동기화 때 서버 기록이 다시 내려온다.
+    // 순서가 반대면 서버 요청이 실패했을 때 기기 기록만 사라진다(탈퇴와 같은 순서).
+    if (authStatus === 'member') {
+      setResetBusy(true);
+      try {
+        await deleteAllRecords(useAuthStore.getState().accessToken ?? '');
+      } catch (e) {
+        setResetBusy(false);
+        setResetOpen(false);
+        showToast(
+          e instanceof ApiError || e instanceof NetworkError ? e.message : '초기화하지 못했어요. 잠시 후 다시 시도해 주세요',
+        );
+        return;
+      }
+      setResetBusy(false);
+    }
     setResetOpen(false);
     resetAll();
     // 최근 검색은 세션 스토어라 앱 스토어 초기화에 안 딸려온다.
@@ -280,13 +300,19 @@ export default function SettingsScreen() {
 
       <AlertModal
         visible={resetOpen}
-        onClose={() => setResetOpen(false)}
+        onClose={() => !resetBusy && setResetOpen(false)}
         title="모든 기록을 지울까요?"
-        body="식단·운동·체중 기록과 프로필, 설정이 모두 지워지고 온보딩부터 다시 시작해요. 되돌릴 수 없어요."
+        body={
+          authStatus === 'member'
+            ? '이 기기와 계정에 올린 식단·운동·체중 기록이 모두 지워지고 온보딩부터 다시 시작해요. 계정과 로그인은 그대로예요. 되돌릴 수 없어요.'
+            : '식단·운동·체중 기록과 프로필, 설정이 모두 지워지고 온보딩부터 다시 시작해요. 되돌릴 수 없어요.'
+        }
         dangerLabel="초기화"
         onDanger={confirmReset}
+        dangerLoading={resetBusy}
         primaryLabel="취소"
-        onPrimary={() => setResetOpen(false)}
+        // 서버 요청이 나간 뒤에는 취소를 받지 않는다. 창만 닫히고 기록은 지워지면 취소한 줄 안다.
+        onPrimary={() => !resetBusy && setResetOpen(false)}
       />
 
       <Modal visible={menuPos != null} transparent animationType="fade" onRequestClose={() => setMenuPos(null)}>
