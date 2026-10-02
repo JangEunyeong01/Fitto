@@ -124,6 +124,13 @@ export interface Alarms {
   quiet: boolean;
   quietFrom: string;
   quietTo: string;
+  /** 생리 예정 하루 전 알림. 생리 주기 기능을 켰을 때만 의미가 있다. */
+  period: boolean;
+  /**
+   * 생리 알림에 내용을 보여줄지. 끄면 잠금화면엔 "피또가 알려줄 게 있어요"만 뜬다.
+   * 사람마다 괜찮은 정도가 달라서 고르게 한다 — 무조건 가리면 귀찮아서 오히려 안 본다.
+   */
+  periodPreview: boolean;
 }
 
 /**
@@ -344,18 +351,22 @@ function defaultPeriodSettings(): PeriodSettings {
   return { lastStartDate: toDateKey(start), cycleLength: 28, periodLength: 5 };
 }
 
+// 전부 꺼진 채로 시작한다. 처음 켜는 순간 알림 권한을 묻는다 — 켜지도 않았는데 권한부터 물으면 대부분 거절한다.
+// 이미 쓰던 사람은 저장된 값이 이 기본값 위에 덮이므로 그대로 남는다.
 const defaultAlarms: Alarms = {
-  water: true,
+  water: false,
   waterEvery: 2,
-  meal: true,
+  meal: false,
   mealTimes: ['08:00', '12:30', '19:00'],
-  move: true,
+  move: false,
   moveAfter: 60,
   weigh: false,
-  report: true,
+  report: false,
   quiet: true,
   quietFrom: '22:30',
   quietTo: '07:00',
+  period: false,
+  periodPreview: false,
 };
 
 export const useAppStore = create<AppState>()(
