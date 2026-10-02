@@ -104,7 +104,7 @@ export default function HomeScreen() {
     (id) => !cardHidden.includes(id) && (id !== 'period' || (periodOn && periodSetupDone))
   );
 
-  /** 한 카드가 어떤 튜토리얼 단계의 대상인지. 첫 카드는 "카드 순서" 단계가 가리킨다. */
+  /** 한 카드가 어떤 튜토리얼 단계의 대상인지. "카드 순서" 단계는 탭바의 설정 칸을 가리킨다(TabBar). */
   const targetIdFor = (cardId: CardId): TutorialTargetId | null => {
     if (cardId === 'kcal') return 'kcal';
     if (cardId === 'water') return 'water';
@@ -119,7 +119,6 @@ export default function HomeScreen() {
     measureCard('kcal', 'kcal');
     measureCard('water', 'water');
     measureCard('steps', 'steps');
-    if (visibleCards[0]) measureCard(visibleCards[0], 'firstCard');
   };
 
   // 튜토리얼이 열리는 시점의 스크롤 위치 기준으로 다시 재야 프레임이 카드에 정확히 붙는다.
@@ -160,7 +159,6 @@ export default function HomeScreen() {
                 onLayout={() => {
                   const target = targetIdFor(id);
                   if (target) measureCard(id, target);
-                  if (index === 0) measureCard(id, 'firstCard');
                 }}
               >
                 <Card />

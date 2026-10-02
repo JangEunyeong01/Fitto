@@ -9,9 +9,10 @@ export interface TargetRect {
 
 /**
  * 각 단계가 가리키는 홈 화면 요소. HomeScreen에서 measureInWindow로 좌표를 등록한다.
- * firstCard는 "카드 순서" 단계용 — 그리드 전체를 가리키면 프레임이 화면 밖으로 한참 넘친다.
+ * settingsTab은 탭바의 설정 칸(TabBar에서 잰다) — "카드 순서" 단계가 가리킨다. 예전엔 첫 카드를 가리켰는데
+ * 그게 2단계와 같은 칼로리 카드라 무엇을 알려주는지 구분이 안 됐다.
  */
-export type TutorialTargetId = 'hero' | 'kcal' | 'water' | 'steps' | 'firstCard';
+export type TutorialTargetId = 'hero' | 'kcal' | 'water' | 'steps' | 'settingsTab';
 
 export const TUTORIAL_STEPS: { target: TutorialTargetId; title: string; body: string }[] = [
   {
@@ -35,9 +36,9 @@ export const TUTORIAL_STEPS: { target: TutorialTargetId; title: string; body: st
     body: '카드의 상세를 누르면 일·주·월로 기간을 바꿔 보고 목표도 여기서 고쳐요.',
   },
   {
-    target: 'firstCard',
-    title: '카드는 원하는 순서로',
-    body: '길게 눌러 카드를 옮기면 나에게 맞는 홈 화면이 돼요.',
+    target: 'settingsTab',
+    title: '홈 카드는 원하는 순서로',
+    body: '아무 카드나 길게 누르면 순서를 바꾸고 숨길 수 있어요. 설정 › 홈 카드 순서에서도 바꿀 수 있어요.',
   },
 ];
 

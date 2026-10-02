@@ -7,6 +7,8 @@ import { useTutorialStore, TUTORIAL_STEPS } from '../store/useTutorialStore';
 const DIM = 'rgba(16,26,36,0.62)';
 const TOOLTIP_BG = 'rgba(22,32,42,0.92)';
 const TOOLTIP_GAP = 12;
+/** 대상 둘레로 띄우는 여백. 뚫린 칸과 테두리가 같은 값을 써야 어긋나지 않는다. */
+const PAD = 4;
 
 // README 12장: 딤 + 대상 카드 하이라이트 프레임(fpulse) + 아래 어두운 툴팁 카드.
 export default function TutorialOverlay() {
@@ -56,8 +58,33 @@ export default function TutorialOverlay() {
 
   return (
     <View style={styles.overlay} onLayout={(e) => setMeasuredH(e.nativeEvent.layout.height)}>
-      {/* 딤은 탭을 먹어서 뒤 화면이 눌리지 않게 한다. */}
-      <Pressable style={[styles.dim, { backgroundColor: DIM }]} onPress={() => {}} />
+      {/* 딤은 탭을 먹어서 뒤 화면이 눌리지 않게 한다.
+          가리키는 곳은 밝게 남기려고 대상 둘레를 네 장(위·아래·왼쪽·오른쪽)으로 덮는다.
+          예전엔 한 장으로 다 덮고 테두리만 그려서, 정작 보여줄 곳까지 어두워 무엇을 가리키는지 몰랐다. */}
+      {rect ? (
+        <>
+          <Pressable style={[styles.dimPiece, { backgroundColor: DIM, left: 0, right: 0, top: 0, height: Math.max(0, rect.y - PAD) }]} />
+          <Pressable style={[styles.dimPiece, { backgroundColor: DIM, left: 0, right: 0, top: rect.y + rect.height + PAD, bottom: 0 }]} />
+          <Pressable
+            style={[
+              styles.dimPiece,
+              { backgroundColor: DIM, left: 0, width: Math.max(0, rect.x - PAD), top: rect.y - PAD, height: rect.height + PAD * 2 },
+            ]}
+          />
+          <Pressable
+            style={[
+              styles.dimPiece,
+              { backgroundColor: DIM, left: rect.x + rect.width + PAD, right: 0, top: rect.y - PAD, height: rect.height + PAD * 2 },
+            ]}
+          />
+          {/* 뚫린 곳도 눌리면 안 된다(튜토리얼 중에 카드가 열리지 않게). 투명한 판만 둔다. */}
+          <Pressable
+            style={[styles.dimPiece, { left: rect.x - PAD, top: rect.y - PAD, width: rect.width + PAD * 2, height: rect.height + PAD * 2 }]}
+          />
+        </>
+      ) : (
+        <Pressable style={[styles.dim, { backgroundColor: DIM }]} onPress={() => {}} />
+      )}
 
       {rect && (
         <Animated.View
@@ -65,10 +92,10 @@ export default function TutorialOverlay() {
           style={[
             styles.frame,
             {
-              left: rect.x - 4,
-              top: rect.y - 4,
-              width: rect.width + 8,
-              height: rect.height + 8,
+              left: rect.x - PAD,
+              top: rect.y - PAD,
+              width: rect.width + PAD * 2,
+              height: rect.height + PAD * 2,
               opacity: frameOpacity,
             },
           ]}
@@ -124,12 +151,15 @@ const styles = StyleSheet.create({
     top: 0,
     bottom: 0,
   },
+  dimPiece: {
+    position: 'absolute',
+  },
+  // 뚫린 칸은 네모라 둥근 카드 모서리 바깥이 살짝 밝게 남는다. 테두리를 두껍게 둘러 그 틈을 덮는다.
   frame: {
     position: 'absolute',
     borderRadius: radius.sheetTop,
-    borderWidth: 2,
-    borderColor: alpha(brand.blue, 0.85),
-    backgroundColor: alpha(brand.blue, 0.1),
+    borderWidth: 3,
+    borderColor: brand.blue,
   },
   tooltipWrap: {
     position: 'absolute',
