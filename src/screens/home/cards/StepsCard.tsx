@@ -8,6 +8,7 @@ import { useTheme } from '../../../theme/useTheme';
 import { useAppStore } from '../../../store/useAppStore';
 import { dateKey } from '../../../utils/timeOfDay';
 import { recentDays } from '../../../utils/history';
+import { useConnectSteps } from '../../../health/useConnectSteps';
 import { typography, weight } from '../../../theme/tokens';
 
 const BAR_MAX_HEIGHT = 34;
@@ -18,6 +19,8 @@ export default function StepsCard() {
   const goal = useAppStore((s) => s.goals.steps);
   const records = useAppStore((s) => s.dailyRecords);
   const steps = records[dateKey()]?.steps ?? 0;
+  const connected = useAppStore((s) => s.stepSource) !== 'none';
+  const { connect, busy } = useConnectSteps();
 
   const { labels, values: week } = recentDays(records, 'steps');
   const total = week.reduce((a, v) => a + v, 0);
@@ -25,11 +28,10 @@ export default function StepsCard() {
   const maxVal = Math.max(...week, 1);
 
   /*
-   * 걸음 수는 폰의 건강 데이터에서 와야 한다. 아직 연결하지 않았으므로 한 번도 들어온 적이 없다.
-   * 이때 "0 / 8,000"을 보여주면 하루 종일 한 걸음도 안 걸은 것처럼 읽힌다.
-   * 기록이 하나라도 들어오면(연결 후) 아래 차트로 돌아간다.
+   * 걸음 수는 폰의 건강 데이터에서 온다. 연결 전에 "0 / 8,000"을 보여주면 하루 종일 한 걸음도 안 걸은 것처럼 읽힌다.
+   * 연결했으면 0이어도 아래 차트로 간다 — 아직 안 걸은 것과 연결 전은 다르다.
    */
-  if (total === 0) {
+  if (!connected) {
     // 연결 전엔 목표도 숨긴다(시안 02). "목표 8,000보"만 떠 있으면 못 채운 숙제처럼 읽힌다.
     return (
       <GlassCard fill>
@@ -40,9 +42,8 @@ export default function StepsCard() {
         <Text style={[styles.emptyDesc, { color: colors.textSecondary }]}>
           건강 데이터를 연결하면 걸음 수가 표시돼요.
         </Text>
-        {/* ponytail: 폰 건강 데이터 연동은 아직 없다. 지금은 걸음 상세(연결 안내)로 보내고, 센서를 붙이면 연결 화면으로 바꾼다. */}
         <View style={styles.linkWrap}>
-          <TextLink label="건강 데이터 연결" onPress={() => navigation.navigate('StepsDetail')} />
+          <TextLink label={busy ? '연결하는 중…' : '건강 데이터 연결'} onPress={connect} disabled={busy} />
         </View>
       </GlassCard>
     );

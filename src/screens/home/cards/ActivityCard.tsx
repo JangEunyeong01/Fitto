@@ -30,8 +30,8 @@ export default function ActivityCard() {
   const dashOffset = CIRC * (1 - percent / 100);
 
   // 걸음 수는 건강 데이터를 연결해야 들어온다. 연결 전에는 "0%"가 아니라 값이 없다고 말한다.
-  // 오늘 값만 보면 연결된 사람도 자정 직후엔 "연결 전"이 된다. 걸음수 카드와 같은 기준(최근 7일)으로 본다.
-  const stepsConnected = recentDays(records, 'steps').values.some((v) => v > 0);
+  // 연결했는지는 저장된 값으로 본다. 걸음이 0이라고 연결 전은 아니다(자정 직후, 오늘 아직 안 걸었을 때).
+  const stepsConnected = useAppStore((s) => s.stepSource) !== 'none';
 
   return (
     <GlassCard>
