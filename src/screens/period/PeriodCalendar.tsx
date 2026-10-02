@@ -48,7 +48,7 @@ export default function PeriodCalendar({ year, month, onShiftMonth, selected, on
           onPress={() => onShiftMonth(-1)}
           accessibilityRole="button"
           accessibilityLabel="이전 달"
-          style={[styles.navBtn, styles.navLeft]}
+          style={styles.navBtn}
         >
           <Icon name="chevronLeft" size={20} color={colors.textPrimary} />
         </Pressable>
@@ -67,7 +67,7 @@ export default function PeriodCalendar({ year, month, onShiftMonth, selected, on
           onPress={() => onShiftMonth(1)}
           accessibilityRole="button"
           accessibilityLabel="다음 달"
-          style={[styles.navBtn, styles.navRight]}
+          style={styles.navBtn}
         >
           <Icon name="chevronRight" size={20} color={colors.textPrimary} />
         </Pressable>
@@ -144,10 +144,13 @@ const styles = StyleSheet.create({
   card: {
     marginBottom: 12,
   },
+  // 화살표는 양 끝이 아니라 "○년 ○월" 가까이(물·걸음 기간 바, 날짜 이동과 같은 간격 8).
+  // 양 끝에 있으면 달 글씨와 한 덩어리로 안 읽힌다.
   navRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
+    gap: 8,
     height: 36,
   },
   navBtn: {
@@ -156,16 +159,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  navLeft: {
-    marginLeft: -12,
-  },
-  navRight: {
-    marginRight: -12,
-  },
   monthLabel: typography.cardTitle,
+  // 달마다 글씨 폭이 달라도 화살표가 흔들리지 않게 최소 폭(기간 바와 같은 140).
   monthBtn: {
     minHeight: 44,
-    paddingHorizontal: 12,
+    minWidth: 140,
+    alignItems: 'center',
     justifyContent: 'center',
   },
   legendRow: {
