@@ -4,6 +4,7 @@ import type {
   CustomIngredientResponseDto,
   MealItemDto,
   PeriodDailyDto,
+  PeriodLogDto,
   PeriodSettingsDto,
   RecipeDto,
   RecipeResponseDto,
@@ -63,6 +64,15 @@ export function putPeriodSettings(
   token: string
 ): Promise<unknown> {
   return request('/period', { method: 'PUT', body: settings, token });
+}
+
+/** 생리 기록 목록 전체를 보내 통째로 바꾼다(명세 12장). */
+export function putPeriodLogs(items: PeriodLogDto[], today: string, token: string): Promise<unknown> {
+  return request('/period/logs', { method: 'PUT', body: { items, today }, token });
+}
+
+export function getPeriodLogs(token: string): Promise<{ items: PeriodLogDto[] }> {
+  return request('/period/logs', { token });
 }
 
 export function putPeriodDaily(

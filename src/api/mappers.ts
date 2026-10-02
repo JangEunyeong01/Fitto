@@ -7,7 +7,7 @@ import type {
   Recipe,
   WorkoutRoutine,
 } from '../store/useAppStore';
-import type { PeriodSettings } from '../utils/periodCycle';
+import type { PeriodLog, PeriodSettings } from '../utils/periodCycle';
 import type { WorkoutPreference } from '../utils/workoutRecommend';
 import type {
   CustomIngredientImportDto,
@@ -36,6 +36,7 @@ export interface LocalSnapshot {
   weightLog: Record<string, number>;
   periodSettings: PeriodSettings;
   periodSetupDone: boolean;
+  periodLogs: PeriodLog[];
   recipes: Recipe[];
   routines: WorkoutRoutine[];
   customIngredients: CustomIngredient[];
@@ -138,6 +139,7 @@ export function toImportPayload(s: LocalSnapshot): ImportPayload {
           }
         : undefined,
       daily: periodDaily,
+      logs: s.periodLogs.map((l) => ({ startDate: l.start, endDate: l.end })),
     },
     recipes,
     routines,

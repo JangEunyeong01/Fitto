@@ -6,6 +6,7 @@ import WaterDetailScreen from '../screens/detail/WaterDetailScreen';
 import StepsDetailScreen from '../screens/detail/StepsDetailScreen';
 import ActivityDetailScreen from '../screens/detail/ActivityDetailScreen';
 import PeriodDetailScreen from '../screens/period/PeriodDetailScreen';
+import PeriodHistoryScreen from '../screens/period/PeriodHistoryScreen';
 
 export type HomeStackParamList = {
   HomeMain: undefined;
@@ -13,6 +14,7 @@ export type HomeStackParamList = {
   StepsDetail: undefined;
   ActivityDetail: undefined;
   PeriodDetail: undefined;
+  PeriodHistory: undefined;
 };
 
 const Stack = createNativeStackNavigator<HomeStackParamList>();
@@ -28,6 +30,7 @@ export default function HomeStack() {
       <Stack.Screen name="StepsDetail" component={StepsDetailScreen} />
       <Stack.Screen name="ActivityDetail" component={ActivityDetailScreen} />
       <Stack.Screen name="PeriodDetail" component={PeriodDetailScreen} />
+      <Stack.Screen name="PeriodHistory" component={PeriodHistoryScreen} />
     </Stack.Navigator>
   );
 }

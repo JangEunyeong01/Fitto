@@ -65,6 +65,10 @@ try {
     weightLog: { '2026-09-16': 54.6 },
     periodSettings: { lastStartDate: '2026-09-05', cycleLength: 30, periodLength: 5 },
     periodSetupDone: true,
+    periodLogs: [
+      { start: '2026-08-06', end: '2026-08-10' },
+      { start: '2026-09-05', end: null },
+    ],
     recipes: [
       {
         id: 'r1',
@@ -111,6 +115,11 @@ try {
   assert.deepEqual(p.period.settings, { startDate: '2026-09-05', cycleLength: 30, periodLength: 5 });
   assert.deepEqual(p.period.daily, [
     { date: '2026-09-16', condition: 'bad', symptoms: ['cramp'], medication: null, memo: null },
+  ]);
+  // 생리 기록은 서버 이름(startDate·endDate)으로, 진행 중은 null 그대로.
+  assert.deepEqual(p.period.logs, [
+    { startDate: '2026-08-06', endDate: '2026-08-10' },
+    { startDate: '2026-09-05', endDate: null },
   ]);
   assert.equal(p.recipes[0].photoUrl, null);
   assert.deepEqual(p.recipes[0].ingredients, [{ name: '현미밥', grams: 210, calories: 310 }]);

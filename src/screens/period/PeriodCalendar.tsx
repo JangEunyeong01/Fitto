@@ -6,6 +6,7 @@ import { dateKey } from '../../utils/timeOfDay';
 import Icon from '../../components/Icon';
 import { useTheme } from '../../theme/useTheme';
 import { alpha, brand, typography, weight } from '../../theme/tokens';
+import { useAppStore } from '../../store/useAppStore';
 import {
   addDays,
   bandGroup,
@@ -14,6 +15,7 @@ import {
   getUpcomingDates,
   parseDateKey,
   type BandDay,
+  type PeriodLog,
   type PeriodSettings,
 } from '../../utils/periodCycle';
 
@@ -24,11 +26,11 @@ const WEEKDAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
  * 복숭아·라벤더는 피또 화면에서 혼자 튀어서(사용자 피드백) 생리는 피또 팔레트와 같은 밝기의 장미색,
  * 가임기는 피또 하늘색, 배란일은 피또 팔다리 색(#61A1B9)으로 맞췄다.
  */
-const ROSE = '#EBA3B5';
-const PERIOD_RECORDED = alpha(ROSE, 0.6);
-const PERIOD_PREDICTED = alpha(ROSE, 0.22);
-const FERTILE_FILL = alpha(brand.blue, 0.26);
-const OVULATION_FILL = alpha('#61A1B9', 0.7);
+export const ROSE = '#EBA3B5';
+export const PERIOD_RECORDED = alpha(ROSE, 0.6);
+export const PERIOD_PREDICTED = alpha(ROSE, 0.22);
+export const FERTILE_FILL = alpha(brand.blue, 0.26);
+export const OVULATION_FILL = alpha('#61A1B9', 0.7);
 
 interface PeriodCalendarProps {
   year: number;
@@ -48,6 +50,7 @@ export default function PeriodCalendar({ year, month, onShiftMonth, selected, on
   const { colors, brand: themeBrand } = useTheme();
   const cells = getMonthGrid(year, month);
   const today = dateKey();
+  const logs = useAppStore((s) => s.periodLogs);
   const [pickerOpen, setPickerOpen] = useState(false);
 
   return (
@@ -102,13 +105,13 @@ export default function PeriodCalendar({ year, month, onShiftMonth, selected, on
         {cells.map((key, i) => {
           if (!key) return <View key={i} style={styles.cell} />;
           // settings가 null이면(시작일 입력 전) 추정 색을 칠하지 않는다.
-          const band = settings ? getBandDay(key, settings) : null;
+          const band = settings ? getBandDay(key, settings, logs, today) : null;
           const group = bandGroup(band);
           // 앞뒤 날이 같은 묶음이면 띠를 잇고, 묶음이 끝나거나 주가 바뀌면(일·토) 둥글게 닫는다.
           const weekday = i % 7;
           // 이번 달 칸이 아닌 빈칸 쪽(1일 앞, 말일 뒤)으로는 잇지 않는다.
-          const openLeft = weekday !== 0 && !!cells[i - 1] && bandGroup(getBandDay(addDays(key, -1), settings!)) === group;
-          const openRight = weekday !== 6 && !!cells[i + 1] && bandGroup(getBandDay(addDays(key, 1), settings!)) === group;
+          const openLeft = weekday !== 0 && !!cells[i - 1] && bandGroup(getBandDay(addDays(key, -1), settings!, logs, today)) === group;
+          const openRight = weekday !== 6 && !!cells[i + 1] && bandGroup(getBandDay(addDays(key, 1), settings!, logs, today)) === group;
           const isSelected = key === selected;
           const isToday = key === today;
           const day = Number(key.slice(-2));
@@ -148,7 +151,7 @@ export default function PeriodCalendar({ year, month, onShiftMonth, selected, on
         })}
       </View>
 
-      {settings && <Summary settings={settings} today={today} colors={colors} />}
+      {settings && <Summary settings={settings} logs={logs} today={today} colors={colors} />}
     </GlassCard>
   );
 }
@@ -176,10 +179,17 @@ const fmtRange = (a: string, b: string) => {
 };
 
 /** 달력 아래 네 줄. 왼쪽 색 막대가 달력 띠 색과 같아서 따로 범례를 두지 않는다. */
-function Summary({ settings, today, colors }: { settings: PeriodSettings; today: string; colors: any }) {
+function Summary({ settings, logs, today, colors }: { settings: PeriodSettings; logs: PeriodLog[]; today: string; colors: any }) {
   const up = getUpcomingDates(today, settings);
+  // 가장 최근 기록. 진행 중이면 끝 대신 "진행 중".
+  const last = logs[logs.length - 1];
+  const period = last
+    ? last.end
+      ? fmtRange(last.start, last.end)
+      : `${md(last.start).m}월 ${md(last.start).d}일 - 진행 중`
+    : fmtRange(settings.lastStartDate, addDays(settings.lastStartDate, settings.periodLength - 1));
   const items = [
-    { label: '생리 기간', value: fmtRange(settings.lastStartDate, addDays(settings.lastStartDate, settings.periodLength - 1)), bar: PERIOD_RECORDED },
+    { label: '생리 기간', value: period, bar: PERIOD_RECORDED },
     { label: '예상 가임기', value: fmtRange(up.fertileStart, up.fertileEnd), bar: FERTILE_FILL },
     { label: '예상 배란일', value: fmtDay(up.ovulation), bar: OVULATION_FILL },
     { label: '다음 생리 예정일', value: fmtDay(up.nextStart), bar: PERIOD_PREDICTED },

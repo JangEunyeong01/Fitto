@@ -14,6 +14,7 @@ import {
   putCustomIngredient,
   putMealMemo,
   putPeriodDaily,
+  putPeriodLogs,
   putPeriodSettings,
   putSteps,
   putWater,
@@ -211,6 +212,14 @@ async function send(op: SyncOp, token: string): Promise<void> {
           periodLength: s.periodSettings.periodLength,
           today: toDateKey(new Date()),
         },
+        token
+      );
+      return;
+
+    case 'period.logs':
+      await putPeriodLogs(
+        s.periodLogs.map((l) => ({ startDate: l.start, endDate: l.end })),
+        toDateKey(new Date()),
         token
       );
       return;

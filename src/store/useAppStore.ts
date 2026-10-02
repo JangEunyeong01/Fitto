@@ -5,7 +5,7 @@ import { ageFromBirth, calculateGoals } from '../utils/goals';
 // 기록이 바뀌면 동기화 대기열에 알린다. 게스트면 아무 일도 일어나지 않는다(sync/enqueue.ts).
 import { enqueueSync } from '../sync/enqueue';
 import { isUuid, newId } from '../utils/id';
-import { toDateKey, type PeriodSettings } from '../utils/periodCycle';
+import { addDays, deriveSettings, sortLogs, toDateKey, type PeriodLog, type PeriodSettings } from '../utils/periodCycle';
 import type { WorkoutPreference } from '../utils/workoutRecommend';
 import {
   ACTIVITY_OPTIONS,
@@ -205,6 +205,11 @@ interface AppState {
    * periodSettings는 계산이 깨지지 않게 늘 기본값을 들고 있어서, 값만 보고는 입력 여부를 알 수 없다.
    */
   periodSetupDone: boolean;
+  /**
+   * 실제로 입력한 생리 기록(시작일 순). 평균 주기·규칙성·주기 내역을 여기서 계산하고,
+   * 바뀔 때마다 periodSettings(마지막 시작일·평균 주기·평균 기간)를 다시 맞춘다.
+   */
+  periodLogs: PeriodLog[];
   cardOrder: CardId[];
   cardHidden: CardId[];
   alarms: Alarms;
@@ -251,6 +256,8 @@ interface AppState {
   setPeriodOn: (v: boolean) => void;
   setScreenLock: (v: boolean) => void;
   setPeriodSettings: (patch: Partial<PeriodSettings>) => void;
+  /** 생리 기록 목록을 통째로 바꾼다. 검사(checkLogs)는 부르는 쪽에서 먼저 한다. */
+  setPeriodLogs: (logs: PeriodLog[]) => void;
   setDayCondition: (dateKey: string, condition: DailyRecord['periodCondition']) => void;
   toggleDaySymptom: (dateKey: string, symptom: string) => void;
   setDayPeriodNote: (dateKey: string, patch: { medication?: string; memo?: string }) => void;
@@ -294,6 +301,7 @@ interface AppState {
     weightLog?: Record<string, number>;
     periodSettings?: PeriodSettings;
     periodSetupDone?: boolean;
+    periodLogs?: PeriodLog[];
     recipes?: Recipe[];
     routines?: WorkoutRoutine[];
     customIngredients?: CustomIngredient[];
@@ -381,6 +389,7 @@ export const useAppStore = create<AppState>()(
       screenLock: false,
       periodSettings: defaultPeriodSettings(),
       periodSetupDone: false,
+      periodLogs: [],
       // 전역 상수를 그대로 상태에 넣으면 어딘가에서 배열을 직접 수정했을 때 기본값이 오염된다.
       cardOrder: [...DEFAULT_CARD_ORDER],
       cardHidden: [],
@@ -477,6 +486,17 @@ export const useAppStore = create<AppState>()(
         if (get().periodSetupDone) {
           enqueueSync({ kind: 'period.settings' });
         }
+      },
+      // 기록이 바뀌면 예측 설정도 같이 바뀐다. 둘 다 올려야 다른 기기에서 받았을 때 어긋나지 않는다.
+      setPeriodLogs: (logs) => {
+        const sorted = sortLogs(logs);
+        set((s) => ({
+          periodLogs: sorted,
+          periodSettings: deriveSettings(sorted, s.periodSettings),
+          periodSetupDone: s.periodSetupDone || sorted.length > 0,
+        }));
+        enqueueSync({ kind: 'period.logs' });
+        if (sorted.length) enqueueSync({ kind: 'period.settings' });
       },
       setDayCondition: (dateKey, condition) => {
         set((s) => {
@@ -721,6 +741,7 @@ export const useAppStore = create<AppState>()(
             weightLog: patch.weightLog ? { ...s.weightLog, ...patch.weightLog } : s.weightLog,
             periodSettings: patch.periodSettings ?? s.periodSettings,
             periodSetupDone: patch.periodSetupDone ?? s.periodSetupDone,
+            periodLogs: patch.periodLogs ?? s.periodLogs,
             profile: patch.profile ?? s.profile,
             goals: patch.goals ?? s.goals,
             persona: patch.persona ?? s.persona,
@@ -733,7 +754,7 @@ export const useAppStore = create<AppState>()(
     {
       name: 'fitto-app-storage',
       storage: createJSONStorage(() => AsyncStorage),
-      version: 7,
+      version: 8,
       // 기본 병합은 얕은 병합이라 profile 같은 객체는 저장본이 통째로 덮어쓴다.
       // 그러면 나중에 필드를 추가했을 때 기존 사용자에게만 undefined가 남으므로,
       // 객체 필드는 기본값 위에 저장본을 얹는다.
@@ -769,6 +790,9 @@ export const useAppStore = create<AppState>()(
               startDate?: string | null;
               recipes?: any[];
               routines?: any[];
+              periodSettings?: PeriodSettings;
+              periodSetupDone?: boolean;
+              periodLogs?: PeriodLog[];
             }
           | undefined;
         if (!state) return state as unknown as AppState;
@@ -925,6 +949,14 @@ export const useAppStore = create<AppState>()(
         // 앱을 열자마자 가입 화면을 띄우면 쓰던 흐름이 끊긴다. 물어본 것으로 친다.
         if (version < 7 && state.onboardingDone) {
           state.accountPromptSeen = true;
+        }
+
+        // v8: 생리 기록을 목록으로 쌓기 시작했다. 예전엔 마지막 시작일 하나뿐이라 그걸 기록 한 건으로 옮긴다.
+        // 끝날은 평균 기간으로 채우되, 아직 안 지났으면 진행 중으로 둔다(오늘 뒤 끝날은 서버가 안 받는다).
+        if (version < 8 && state.periodSetupDone && state.periodSettings && !state.periodLogs?.length) {
+          const { lastStartDate, periodLength } = state.periodSettings;
+          const end = addDays(lastStartDate, periodLength - 1);
+          state.periodLogs = [{ start: lastStartDate, end: end < toDateKey(new Date()) ? end : null }];
         }
 
         return state as AppState;

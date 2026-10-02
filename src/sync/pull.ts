@@ -5,6 +5,7 @@ import {
   getDiet,
   getPeriod,
   getPeriodDaily,
+  getPeriodLogs,
   getRecipes,
   getRoutines,
   getSteps,
@@ -190,6 +191,7 @@ async function pullOnce(token: string): Promise<void> {
   // 주기는 설정이 없으면 404다. 그건 오류가 아니라 "아직 입력 안 함"이라 조용히 넘어간다(명세 3-3).
   let periodSettings;
   let periodSetupDone;
+  let periodLogs;
   try {
     const period = await getPeriod(today, token);
     periodSettings = {
@@ -198,6 +200,12 @@ async function pullOnce(token: string): Promise<void> {
       periodLength: period.periodLength,
     };
     periodSetupDone = true;
+
+    // 기록 표가 생기기 전 계정은 목록이 비어 있다. 그땐 기기 목록(마지막 시작일에서 옮긴 한 건)을 지우지 않는다.
+    const logs = await getPeriodLogs(token);
+    if (logs.items.length) {
+      periodLogs = logs.items.map((l) => ({ start: l.startDate, end: l.endDate }));
+    }
 
     const daily = await getPeriodDaily(from, today, token);
     daily.items.forEach((item) => {
@@ -222,6 +230,7 @@ async function pullOnce(token: string): Promise<void> {
     weightLog,
     periodSettings,
     periodSetupDone,
+    periodLogs,
     ...templates,
   });
   useOutboxStore.getState().markSynced();

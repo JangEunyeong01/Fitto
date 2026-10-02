@@ -11,7 +11,7 @@ import { useTheme } from '../../theme/useTheme';
 import { useAppStore } from '../../store/useAppStore';
 import { useToastStore } from '../../store/useToastStore';
 import { dateKey } from '../../utils/timeOfDay';
-import { getUpcomingDates, parseDateKey, shiftYearMonth } from '../../utils/periodCycle';
+import { addDays, checkLogs, daysBetween, getUpcomingDates, parseDateKey, shiftYearMonth } from '../../utils/periodCycle';
 import { typography, weight } from '../../theme/tokens';
 
 // 통상 주기는 21~35일이라 여유를 두고 45일까지 받는다.
@@ -31,6 +31,8 @@ export default function PeriodSettingsScreen() {
   const settings = useAppStore((s) => s.periodSettings);
   const setPeriodSettings = useAppStore((s) => s.setPeriodSettings);
   const setupDone = useAppStore((s) => s.periodSetupDone);
+  const logs = useAppStore((s) => s.periodLogs);
+  const setPeriodLogs = useAppStore((s) => s.setPeriodLogs);
   const showToast = useToastStore((s) => s.show);
 
   const today = dateKey();
@@ -45,7 +47,19 @@ export default function PeriodSettingsScreen() {
       showToast('오늘 이후 날짜는 고를 수 없어요');
       return;
     }
-    setPeriodSettings({ lastStartDate: key });
+    // 시작일은 이제 생리 기록에서 나온다. 여기서 고르면 가장 최근 기록의 시작일을 옮긴다(길이는 그대로,
+    // 진행 중이면 진행 중 그대로). 기록이 없으면 새로 하나 만든다.
+    const last = logs[logs.length - 1];
+    const len = last?.end ? daysBetween(last.start, last.end) + 1 : settings.periodLength;
+    const guess = addDays(key, len - 1);
+    const end = last && !last.end ? null : guess < today ? guess : null;
+    const next = [...logs.slice(0, -1), { start: key, end }];
+    const problem = checkLogs(next, today);
+    if (problem) {
+      showToast(problem);
+      return;
+    }
+    setPeriodLogs(next);
   };
 
   // 범위 안의 값이면 타이핑하는 대로 반영해 미리보기가 같이 바뀌게 한다.

@@ -19,6 +19,8 @@ export type SyncOp =
   | { kind: 'weight.put'; date: string }
   | { kind: 'weight.remove'; date: string }
   | { kind: 'period.settings' }
+  /** 생리 기록 목록 전체. 보낼 때 기기 목록을 통째로 올린다. */
+  | { kind: 'period.logs' }
   | { kind: 'period.daily'; date: string }
   | { kind: 'profile.patch' }
   | { kind: 'recipe.save'; recipeId: string }
@@ -65,8 +67,10 @@ export function describeOp(op: SyncOp): string {
       return `${op.date} 체중 삭제`;
     case 'period.settings':
       return '생리 주기 설정';
+    case 'period.logs':
+      return '생리 기록';
     case 'period.daily':
-      return `${op.date} 생리 기록`;
+      return `${op.date} 생리 컨디션`;
     case 'profile.patch':
       return '프로필';
     case 'recipe.save':
@@ -95,6 +99,7 @@ export function isSameTarget(a: SyncOp, b: SyncOp): boolean {
     case 'meal.memo':
       return a.date === (b as typeof a).date && a.mealType === (b as typeof a).mealType;
     case 'period.settings':
+    case 'period.logs':
     case 'profile.patch':
       return true;
     // 저장은 보낼 때 최신 값을 읽으므로 같은 대상이면 한 번이면 된다.

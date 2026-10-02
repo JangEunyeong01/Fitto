@@ -54,24 +54,121 @@ export function getDayType(dateKey: string, settings: PeriodSettings): DayType {
   return null;
 }
 
+/** 실제로 입력한 생리 한 번. end가 null이면 진행 중(서버 period_logs와 같은 모양). */
+export interface PeriodLog {
+  start: string;
+  end: string | null;
+}
+
+/** 생리 한 번의 최대 길이. 서버 PeriodService.MAX_LOG_DAYS와 같다. */
+export const MAX_LOG_DAYS = 15;
+
+/** 평균을 낼 때 보는 최근 기록 수. 오래된 주기까지 섞으면 요즘 몸 상태가 묻힌다. */
+const RECENT = 6;
+
+/**
+ * 기록 목록 검사. 서버(PeriodService.validateLogs)와 같은 규칙이라, 앱에서 막으면 서버에서 다시 막힐 일이 없다.
+ * @return 문제가 있으면 보여줄 문구, 없으면 null
+ */
+export function checkLogs(logs: PeriodLog[], today: string): string | null {
+  const sorted = [...logs].sort((a, b) => (a.start < b.start ? -1 : 1));
+  for (let i = 0; i < sorted.length; i++) {
+    const { start, end } = sorted[i];
+    if (start > today || (end && end > today)) return '오늘 이후 날짜는 고를 수 없어요';
+    if (end && (end < start || daysBetween(start, end) >= MAX_LOG_DAYS)) return `생리 기간은 1일부터 ${MAX_LOG_DAYS}일까지예요`;
+    const next = sorted[i + 1];
+    if (!next) continue;
+    if (!end) return '진행 중인 생리는 가장 최근 기록만 될 수 있어요';
+    if (next.start <= end) return '다른 생리 기록과 날짜가 겹쳐요';
+  }
+  return null;
+}
+
+export const sortLogs = (logs: PeriodLog[]) => [...logs].sort((a, b) => (a.start < b.start ? -1 : 1));
+
+/** 끝난 기록의 길이(시작·끝 포함). */
+const logLength = (l: PeriodLog) => (l.end ? daysBetween(l.start, l.end) + 1 : null);
+
+const mean = (xs: number[]) => (xs.length ? Math.round(xs.reduce((a, b) => a + b, 0) / xs.length) : null);
+
+export interface CycleStats {
+  /** 최근 주기 길이들(시작일 → 다음 시작일). 오래된 것부터. */
+  cycles: number[];
+  avgCycle: number | null;
+  avgLength: number | null;
+  /** 가장 최근에 끝난 주기가 평균과 며칠 차이 나는지. 평균은 그 주기를 뺀 앞 주기들로 낸다. */
+  change: number | null;
+}
+
+export function cycleStats(logs: PeriodLog[]): CycleStats {
+  const sorted = sortLogs(logs);
+  const cycles = sorted.slice(1).map((l, i) => daysBetween(sorted[i].start, l.start)).slice(-RECENT);
+  const lengths = sorted.map(logLength).filter((n): n is number => n !== null).slice(-RECENT);
+  const before = cycles.slice(0, -1);
+  const prevAvg = mean(before);
+  return {
+    cycles,
+    avgCycle: mean(cycles),
+    avgLength: mean(lengths),
+    change: prevAvg !== null ? cycles[cycles.length - 1] - prevAvg : null,
+  };
+}
+
+/**
+ * 평소와 같은지. 의학적 판정이 아니라 일반 범위와의 비교다.
+ * - 평균 주기 21~35일, 평균 생리 2~7일이면 일반 범위
+ * - 최근 주기가 평균과 7일 넘게 차이 나면 "평소와 다름"(주기 변동이 7~9일을 넘으면 불규칙으로 보는 게 일반적)
+ */
+export const isTypicalCycle = (n: number) => n >= 21 && n <= 35;
+export const isTypicalLength = (n: number) => n >= 2 && n <= 7;
+export const isTypicalChange = (n: number) => Math.abs(n) <= 7;
+
+/**
+ * 기록이 바뀌면 예측에 쓰는 설정을 다시 맞춘다. 마지막 시작일은 가장 최근 기록,
+ * 주기·기간은 기록이 있으면 평균(서버 범위 21~45, 2~10 안으로), 없으면 사용자가 정한 값을 그대로.
+ */
+export function deriveSettings(logs: PeriodLog[], s: PeriodSettings): PeriodSettings {
+  const sorted = sortLogs(logs);
+  if (!sorted.length) return s;
+  const { avgCycle, avgLength } = cycleStats(sorted);
+  const clamp = (n: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, n));
+  return {
+    lastStartDate: sorted[sorted.length - 1].start,
+    cycleLength: avgCycle !== null ? clamp(avgCycle, 21, 45) : s.cycleLength,
+    periodLength: avgLength !== null ? clamp(avgLength, 2, 10) : s.periodLength,
+  };
+}
+
+/** 그날을 포함하는 기록. 진행 중이면 오늘까지 포함한다. */
+export function findLog(logs: PeriodLog[], key: string, today: string): PeriodLog | undefined {
+  return logs.find((l) => key >= l.start && key <= (l.end ?? (today > l.start ? today : l.start)));
+}
+
 export interface BandDay {
   type: 'period' | 'fertile' | 'ovulation';
-  /** 예측이면 옅게. 사용자가 입력한 마지막 생리(시작일 ~ 기간)만 기록으로 본다. */
+  /** 예측이면 옅게. 사용자가 입력한 생리만 기록으로 본다. */
   predicted: boolean;
 }
 
 /**
- * 달력 띠용. getDayType과 같은 규칙이지만 두 가지가 다르다.
- * - 마지막 시작일 **이전**은 비운다. 거기 칠하던 건 평균 주기를 뒤로 되풀이한 가짜 기록이었다
- * - 기록(마지막 생리)과 예측(그 뒤 주기, 가임기·배란일)을 나눈다
+ * 달력 띠용. getDayType과 같은 규칙이지만 다른 점이 있다.
+ * - 입력한 생리 기록은 그대로 진하게 칠한다(평균 기간이 아니라 실제 시작·끝)
+ * - 마지막 시작일 **이전**은 기록만 칠한다. 평균 주기를 뒤로 되풀이하면 가짜 기록이 된다
+ * - 마지막 주기 안의 생리일은 기록이 정한다. 끝났으면 거기까지, 진행 중이면 오늘 뒤는 예측
+ * - 기록이 아예 없으면(예전 데이터) 마지막 시작일부터 평균 기간을 기록으로 본다
  */
-export function getBandDay(dateKey: string, s: PeriodSettings): BandDay | null {
+export function getBandDay(dateKey: string, s: PeriodSettings, logs: PeriodLog[], today: string): BandDay | null {
+  if (findLog(logs, dateKey, today)) return { type: 'period', predicted: false };
   const diff = daysBetween(s.lastStartDate, dateKey);
   if (diff < 0) return null;
   const type = getDayType(dateKey, s);
   if (!type) return null;
-  const firstCycle = diff < s.cycleLength;
-  return { type, predicted: !(firstCycle && type === 'period') };
+  if (type !== 'period' || diff >= s.cycleLength) return { type, predicted: true };
+  // 마지막 주기 안의 생리일
+  const last = logs.find((l) => l.start === s.lastStartDate);
+  if (!last) return { type, predicted: logs.length > 0 };
+  if (last.end) return null;
+  return { type, predicted: true };
 }
 
 /** 띠가 이어지는 묶음. 배란일은 가임기 띠의 끝이라 같은 묶음이다. */
@@ -81,8 +178,8 @@ export function bandGroup(b: BandDay | null): string | null {
 }
 
 /** 생리 화면 맨 위 한 줄. 생리 중이면 며칠째, 아니면 다음 예정일까지. */
-export function getPeriodHeadline(today: string, s: PeriodSettings): string {
-  const band = getBandDay(today, s);
+export function getPeriodHeadline(today: string, s: PeriodSettings, logs: PeriodLog[] = []): string {
+  const band = getBandDay(today, s, logs, today);
   if (band?.type === 'period') {
     const n = getCycleDayNumber(today, s);
     // 예측한 날을 "생리 중"이라고 단정하지 않는다. 아직 입력이 없으면 예정일 뿐이다.
