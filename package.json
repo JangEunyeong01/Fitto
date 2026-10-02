@@ -41,6 +41,7 @@
     "check:api": "node scripts/check-mappers.mjs",
     "check:copy": "node scripts/check-briefing.mjs",
     "check:notify": "node scripts/check-notify.mjs",
+    "check:range": "node scripts/check-range.mjs",
     "check:search": "node scripts/check-hangul.mjs"
   },
   "private": true

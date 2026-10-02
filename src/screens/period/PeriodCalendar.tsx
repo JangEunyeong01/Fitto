@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import GlassCard from '../../components/GlassCard';
+import DatePickerSheet from '../../components/DatePickerSheet';
+import { dateKey } from '../../utils/timeOfDay';
 import Icon from '../../components/Icon';
 import { useTheme } from '../../theme/useTheme';
 import { alpha, brand, typography, weight } from '../../theme/tokens';
-import { getMonthGrid, getDayType, type PeriodSettings } from '../../utils/periodCycle';
+import { addDays, getMonthGrid, getDayType, type PeriodSettings } from '../../utils/periodCycle';
 
 const WEEKDAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
 
@@ -29,9 +31,18 @@ interface PeriodCalendarProps {
 export default function PeriodCalendar({ year, month, onShiftMonth, selected, onSelect, settings }: PeriodCalendarProps) {
   const { colors, brand: themeBrand } = useTheme();
   const cells = getMonthGrid(year, month);
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   return (
     <GlassCard style={styles.card}>
+      {/* 생리 달력은 예정일을 보려고 앞 달로도 간다. 그래서 1년 뒤까지 고를 수 있게 한다. */}
+      <DatePickerSheet
+        visible={pickerOpen}
+        value={`${year}-${String(month).padStart(2, '0')}-01`}
+        max={addDays(dateKey(), 365)}
+        onPickMonth={(ym) => onShiftMonth((ym.year - year) * 12 + (ym.month - month))}
+        onClose={() => setPickerOpen(false)}
+      />
       <View style={styles.navRow}>
         <Pressable
           onPress={() => onShiftMonth(-1)}
@@ -41,9 +52,17 @@ export default function PeriodCalendar({ year, month, onShiftMonth, selected, on
         >
           <Icon name="chevronLeft" size={20} color={colors.textPrimary} />
         </Pressable>
-        <Text style={[styles.monthLabel, { color: colors.textPrimary }]}>
-          {year}년 {month}월
-        </Text>
+        {/* 위쪽 "○년 ○월"을 누르면 달·연도를 바로 고른다. 몇 달 전 기록을 보려고 ‹를 여러 번 누르지 않게. */}
+        <Pressable
+          onPress={() => setPickerOpen(true)}
+          style={({ pressed }) => [styles.monthBtn, { opacity: pressed ? 0.6 : 1 }]}
+          accessibilityRole="button"
+          accessibilityLabel={`${year}년 ${month}월, 눌러서 달 고르기`}
+        >
+          <Text style={[styles.monthLabel, { color: colors.textPrimary }]}>
+            {year}년 {month}월
+          </Text>
+        </Pressable>
         <Pressable
           onPress={() => onShiftMonth(1)}
           accessibilityRole="button"
@@ -144,6 +163,11 @@ const styles = StyleSheet.create({
     marginRight: -12,
   },
   monthLabel: typography.cardTitle,
+  monthBtn: {
+    minHeight: 44,
+    paddingHorizontal: 12,
+    justifyContent: 'center',
+  },
   legendRow: {
     flexDirection: 'row',
     gap: 14,
