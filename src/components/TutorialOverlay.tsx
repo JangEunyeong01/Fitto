@@ -1,37 +1,35 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, Pressable, StyleSheet, Animated, Easing, useWindowDimensions } from 'react-native';
-import { BlurView } from 'expo-blur';
-import { alpha, brand, radius, typography, white } from '../theme/tokens';
+import React, { useState } from 'react';
+import { View, Text, Pressable, StyleSheet, useWindowDimensions } from 'react-native';
+import { useTheme } from '../theme/useTheme';
+import { brand, typography, weight } from '../theme/tokens';
 import { useTutorialStore, TUTORIAL_STEPS } from '../store/useTutorialStore';
 
-const DIM = 'rgba(16,26,36,0.62)';
-const TOOLTIP_BG = 'rgba(22,32,42,0.92)';
-const TOOLTIP_GAP = 12;
-/** 대상 둘레로 띄우는 여백. 뚫린 칸과 테두리가 같은 값을 써야 어긋나지 않는다. */
+const DIM = 'rgba(16,26,36,0.55)';
+/** 대상 둘레로 띄우는 여백. 뚫린 칸의 크기. */
 const PAD = 4;
+/** 꼬리(삼각형) 크기와 풍선까지의 거리. */
+const TAIL = 10;
+const GAP = 6;
+const SIDE = 16;
+const BUBBLE_MAX = 300;
 
-// README 12장: 딤 + 대상 카드 하이라이트 프레임(fpulse) + 아래 어두운 툴팁 카드.
+/**
+ * 첫 실행 튜토리얼 — 대상만 밝게 뚫고, 그 옆에 꼬리 달린 작은 말풍선.
+ *
+ * 예전엔 화면 폭을 가로지르는 어두운 상자 + 깜빡이는 테두리였는데, 화면 위쪽(인사)을 가리킬 땐
+ * 큰 상자가 그 아래를 통째로 덮어 답답했다. 풍선은 대상 쪽으로 꼬리를 내밀어 "여기"를 가리키고,
+ * 폭은 내용만큼(최대 300)만 차지한다. 대상 아래에 두되 아래가 모자라면 위로 뒤집는다.
+ */
 export default function TutorialOverlay() {
   const { open, step, targets, next, close } = useTutorialStore();
-  const { height: windowH } = useWindowDimensions();
-  const pulse = useRef(new Animated.Value(0)).current;
+  const { colors } = useTheme();
+  const { width: windowW, height: windowH } = useWindowDimensions();
 
   // NavigationContainer 바깥에 마운트돼 있어 useWindowDimensions가 0을 주는 경우가 있다.
-  // 오버레이가 실제로 차지한 높이를 우선 쓰고, 없을 때만 창 높이로 넘어간다.
-  const [measuredH, setMeasuredH] = useState(0);
-  const screenH = measuredH || windowH;
-
-  useEffect(() => {
-    if (!open) return;
-    const loop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulse, { toValue: 1, duration: 900, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
-        Animated.timing(pulse, { toValue: 0, duration: 900, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
-      ])
-    );
-    loop.start();
-    return () => loop.stop();
-  }, [open]);
+  // 오버레이가 실제로 차지한 크기를 우선 쓴다.
+  const [size, setSize] = useState({ w: 0, h: 0 });
+  const screenW = size.w || windowW;
+  const screenH = size.h || windowH;
 
   if (!open) return null;
 
@@ -39,8 +37,7 @@ export default function TutorialOverlay() {
   const raw = targets[current.target];
   const isLast = step === TUTORIAL_STEPS.length - 1;
 
-  // 대상이 화면보다 크거나 아래로 걸쳐 있으면 프레임이 잘려 보이므로 화면 안으로 가둔다.
-  // 높이를 아직 모르면(0) 자르지 않고 원래 좌표를 그대로 쓴다.
+  // 대상이 화면 밖으로 걸쳐 있으면 화면 안으로 가둔다.
   const rect =
     raw && screenH > 0
       ? (() => {
@@ -50,86 +47,74 @@ export default function TutorialOverlay() {
         })()
       : raw;
 
-  // 대상 아래에 툴팁을 두되, 화면 아래로 넘치면 대상 위로 올린다.
-  const tooltipTop = rect ? rect.y + rect.height + TOOLTIP_GAP : screenH / 2;
-  const flipAbove = rect ? tooltipTop > screenH - 200 : false;
+  // 풍선은 대상 가운데 쪽으로 붙이되 화면 밖으로 안 나가게.
+  const bubbleW = Math.min(BUBBLE_MAX, screenW - SIDE * 2);
+  const centerX = rect ? rect.x + rect.width / 2 : screenW / 2;
+  const bubbleLeft = Math.min(Math.max(SIDE, centerX - bubbleW / 2), screenW - SIDE - bubbleW);
+  // 꼬리는 대상 가운데를 가리킨다. 풍선 모서리에 걸리지 않게 안쪽으로 가둔다.
+  const tailLeft = Math.min(Math.max(20, centerX - bubbleLeft - TAIL), bubbleW - 20 - TAIL * 2);
 
-  const frameOpacity = pulse.interpolate({ inputRange: [0, 1], outputRange: [0.55, 1] });
+  const below = rect ? rect.y + rect.height + PAD + GAP + TAIL : screenH / 2;
+  const flipAbove = rect ? below > screenH - 190 : false;
+  const position = !rect
+    ? { top: screenH / 2 - 80 }
+    : flipAbove
+      ? { bottom: screenH - (rect.y - PAD - GAP - TAIL) }
+      : { top: below };
+
+  const tail = (
+    <View
+      style={[
+        styles.tail,
+        { left: tailLeft, backgroundColor: colors.surfaceSolid },
+        flipAbove ? { bottom: -TAIL } : { top: -TAIL },
+      ]}
+    />
+  );
 
   return (
-    <View style={styles.overlay} onLayout={(e) => setMeasuredH(e.nativeEvent.layout.height)}>
-      {/* 딤은 탭을 먹어서 뒤 화면이 눌리지 않게 한다.
-          가리키는 곳은 밝게 남기려고 대상 둘레를 네 장(위·아래·왼쪽·오른쪽)으로 덮는다.
-          예전엔 한 장으로 다 덮고 테두리만 그려서, 정작 보여줄 곳까지 어두워 무엇을 가리키는지 몰랐다. */}
+    <View style={styles.overlay} onLayout={(e) => setSize({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })}>
+      {/* 대상 둘레를 네 장으로 덮어 가리키는 곳만 밝게 남긴다. 뚫린 곳 위의 투명한 판은 튜토리얼 중 눌림을 막는다. */}
       {rect ? (
         <>
-          <Pressable style={[styles.dimPiece, { backgroundColor: DIM, left: 0, right: 0, top: 0, height: Math.max(0, rect.y - PAD) }]} />
-          <Pressable style={[styles.dimPiece, { backgroundColor: DIM, left: 0, right: 0, top: rect.y + rect.height + PAD, bottom: 0 }]} />
+          <Pressable style={[styles.piece, { backgroundColor: DIM, left: 0, right: 0, top: 0, height: Math.max(0, rect.y - PAD) }]} />
+          <Pressable style={[styles.piece, { backgroundColor: DIM, left: 0, right: 0, top: rect.y + rect.height + PAD, bottom: 0 }]} />
           <Pressable
-            style={[
-              styles.dimPiece,
-              { backgroundColor: DIM, left: 0, width: Math.max(0, rect.x - PAD), top: rect.y - PAD, height: rect.height + PAD * 2 },
-            ]}
+            style={[styles.piece, { backgroundColor: DIM, left: 0, width: Math.max(0, rect.x - PAD), top: rect.y - PAD, height: rect.height + PAD * 2 }]}
           />
           <Pressable
-            style={[
-              styles.dimPiece,
-              { backgroundColor: DIM, left: rect.x + rect.width + PAD, right: 0, top: rect.y - PAD, height: rect.height + PAD * 2 },
-            ]}
+            style={[styles.piece, { backgroundColor: DIM, left: rect.x + rect.width + PAD, right: 0, top: rect.y - PAD, height: rect.height + PAD * 2 }]}
           />
-          {/* 뚫린 곳도 눌리면 안 된다(튜토리얼 중에 카드가 열리지 않게). 투명한 판만 둔다. */}
-          <Pressable
-            style={[styles.dimPiece, { left: rect.x - PAD, top: rect.y - PAD, width: rect.width + PAD * 2, height: rect.height + PAD * 2 }]}
-          />
+          <Pressable style={[styles.piece, { left: rect.x - PAD, top: rect.y - PAD, width: rect.width + PAD * 2, height: rect.height + PAD * 2 }]} />
         </>
       ) : (
-        <Pressable style={[styles.dim, { backgroundColor: DIM }]} onPress={() => {}} />
-      )}
-
-      {rect && (
-        <Animated.View
-          pointerEvents="none"
-          style={[
-            styles.frame,
-            {
-              left: rect.x - PAD,
-              top: rect.y - PAD,
-              width: rect.width + PAD * 2,
-              height: rect.height + PAD * 2,
-              opacity: frameOpacity,
-            },
-          ]}
-        />
+        <Pressable style={[styles.piece, { backgroundColor: DIM, left: 0, right: 0, top: 0, bottom: 0 }]} />
       )}
 
       <View
-        style={[
-          styles.tooltipWrap,
-          rect
-            ? flipAbove
-              ? { bottom: screenH - rect.y + TOOLTIP_GAP }
-              : { top: tooltipTop }
-            : { top: screenH / 2 },
-        ]}
+        style={[styles.bubble, { left: bubbleLeft, width: bubbleW, backgroundColor: colors.surfaceSolid }, position]}
+        accessibilityViewIsModal
       >
-        <BlurView intensity={20} tint="dark" style={styles.tooltip}>
-          <View style={styles.tooltipInner}>
-            <Text style={styles.stepCount}>
-              {step + 1} / {TUTORIAL_STEPS.length}
-            </Text>
-            <Text style={styles.title}>{current.title}</Text>
-            <Text style={styles.body}>{current.body}</Text>
+        {/* 꼬리를 풍선보다 먼저 그려 풍선 면이 꼬리 이음매를 덮게 한다. */}
+        {tail}
+        <View style={styles.bubbleInner}>
+          <Text style={[styles.stepCount, { color: colors.textSecondary }]}>
+            {step + 1} / {TUTORIAL_STEPS.length}
+          </Text>
+          <Text style={[styles.title, { color: colors.textPrimary }]}>{current.title}</Text>
+          <Text style={[styles.body, { color: colors.textSecondary }]}>{current.body}</Text>
 
-            <View style={styles.buttonRow}>
-              <Pressable onPress={close} style={styles.skipBtn}>
-                <Text style={styles.skipLabel}>건너뛰기</Text>
+          <View style={styles.buttonRow}>
+            {!isLast && (
+              <Pressable onPress={close} style={styles.textBtn} accessibilityRole="button">
+                <Text style={[styles.skipLabel, { color: colors.textSecondary }]}>건너뛰기</Text>
               </Pressable>
-              <Pressable onPress={next} style={[styles.nextBtn, { backgroundColor: brand.blue }]}>
-                <Text style={styles.nextLabel}>{isLast ? '완료' : '다음'}</Text>
-              </Pressable>
-            </View>
+            )}
+            <Pressable onPress={next} hitSlop={4} style={[styles.nextBtn, { backgroundColor: brand.blue }]} accessibilityRole="button">
+              <Text style={[styles.nextLabel, { color: colors.textOnPrimary }]}>{isLast ? '시작하기' : '다음'}</Text>
+            </Pressable>
           </View>
-        </BlurView>
+        </View>
       </View>
     </View>
   );
@@ -144,77 +129,70 @@ const styles = StyleSheet.create({
     bottom: 0,
     zIndex: 960,
   },
-  dim: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: 0,
-    bottom: 0,
-  },
-  dimPiece: {
+  piece: {
     position: 'absolute',
   },
-  // 뚫린 칸은 네모라 둥근 카드 모서리 바깥이 살짝 밝게 남는다. 테두리를 두껍게 둘러 그 틈을 덮는다.
-  frame: {
+  bubble: {
     position: 'absolute',
-    borderRadius: radius.sheetTop,
-    borderWidth: 3,
-    borderColor: brand.blue,
-  },
-  tooltipWrap: {
-    position: 'absolute',
-    left: 16,
-    right: 16,
-  },
-  tooltip: {
     borderRadius: 16,
-    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.18,
+    shadowRadius: 20,
+    elevation: 10,
   },
-  tooltipInner: {
-    backgroundColor: TOOLTIP_BG,
-    padding: 18,
+  // 정사각형을 45도 돌려 반만 보이게 하면 삼각형 꼬리가 된다(물방울 로딩과 같은 방식).
+  tail: {
+    position: 'absolute',
+    width: TAIL * 2,
+    height: TAIL * 2,
+    transform: [{ rotate: '45deg' }],
+    borderRadius: 3,
+  },
+  bubbleInner: {
+    paddingHorizontal: 16,
+    paddingTop: 14,
+    paddingBottom: 10,
   },
   stepCount: {
-    ...typography.badge,
-    color: alpha(white, 0.6),
+    fontSize: 12,
+    ...weight(600),
   },
   title: {
-    ...typography.buttonLabel,
-    color: white,
-    marginTop: 6,
+    fontSize: 15,
+    ...weight(700),
+    marginTop: 4,
   },
   body: {
-    ...typography.body,
-    color: alpha(white, 0.78),
-    marginTop: 8,
+    ...typography.bodySm,
+    lineHeight: 20,
+    marginTop: 4,
   },
   buttonRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'flex-end',
-    gap: 8,
-    marginTop: 16,
+    gap: 4,
+    marginTop: 10,
   },
-  skipBtn: {
-    height: 38,
-    paddingHorizontal: 14,
-    borderRadius: 10,
-    alignItems: 'center',
+  textBtn: {
+    minHeight: 44,
+    paddingHorizontal: 12,
     justifyContent: 'center',
   },
   skipLabel: {
-    ...typography.unit,
-    color: alpha(white, 0.7),
+    fontSize: 14,
+    ...weight(600),
   },
   nextBtn: {
-    height: 38,
-    paddingHorizontal: 20,
+    height: 36,
+    paddingHorizontal: 18,
     borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
   },
   nextLabel: {
-    ...typography.buttonLabelSm,
-    color: white,
+    fontSize: 14,
+    ...weight(700),
   },
 });
