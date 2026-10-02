@@ -1,5 +1,7 @@
 package com.fitto.server.user;
 
+import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.UUID;
 
@@ -24,8 +26,12 @@ import com.fitto.server.diet.RecipeIngredient;
 import com.fitto.server.diet.RecipeRepository;
 import com.fitto.server.period.PeriodDaily;
 import com.fitto.server.period.PeriodDailyRepository;
+import com.fitto.server.period.PeriodLog;
+import com.fitto.server.period.PeriodLogRepository;
+import com.fitto.server.period.PeriodService;
 import com.fitto.server.period.PeriodSetting;
 import com.fitto.server.period.PeriodSettingRepository;
+import com.fitto.server.period.dto.PeriodLogDto;
 import com.fitto.server.user.dto.ImportRequest;
 import com.fitto.server.user.dto.ImportResult;
 import com.fitto.server.workout.Routine;
@@ -50,7 +56,7 @@ import com.fitto.server.workout.WorkoutRepository;
 public class ImportService {
 
 	private static final String[] KEYS = {
-			"meals", "mealMemos", "workouts", "water", "steps", "weights", "periodDaily",
+			"meals", "mealMemos", "workouts", "water", "steps", "weights", "periodDaily", "periodLogs",
 			"recipes", "routines", "customIngredients" };
 
 	private final UserRepository userRepository;
@@ -62,6 +68,7 @@ public class ImportService {
 	private final WeightLogRepository weightRepository;
 	private final PeriodSettingRepository periodSettingRepository;
 	private final PeriodDailyRepository periodDailyRepository;
+	private final PeriodLogRepository periodLogRepository;
 	private final RecipeRepository recipeRepository;
 	private final RoutineRepository routineRepository;
 	private final CustomIngredientRepository customIngredientRepository;
@@ -70,7 +77,8 @@ public class ImportService {
 			MealMemoRepository mealMemoRepository, WorkoutRepository workoutRepository,
 			DailyWaterRepository waterRepository, DailyStepsRepository stepsRepository,
 			WeightLogRepository weightRepository, PeriodSettingRepository periodSettingRepository,
-			PeriodDailyRepository periodDailyRepository, RecipeRepository recipeRepository,
+			PeriodDailyRepository periodDailyRepository, PeriodLogRepository periodLogRepository,
+			RecipeRepository recipeRepository,
 			RoutineRepository routineRepository, CustomIngredientRepository customIngredientRepository) {
 		this.userRepository = userRepository;
 		this.mealItemRepository = mealItemRepository;
@@ -81,6 +89,7 @@ public class ImportService {
 		this.weightRepository = weightRepository;
 		this.periodSettingRepository = periodSettingRepository;
 		this.periodDailyRepository = periodDailyRepository;
+		this.periodLogRepository = periodLogRepository;
 		this.recipeRepository = recipeRepository;
 		this.routineRepository = routineRepository;
 		this.customIngredientRepository = customIngredientRepository;
@@ -278,6 +287,18 @@ public class ImportService {
 		if (period.settings() != null && periodSettingRepository.findById(userId).isEmpty()) {
 			periodSettingRepository.save(PeriodSetting.create(userId, period.settings().startDate(),
 					period.settings().cycleLength(), period.settings().periodLength()));
+		}
+
+		// 생리 기록도 서버에 하나도 없을 때만 통째로 넣는다. 섞으면 두 기기의 기록이 서로 겹칠 수 있다.
+		// 가져오기는 오늘을 받지 않아서, 어느 시간대의 오늘이든 넘지 않게 UTC 하루 뒤까지 허용한다.
+		if (period.logs() != null && !period.logs().isEmpty() && !periodLogRepository.existsByUserId(userId)) {
+			List<PeriodLogDto> logs = PeriodService.validateLogs(period.logs(), LocalDate.now(ZoneOffset.UTC).plusDays(1));
+			for (PeriodLogDto log : logs) {
+				periodLogRepository.save(PeriodLog.create(userId, log.startDate(), log.endDate()));
+				counter.imported("periodLogs");
+			}
+		} else if (period.logs() != null) {
+			period.logs().forEach(log -> counter.skipped("periodLogs"));
 		}
 
 		if (period.daily() == null) {

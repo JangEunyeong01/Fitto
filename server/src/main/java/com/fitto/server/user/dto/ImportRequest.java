@@ -7,6 +7,8 @@ import java.util.UUID;
 import com.fitto.server.diet.MealType;
 import com.fitto.server.diet.MealUnit;
 import com.fitto.server.period.PeriodCondition;
+import com.fitto.server.period.dto.PeriodLogDto;
+import com.fitto.server.period.dto.PeriodLogsPutRequest;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMax;
@@ -92,7 +94,9 @@ public record ImportRequest(
 			@NotNull @DecimalMin("25") @DecimalMax("250") Double weight) {
 	}
 
-	public record Period(@Valid Settings settings, @Size(max = MAX_DAILY) List<@Valid Daily> daily) {
+	/** logs는 실제로 입력한 생리 기록(명세 12장). 개별 API(PUT /period/logs)와 같은 검사를 거친다. */
+	public record Period(@Valid Settings settings, @Size(max = MAX_DAILY) List<@Valid Daily> daily,
+			@Size(max = PeriodLogsPutRequest.MAX_LOGS) List<@NotNull @Valid PeriodLogDto> logs) {
 
 		public record Settings(
 				@NotNull LocalDate startDate,

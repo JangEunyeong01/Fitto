@@ -17,6 +17,8 @@ import org.springframework.web.bind.annotation.RestController;
 import com.fitto.server.auth.AuthenticatedUser;
 import com.fitto.server.period.dto.PeriodDailyRequest;
 import com.fitto.server.period.dto.PeriodDailyResponse;
+import com.fitto.server.period.dto.PeriodLogDto;
+import com.fitto.server.period.dto.PeriodLogsPutRequest;
 import com.fitto.server.period.dto.PeriodPutRequest;
 import com.fitto.server.period.dto.PeriodResponse;
 
@@ -51,6 +53,17 @@ public class PeriodController {
 		PeriodDailyResponse saved = periodService.putDaily(AuthenticatedUser.requireId(), date, request);
 		// 모든 값이 비어서 기록을 지운 경우에는 돌려줄 본문이 없다.
 		return saved != null ? ResponseEntity.ok(saved) : ResponseEntity.noContent().build();
+	}
+
+	@GetMapping("/logs")
+	public Map<String, List<PeriodLogDto>> getLogs() {
+		return Map.of("items", periodService.getLogs(AuthenticatedUser.requireId()));
+	}
+
+	/** 목록 전체를 받아 통째로 바꾼다. 앱의 동기화 큐가 마지막 상태 하나만 보내면 되게. */
+	@PutMapping("/logs")
+	public Map<String, List<PeriodLogDto>> putLogs(@Valid @RequestBody PeriodLogsPutRequest request) {
+		return Map.of("items", periodService.putLogs(AuthenticatedUser.requireId(), request));
 	}
 
 	@GetMapping("/daily")
