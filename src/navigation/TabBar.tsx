@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/useTheme';
 import Icon, { type IconName } from '../components/Icon';
 import { useQuickLogSheetStore } from '../store/useQuickLogSheetStore';
+import { useTutorialStore } from '../store/useTutorialStore';
 import { alpha, radius, tabBarShadowColor, weight } from '../theme/tokens';
 
 const TAB_LABELS: Record<string, string> = {
@@ -34,6 +35,18 @@ export default function TabBar({ state, navigation }: BottomTabBarProps) {
   const { colors, mode } = useTheme();
   const insets = useSafeAreaInsets();
   const showSheet = useQuickLogSheetStore((s) => s.show);
+  const setTutorialTarget = useTutorialStore((s) => s.setTarget);
+  const tutorialOpen = useTutorialStore((s) => s.open);
+  const settingsRef = useRef<View | null>(null);
+  const measureSettings = () => {
+    settingsRef.current?.measureInWindow((x, y, width, height) => {
+      if (width > 0 && height > 0) setTutorialTarget('settingsTab', { x, y, width, height });
+    });
+  };
+  // 튜토리얼이 열릴 때 한 번 더 잰다. 첫 레이아웃 땐 탭바가 아직 자리를 덜 잡았을 수 있다.
+  useEffect(() => {
+    if (tutorialOpen) measureSettings();
+  }, [tutorialOpen]);
 
   const leftRoutes = state.routes.slice(0, 2);
   const rightRoutes = state.routes.slice(2, 4);
@@ -60,9 +73,13 @@ export default function TabBar({ state, navigation }: BottomTabBarProps) {
     };
 
     const tint = focused ? colors.textPrimary : colors.textSecondary;
+    const isSettings = route.name === 'Settings';
     return (
       <Pressable
         key={route.key}
+        // 튜토리얼 마지막 단계("홈 카드 순서")가 이 칸을 가리킨다.
+        ref={isSettings ? settingsRef : undefined}
+        onLayout={isSettings ? measureSettings : undefined}
         onPress={onPress}
         style={styles.tabItem}
         accessibilityRole="tab"
