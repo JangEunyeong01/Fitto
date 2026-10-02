@@ -134,6 +134,9 @@ export default function PeriodCalendar({ year, month, onShiftMonth, selected, on
               <View
                 style={[
                   styles.dayCircle,
+                  // 배란일은 네 모서리가 다 둥근 진한 동그라미. 칸을 통째로 칠하면 띠에 붙은 쪽이 각져 보인다.
+                  // 띠와 높이가 같은 36이라 가장자리가 딱 겹친다.
+                  band?.type === 'ovulation' && { backgroundColor: OVULATION_FILL },
                   isToday && { borderWidth: 1.5, borderColor: colors.textSecondary },
                   isSelected && { borderWidth: 2, borderColor: themeBrand.blue },
                 ]}
@@ -154,8 +157,8 @@ const TYPE_LABEL = { period: '생리', fertile: '가임기', ovulation: '배란�
 
 function bandColor(b: BandDay) {
   if (b.type === 'period') return b.predicted ? PERIOD_PREDICTED : PERIOD_RECORDED;
-  // 배란일은 가임기 띠의 마지막 칸을 진하게. 동그라미를 따로 얹으면 띠와 크기가 어긋난다.
-  return b.type === 'ovulation' ? OVULATION_FILL : FERTILE_FILL;
+  // 배란일 칸도 띠는 가임기 색으로 잇고, 그 위에 진한 동그라미를 얹는다(아래 dayCircle).
+  return FERTILE_FILL;
 }
 
 const md = (key: string) => {
