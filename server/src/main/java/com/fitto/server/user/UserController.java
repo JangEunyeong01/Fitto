@@ -72,6 +72,13 @@ public class UserController {
 		return ResponseEntity.noContent().build();
 	}
 
+	/** 데이터 초기화. 계정은 두고 기록만 지운다(명세 5장). */
+	@DeleteMapping("/users/me/records")
+	public ResponseEntity<Void> resetRecords() {
+		accountService.resetRecords(AuthenticatedUser.requireId());
+		return ResponseEntity.noContent().build();
+	}
+
 	@PostMapping("/me/import")
 	public ImportResult importGuestData(@Valid @RequestBody ImportRequest request) {
 		return importService.importAll(AuthenticatedUser.requireId(), request);

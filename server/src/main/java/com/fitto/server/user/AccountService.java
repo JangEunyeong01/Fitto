@@ -35,11 +35,14 @@ public class AccountService {
 	private static final Logger log = LoggerFactory.getLogger(AccountService.class);
 
 	/**
-	 * 자식 표가 없어 한 번에 지워도 되는 것들.
+	 * 자식 표가 없어 한 번에 지워도 되는 기록 표. 탈퇴와 데이터 초기화가 함께 쓴다.
 	 * 엔티티 이름이라 표 이름과 다를 수 있다(RefreshToken → refresh_tokens).
 	 */
-	private static final List<String> SIMPLE_ENTITIES = List.of("MealItem", "MealMemo", "DailyWater", "DailySteps",
-			"WeightLog", "Workout", "CustomIngredient", "PeriodSetting", "RefreshToken", "EmailCode");
+	private static final List<String> RECORD_ENTITIES = List.of("MealItem", "MealMemo", "DailyWater", "DailySteps",
+			"WeightLog", "Workout", "CustomIngredient", "PeriodSetting");
+
+	/** 계정에 딸린 것. 탈퇴 때만 지운다 — 초기화는 로그인을 유지한다. */
+	private static final List<String> ACCOUNT_ENTITIES = List.of("RefreshToken", "EmailCode");
 
 	/**
 	 * 비밀번호 확인 시도 제한.
@@ -83,15 +86,9 @@ public class AccountService {
 			throw new ApiException(ErrorCode.INVALID_CREDENTIALS);
 		}
 
-		// 자식 표를 가진 것부터. 엔티티를 읽어서 지워야 재료·세부 운동·증상이 함께 지워진다.
-		recipeRepository.deleteAllByUserId(userId);
-		routineRepository.deleteAllByUserId(userId);
-		periodDailyRepository.deleteAllByUserId(userId);
-
-		for (String entity : SIMPLE_ENTITIES) {
-			entityManager.createQuery("delete from " + entity + " e where e.userId = :userId")
-					.setParameter("userId", userId)
-					.executeUpdate();
+		deleteRecords(userId);
+		for (String entity : ACCOUNT_ENTITIES) {
+			deleteAllOf(entity, userId);
 		}
 
 		// 마지막에 계정. 질환·알레르기·선호 음식 6개 표는 JPA가 함께 지운다.
@@ -105,5 +102,33 @@ public class AccountService {
 
 		// 지워진 뒤에는 어떤 계정이었는지 확인할 방법이 없다. 삭제 사실 자체는 남겨야 문의에 답할 수 있다.
 		log.info("탈퇴 완료: userId={}", userId);
+	}
+
+	/**
+	 * 데이터 초기화(명세 F-043). 계정·로그인·프로필은 두고 기록만 지운다.
+	 * 앱은 이어서 온보딩을 다시 받고 프로필을 PATCH로 올린다. 서버 프로필을 여기서 비우면
+	 * 온보딩 도중 앱이 꺼졌을 때 목표 칼로리 없는 계정이 남는다.
+	 */
+	@Transactional
+	public void resetRecords(UUID userId) {
+		deleteRecords(userId);
+		log.info("데이터 초기화: userId={}", userId);
+	}
+
+	/** 기록 표만. 탈퇴와 초기화가 같은 목록을 써야 한쪽에만 표를 추가하는 일이 없다. */
+	private void deleteRecords(UUID userId) {
+		// 자식 표를 가진 것부터. 엔티티를 읽어서 지워야 재료·세부 운동·증상이 함께 지워진다.
+		recipeRepository.deleteAllByUserId(userId);
+		routineRepository.deleteAllByUserId(userId);
+		periodDailyRepository.deleteAllByUserId(userId);
+		for (String entity : RECORD_ENTITIES) {
+			deleteAllOf(entity, userId);
+		}
+	}
+
+	private void deleteAllOf(String entity, UUID userId) {
+		entityManager.createQuery("delete from " + entity + " e where e.userId = :userId")
+				.setParameter("userId", userId)
+				.executeUpdate();
 	}
 }

@@ -526,7 +526,9 @@ export const useAppStore = create<AppState>()(
       setObPick: (patch) => set((s) => ({ obPick: { ...s.obPick, ...patch } })),
 
       // 온보딩 완료: 계산된 목표를 홈 목표치로, 입력값을 프로필로 옮긴다.
-      completeOnboarding: () =>
+      // 회원이 "온보딩 다시 보기"나 데이터 초기화 뒤에 다시 마치면 바뀐 프로필을 서버로 올린다.
+      // 예전엔 올리지 않아서 기기 프로필과 서버 프로필이 어긋났다(게스트면 enqueueSync가 아무것도 안 한다).
+      completeOnboarding: () => {
         set((s) => {
           const birthYear = s.obInfo.birthYear ? Number(s.obInfo.birthYear) : null;
           const birthdayMonth = s.obInfo.birthMonth ? Number(s.obInfo.birthMonth) : null;
@@ -566,7 +568,9 @@ export const useAppStore = create<AppState>()(
             },
             persona: s.obPick.persona ?? s.persona,
           };
-        }),
+        });
+        enqueueSync({ kind: 'profile.patch' });
+      },
       // 설정 → 온보딩 다시 보기. 처음 온보딩 때 입력한 obInfo는 그 뒤로 갱신되지 않으므로,
       // 프로필에서 바뀐 최신 값을 다시 채워 넣고 첫 화면으로 돌려보낸다.
       resetOnboarding: () =>
