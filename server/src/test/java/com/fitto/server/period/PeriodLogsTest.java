@@ -1,6 +1,7 @@
 package com.fitto.server.period;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -82,6 +83,33 @@ class PeriodLogsTest {
 
 		// 막힌 요청은 아무것도 남기지 않는다.
 		assertEquals(0, getLogs(token).size());
+	}
+
+	@Test
+	void 생리_데이터를_지우면_설정_기록_일일기록이_모두_사라진다() throws Exception {
+		String token = signup("logs-wipe@fitto.app");
+		assertEquals(200, mvc.perform(put("/period")
+				.header("Authorization", "Bearer " + token)
+				.contentType(MediaType.APPLICATION_JSON)
+				.content("{ \"startDate\": \"2026-09-06\", \"cycleLength\": 28, \"periodLength\": 5, \"today\": \"2026-10-03\" }"))
+				.andReturn().getResponse().getStatus());
+		assertEquals(200, putLogs(token, "[{ \"startDate\": \"2026-09-06\", \"endDate\": \"2026-09-10\" }]"));
+		assertEquals(200, mvc.perform(put("/period/daily/2026-09-07")
+				.header("Authorization", "Bearer " + token)
+				.contentType(MediaType.APPLICATION_JSON)
+				.content("{ \"symptoms\": [\"period_pain\", \"mood.tired\"] }"))
+				.andReturn().getResponse().getStatus());
+
+		assertEquals(204, mvc.perform(delete("/period").header("Authorization", "Bearer " + token))
+				.andReturn().getResponse().getStatus());
+
+		// 설정이 없으니 "아직 입력 안 함"(404)으로 돌아간다.
+		assertEquals(404, mvc.perform(get("/period").param("today", "2026-10-03").header("Authorization", "Bearer " + token))
+				.andReturn().getResponse().getStatus());
+		assertEquals(0, getLogs(token).size());
+		MvcResult daily = mvc.perform(get("/period/daily").param("from", "2026-09-01").param("to", "2026-09-30")
+				.header("Authorization", "Bearer " + token)).andReturn();
+		assertEquals(0, mapper.readTree(daily.getResponse().getContentAsString(StandardCharsets.UTF_8)).get("items").size());
 	}
 
 	private int putLogs(String token, String items) throws Exception {

@@ -75,6 +75,13 @@ try {
   assert.equal(p.getPeriodHeadline('2026-09-08', s, ok), '생리 3일째');
   assert.equal(p.getPeriodHeadline('2026-09-20', s2, ended), '다음 생리까지 14일');
 
+  // 예측을 끄면 기록만 남고, 맨 위 한 줄은 마지막 시작일부터 센 날짜.
+  const off = { period: false, fertile: false };
+  assert.equal(p.getBandDay('2026-10-05', s2, ended, today, off), null, '예측 생리 숨김');
+  assert.equal(p.getBandDay('2026-09-20', s2, ended, today, off), null, '가임기 숨김');
+  assert.deepEqual(p.getBandDay('2026-09-07', s2, ended, today, off), { type: 'period', predicted: false }, '기록은 남는다');
+  assert.equal(p.getPeriodHeadline('2026-10-20', s2, ended, off), '이번 주기 45일째', '늦어져도 되풀이하지 않는다');
+
   // 6. 일일 기록 칩.
   assert.equal(tags.periodTagLabel('mood.happy'), '행복함');
   assert.equal(tags.periodTagLabel('custom.허벅지 당김'), '허벅지 당김', '직접 입력은 접두어를 뺀다');

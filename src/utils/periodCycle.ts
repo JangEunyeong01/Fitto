@@ -157,7 +157,28 @@ export interface BandDay {
  * - 마지막 주기 안의 생리일은 기록이 정한다. 끝났으면 거기까지, 진행 중이면 오늘 뒤는 예측
  * - 기록이 아예 없으면(예전 데이터) 마지막 시작일부터 평균 기간을 기록으로 본다
  */
-export function getBandDay(dateKey: string, s: PeriodSettings, logs: PeriodLog[], today: string): BandDay | null {
+export function getBandDay(
+  dateKey: string,
+  s: PeriodSettings,
+  logs: PeriodLog[],
+  today: string,
+  show: PredictShow = SHOW_ALL
+): BandDay | null {
+  const b = bandDay(dateKey, s, logs, today);
+  // 예측을 끈 사람에겐 기록만 남긴다(설정 › 표시할 정보).
+  if (b?.predicted && b.type === 'period' && !show.period) return null;
+  if (b && b.type !== 'period' && !show.fertile) return null;
+  return b;
+}
+
+/** 무엇을 예측해서 보여줄지. 기록한 생리는 늘 보인다. */
+export interface PredictShow {
+  period: boolean;
+  fertile: boolean;
+}
+const SHOW_ALL: PredictShow = { period: true, fertile: true };
+
+function bandDay(dateKey: string, s: PeriodSettings, logs: PeriodLog[], today: string): BandDay | null {
   if (findLog(logs, dateKey, today)) return { type: 'period', predicted: false };
   const diff = daysBetween(s.lastStartDate, dateKey);
   if (diff < 0) return null;
@@ -178,14 +199,17 @@ export function bandGroup(b: BandDay | null): string | null {
 }
 
 /** 생리 화면 맨 위 한 줄. 생리 중이면 며칠째, 아니면 다음 예정일까지. */
-export function getPeriodHeadline(today: string, s: PeriodSettings, logs: PeriodLog[] = []): string {
-  const band = getBandDay(today, s, logs, today);
+export function getPeriodHeadline(today: string, s: PeriodSettings, logs: PeriodLog[] = [], show: PredictShow = SHOW_ALL): string {
+  const band = getBandDay(today, s, logs, today, show);
+  const n = getCycleDayNumber(today, s);
   if (band?.type === 'period') {
-    const n = getCycleDayNumber(today, s);
     // 예측한 날을 "생리 중"이라고 단정하지 않는다. 아직 입력이 없으면 예정일 뿐이다.
     if (!band.predicted) return `생리 ${n}일째`;
     return n === 1 ? '오늘 생리 예정일이에요' : `생리 예정 ${n}일째`;
   }
+  // 예측을 끄면 "언제 올지" 대신 지금 주기 며칠째인지만.
+  // 평균 주기로 되풀이하지 않고 마지막 시작일부터 그대로 센다. 늦어지는 중이면 그게 사실이다(45일째 등).
+  if (!show.period) return `이번 주기 ${daysBetween(s.lastStartDate, today) + 1}일째`;
   return `다음 생리까지 ${daysBetween(today, getUpcomingDates(today, s).nextStart)}일`;
 }
 

@@ -6,6 +6,7 @@ import java.util.Map;
 
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -53,6 +54,12 @@ public class PeriodController {
 		PeriodDailyResponse saved = periodService.putDaily(AuthenticatedUser.requireId(), date, request);
 		// 모든 값이 비어서 기록을 지운 경우에는 돌려줄 본문이 없다.
 		return saved != null ? ResponseEntity.ok(saved) : ResponseEntity.noContent().build();
+	}
+
+	@DeleteMapping
+	public ResponseEntity<Void> deleteAll() {
+		periodService.deleteAll(AuthenticatedUser.requireId());
+		return ResponseEntity.noContent().build();
 	}
 
 	@GetMapping("/logs")

@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ageFromBirth, calculateGoals } from '../utils/goals';
 // 기록이 바뀌면 동기화 대기열에 알린다. 게스트면 아무 일도 일어나지 않는다(sync/enqueue.ts).
 import { enqueueSync } from '../sync/enqueue';
+import { useOutboxStore } from './useOutboxStore';
 import { isUuid, newId } from '../utils/id';
 import { CONDITION_TO_MOOD } from '../constants/periodTags';
 import { addDays, deriveSettings, sortLogs, toDateKey, type PeriodLog, type PeriodSettings } from '../utils/periodCycle';
@@ -113,6 +114,15 @@ export interface DailyRecord {
 
 export type MealSlot = MealSlotCode;
 
+export interface PeriodDisplay {
+  /** 다음 생리 예측(옅은 띠, 예정일, "다음 생리까지"). */
+  predictPeriod: boolean;
+  /** 가임기·배란일 예측. */
+  predictFertile: boolean;
+  /** 기록 화면에서 숨길 묶음 키(constants/periodTags의 TagGroup.key). */
+  hiddenGroups: string[];
+}
+
 export interface Alarms {
   water: boolean;
   waterEvery: number;
@@ -211,6 +221,11 @@ interface AppState {
    * 바뀔 때마다 periodSettings(마지막 시작일·평균 주기·평균 기간)를 다시 맞춘다.
    */
   periodLogs: PeriodLog[];
+  /**
+   * 생리 화면에 무엇을 보여줄지(이 기기에서만). 예측을 끄면 달력·요약·맨 위 한 줄에서 예측이 빠지고,
+   * hiddenGroups에 든 기록 묶음(sex, mucus·ovtest)은 기록 화면에 안 나온다. 이미 남긴 값은 지우지 않는다.
+   */
+  periodDisplay: PeriodDisplay;
   cardOrder: CardId[];
   cardHidden: CardId[];
   alarms: Alarms;
@@ -259,6 +274,9 @@ interface AppState {
   setPeriodSettings: (patch: Partial<PeriodSettings>) => void;
   /** 생리 기록 목록을 통째로 바꾼다. 검사(checkLogs)는 부르는 쪽에서 먼저 한다. */
   setPeriodLogs: (logs: PeriodLog[]) => void;
+  setPeriodDisplay: (patch: Partial<PeriodDisplay>) => void;
+  /** 생리 데이터만 처음 상태로. 서버는 부르는 쪽이 먼저 지운다(회원). 동기화 대기열의 생리 작업도 버린다. */
+  resetPeriodData: () => void;
   setDayPeriodRecord: (dateKey: string, record: { symptoms: string[]; medication?: string; memo?: string }) => void;
   setCardOrder: (order: CardId[]) => void;
   setCardHidden: (hidden: CardId[]) => void;
@@ -389,6 +407,7 @@ export const useAppStore = create<AppState>()(
       periodSettings: defaultPeriodSettings(),
       periodSetupDone: false,
       periodLogs: [],
+      periodDisplay: { predictPeriod: true, predictFertile: true, hiddenGroups: [] },
       // 전역 상수를 그대로 상태에 넣으면 어딘가에서 배열을 직접 수정했을 때 기본값이 오염된다.
       cardOrder: [...DEFAULT_CARD_ORDER],
       cardHidden: [],
@@ -496,6 +515,24 @@ export const useAppStore = create<AppState>()(
         }));
         enqueueSync({ kind: 'period.logs' });
         if (sorted.length) enqueueSync({ kind: 'period.settings' });
+      },
+      setPeriodDisplay: (patch) => set((s) => ({ periodDisplay: { ...s.periodDisplay, ...patch } })),
+      resetPeriodData: () => {
+        set((s) => {
+          const dailyRecords: Record<string, DailyRecord> = {};
+          Object.entries(s.dailyRecords).forEach(([date, rec]) => {
+            const { periodSymptoms, periodMedication, periodMemo, ...rest } = rec;
+            dailyRecords[date] = rest;
+          });
+          return {
+            dailyRecords,
+            periodLogs: [],
+            periodSettings: defaultPeriodSettings(),
+            periodSetupDone: false,
+          };
+        });
+        // 남은 생리 작업이 나중에 올라가면 서버에 지운 기록이 되살아난다.
+        useOutboxStore.getState().drop((op) => op.kind.startsWith('period.'));
       },
       // 기록 화면에서 "완료"를 누를 때 하루치를 통째로 바꾼다. 칩 하나마다 저장하면 취소가 안 되고 동기화도 여러 번 나간다.
       // 빈 문자열·빈 목록이면 키를 지운다. 빈 메모가 남으면 "쓴 적 있음"처럼 보인다.
@@ -748,6 +785,7 @@ export const useAppStore = create<AppState>()(
           goals: { ...current.goals, ...(p.goals ?? {}) },
           alarms: { ...current.alarms, ...(p.alarms ?? {}) },
           periodSettings: { ...current.periodSettings, ...(p.periodSettings ?? {}) },
+          periodDisplay: { ...current.periodDisplay, ...(p.periodDisplay ?? {}) },
           workoutPreference: { ...current.workoutPreference, ...(p.workoutPreference ?? {}) },
           obInfo: { ...current.obInfo, ...(p.obInfo ?? {}) },
           obTags: { ...current.obTags, ...(p.obTags ?? {}) },

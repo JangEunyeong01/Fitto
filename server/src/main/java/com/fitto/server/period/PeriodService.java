@@ -102,6 +102,18 @@ public class PeriodService {
 				.toList();
 	}
 
+	/**
+	 * 생리 데이터만 전부 지운다(설정 › 생리 주기 › 데이터 삭제). 계정과 다른 기록은 그대로.
+	 * 설정 행까지 지워야 조회가 다시 404(아직 입력 안 함)가 된다.
+	 */
+	@Transactional
+	public void deleteAll(UUID userId) {
+		settingRepository.deleteById(userId);
+		logRepository.deleteAllOfUser(userId);
+		// 엔티티를 읽어서 지워야 period_daily_symptoms도 함께 지워진다.
+		dailyRepository.deleteAllByUserId(userId);
+	}
+
 	@Transactional(readOnly = true)
 	public List<PeriodLogDto> getLogs(UUID userId) {
 		return logRepository.findAllByUserIdOrderByStartDate(userId).stream().map(PeriodLogDto::from).toList();

@@ -38,7 +38,10 @@ export default function HomeHeader() {
 
   // 생리 기능을 켜고 시작일을 입력한 사람에게만 주기 값을 만든다(명세 F-017).
   const cycleReady = periodOn && periodSetupDone;
-  const daysUntilPeriod = cycleReady ? daysBetween(today, getUpcomingDates(today, periodSettings).nextStart) : null;
+  // 생리 예측을 끈 사람에겐 브리핑에서도 "생리까지 N일"을 꺼낸다.
+  const predictPeriod = useAppStore((s) => s.periodDisplay.predictPeriod);
+  const daysUntilPeriod =
+    cycleReady && predictPeriod ? daysBetween(today, getUpcomingDates(today, periodSettings).nextStart) : null;
 
   const briefing = buildBriefing({
     persona,

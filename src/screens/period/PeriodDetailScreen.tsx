@@ -36,7 +36,9 @@ export default function PeriodDetailScreen() {
 
   const cycleDay = getCycleDayNumber(today, settings);
   const comment = personaCopy.periodComment[persona]({ day: cycleDay });
-  const onPeriod = getBandDay(today, settings, logs, today)?.type === 'period';
+  const display = useAppStore((s) => s.periodDisplay);
+  const show = { period: display.predictPeriod, fertile: display.predictFertile };
+  const onPeriod = getBandDay(today, settings, logs, today, show)?.type === 'period';
 
   const selectedDate = parseDateKey(selected);
   const selectedLabel = `${selectedDate.getMonth() + 1}월 ${selectedDate.getDate()}일`;
@@ -64,7 +66,7 @@ export default function PeriodDetailScreen() {
 
         {/* 이 화면에서 제일 궁금한 건 "언제"라서 달력보다 먼저 한 줄로 답한다. */}
         <Text style={[styles.headline, { color: colors.textPrimary }]} accessibilityRole="header">
-          {getPeriodHeadline(today, settings, logs)}
+          {getPeriodHeadline(today, settings, logs, show)}
         </Text>
 
         <PeriodCalendar

@@ -42,6 +42,7 @@ export default function PeriodRecordScreen() {
   const { colors } = useTheme();
   const dailyRecords = useAppStore((s) => s.dailyRecords);
   const setDayPeriodRecord = useAppStore((s) => s.setDayPeriodRecord);
+  const hiddenGroups = useAppStore((s) => s.periodDisplay.hiddenGroups);
   const showToast = useToastStore((s) => s.show);
 
   const [date, setDate] = useState<string>(route.params?.date ?? dateKey());
@@ -68,7 +69,14 @@ export default function PeriodRecordScreen() {
   const save = () => setDayPeriodRecord(date, { symptoms: codes, medication, memo });
 
   // 자주 넣은 항목은 화면을 열 때 한 번만 센다. 고르는 도중에 목록이 바뀌면 손가락 밑 칩이 움직인다.
-  const frequent = useMemo(() => frequentTags(Object.values(dailyRecords).map((r) => r.periodSymptoms)), []);
+  // 숨긴 묶음의 칩은 여기서도 뺀다.
+  const frequent = useMemo(
+    () =>
+      frequentTags(Object.values(dailyRecords).map((r) => r.periodSymptoms)).filter(
+        (c) => !hiddenGroups.some((k) => PERIOD_TAG_GROUPS.find((g) => g.key === k)?.options.some((o) => o.code === c))
+      ),
+    []
+  );
   const customs = codes.filter((c) => c.startsWith(CUSTOM_PREFIX));
 
   const toggle = (code: string, group?: TagGroup) => {
@@ -123,7 +131,10 @@ export default function PeriodRecordScreen() {
             </Section>
           )}
 
-          {PERIOD_TAG_GROUPS.map((g) => {
+          {/* 설정에서 숨긴 묶음은 빼되, 그 묶음에 이미 고른 값이 있으면 보여준다(모르는 채로 남아 있지 않게). */}
+          {PERIOD_TAG_GROUPS.filter(
+            (g) => !hiddenGroups.includes(g.key) || g.options.some((o) => codes.includes(o.code))
+          ).map((g) => {
             const expanded = !g.collapsible || open[g.key];
             // 접혀 있어도 고른 칩은 보이게 앞쪽 칩에 더한다.
             const shown = expanded
