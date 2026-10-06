@@ -9,6 +9,7 @@ export type IconName =
   | 'plus'
   | 'chevronLeft'
   | 'chevronRight'
+  | 'chevronDown'
   | 'close'
   | 'search'
   | 'moon'
@@ -127,6 +128,9 @@ function renderPaths(name: IconName, p: StrokeProps) {
 
     case 'chevronRight':
       return <Path d="M9.5 6.5 15 12l-5.5 5.5" {...p} />;
+
+    case 'chevronDown':
+      return <Path d="M6.5 9.5 12 15l5.5-5.5" {...p} />;
 
     case 'close':
       return (
