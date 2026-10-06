@@ -67,8 +67,17 @@ export async function requestPermission(): Promise<PermissionState> {
 
 export const openSystemSettings = () => Linking.openSettings();
 
+// 앱을 켤 때, 앞으로 나올 때, 기록이 바뀔 때가 거의 동시에 겹친다. 두 번이 섞여 돌면
+// 먼저 시작한 쪽이 옛 기록으로 만든 예약을 나중에 덮어쓸 수 있어서, 앞 번이 끝난 뒤에 돈다.
+let queue: Promise<void> = Promise.resolve();
+
 /** 지금 설정·기록으로 예약을 갈아끼운다. 권한이 없으면 지우기만 한다. */
-export async function reschedule(): Promise<void> {
+export function reschedule(): Promise<void> {
+  queue = queue.then(rescheduleNow, rescheduleNow);
+  return queue;
+}
+
+async function rescheduleNow(): Promise<void> {
   if (!Notifications) return;
   await Notifications.cancelAllScheduledNotificationsAsync();
   if ((await getPermission()) !== 'granted') return;

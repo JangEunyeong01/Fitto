@@ -105,7 +105,16 @@ try {
   assert.equal(planNotifications(base({ now: new Date(2026, 9, 14, 6, 0), alarms: { ...off, period: true }, period: { ...periodOn, on: false } })).length, 0);
   assert.equal(planNotifications(base({ now: new Date(2026, 9, 14, 6, 0), alarms: { ...off, period: true }, period: { ...periodOn, setupDone: false } })).length, 0);
 
-  // 11. 다 켜도 iOS 예약 한도(64)를 넘지 않는다.
+  // 11. 물 알림이 다른 알림과 30분 안에 겹치면 물 쪽을 뺀다(저녁 19:00과 물 19:00이 같이 울리던 것).
+  const mixed = planNotifications(base({ alarms: { ...off, water: true, meal: true } }))
+    .filter((n) => day(n.at) === '10/7')
+    .map((n) => `${hhmm(n.at)} ${n.title}`);
+  assert.deepEqual(mixed, [
+    '08:00 아침 기록', '09:00 물 마시기', '11:00 물 마시기', '12:30 점심 기록', '13:00 물 마시기',
+    '15:00 물 마시기', '17:00 물 마시기', '19:00 저녁 기록', '21:00 물 마시기',
+  ]);
+
+  // 12. 다 켜도 iOS 예약 한도(64)를 넘지 않는다.
   const all = planNotifications(base({ alarms: { ...off, water: true, waterEvery: 1, meal: true, weigh: true, report: true, quiet: false, period: true }, period: periodOn }));
   assert.ok(all.length <= 64, `예약 ${all.length}개 — 64개를 넘었다`);
   assert.equal(new Set(all.map((n) => n.id)).size, all.length, 'id가 겹치면 예약이 덮어써진다');

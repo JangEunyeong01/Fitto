@@ -44,6 +44,9 @@ const MEALS = [
   { code: 'dinner', label: '저녁' },
 ] as const;
 
+/** 이 간격 안에 다른 알림이 있으면 물 알림을 뺀다. */
+const NEAR_MS = 30 * 60 * 1000;
+
 /** 방해 금지가 꺼져 있을 때 물 알림을 보낼 깨어 있는 시간. */
 const DEFAULT_DAY = { from: '08:00', to: '22:00' };
 
@@ -148,5 +151,11 @@ export function planNotifications(input: PlanInput): PlannedNotification[] {
     }
   }
 
-  return out.sort((a, b) => a.at.getTime() - b.at.getTime());
+  // 물 알림이 식사·체중 같은 다른 알림과 같은 때 울리면 폰은 한 번만 진동하고 두 개를 쌓는다.
+  // 앞뒤 30분 안에 다른 알림이 있으면 그 물 알림은 건너뛴다. 다른 알림을 열면 어차피 앱에 들어온다.
+  const others = out.filter((n) => !n.id.startsWith('water-')).map((n) => n.at.getTime());
+  const near = (n: PlannedNotification) => others.some((t) => Math.abs(t - n.at.getTime()) < NEAR_MS);
+  return out
+    .filter((n) => !n.id.startsWith('water-') || !near(n))
+    .sort((a, b) => a.at.getTime() - b.at.getTime());
 }
