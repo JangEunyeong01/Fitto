@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Pressable, TextInput, Image, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, Pressable, TextInput, Image, ScrollView, StyleSheet, AppState } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { tabBarSpace } from '../../navigation/TabBar';
 import GlassCard from '../../components/GlassCard';
@@ -21,6 +21,8 @@ import {
   requestPermission,
   scheduleTestNotification,
   openSystemSettings,
+  canScheduleExact,
+  openExactAlarmSettings,
   type PermissionState,
 } from '../../notifications/schedule';
 import { personaCopy, waterStageNames } from '../../copy/persona';
@@ -39,8 +41,14 @@ export default function NotificationsScreen() {
   const showToast = useToastStore((s) => s.show);
 
   const [permission, setPermission] = useState<PermissionState>('undetermined');
+  const [exact, setExact] = useState(canScheduleExact);
   useEffect(() => {
     getPermission().then(setPermission);
+    // 설정 앱에서 정확한 알람을 켜고 돌아오면 안내를 바로 거둔다. 예약은 useNotificationRunner가 다시 건다.
+    const sub = AppState.addEventListener('change', (next) => {
+      if (next === 'active') setExact(canScheduleExact());
+    });
+    return () => sub.remove();
   }, []);
   const anyOn = alarms.water || alarms.meal || alarms.weigh || alarms.report || alarms.period;
 
@@ -89,6 +97,14 @@ export default function NotificationsScreen() {
               알림 권한이 꺼져 있어서 울리지 않아요.
             </Text>
             <TextLink label="설정 열기" onPress={openSystemSettings} />
+          </View>
+        ) : permission === 'granted' && anyOn && !exact ? (
+          // 안드로이드 14부터 기본으로 꺼져 있다. 울리긴 하니 빨간 경고가 아니라 회색 안내로.
+          <View style={styles.noticeRow}>
+            <Text style={[styles.notice, styles.noticeText, { color: colors.textSecondary }]}>
+              알림이 조금 늦거나 한꺼번에 올 수 있어요.
+            </Text>
+            <TextLink label="정확한 시간에 받기" onPress={openExactAlarmSettings} />
           </View>
         ) : null}
 

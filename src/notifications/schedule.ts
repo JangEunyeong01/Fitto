@@ -1,5 +1,6 @@
 import { Platform, Linking } from 'react-native';
 import Constants, { ExecutionEnvironment } from 'expo-constants';
+import { requireOptionalNativeModule } from 'expo';
 import type * as NotificationsModule from 'expo-notifications';
 import { useAppStore } from '../store/useAppStore';
 import { toDateKey } from '../utils/periodCycle';
@@ -66,6 +67,18 @@ export async function requestPermission(): Promise<PermissionState> {
 }
 
 export const openSystemSettings = () => Linking.openSettings();
+
+/**
+ * 안드로이드 "정확한 알람" 권한(modules/exact-alarm). 없으면 OS가 알람을 미뤘다가 한꺼번에 보낸다.
+ * 모듈이 없는 환경(Expo Go·iOS·웹)은 확인할 방법이 없으니 켜진 걸로 보고 안내를 띄우지 않는다.
+ */
+const ExactAlarm =
+  NOTIFICATIONS_SUPPORTED && Platform.OS === 'android'
+    ? requireOptionalNativeModule<{ canSchedule(): boolean; openSettings(): void }>('ExactAlarm')
+    : null;
+
+export const canScheduleExact = (): boolean => ExactAlarm?.canSchedule() ?? true;
+export const openExactAlarmSettings = () => ExactAlarm?.openSettings();
 
 // 앱을 켤 때, 앞으로 나올 때, 기록이 바뀔 때가 거의 동시에 겹친다. 두 번이 섞여 돌면
 // 먼저 시작한 쪽이 옛 기록으로 만든 예약을 나중에 덮어쓸 수 있어서, 앞 번이 끝난 뒤에 돈다.
