@@ -20,6 +20,8 @@ import { useTutorialStore } from '../../store/useTutorialStore';
 import { useFoodSearchStore } from '../../store/useFoodSearchStore';
 import { useAuthStore } from '../../store/useAuthStore';
 import { deleteAllRecords } from '../../api/auth';
+import { useConnectSteps } from '../../health/useConnectSteps';
+import { STEP_SOURCE, disconnectSteps } from '../../health/steps';
 import { ApiError, NetworkError } from '../../api/client';
 import { PERSONA_OPTIONS } from '../onboarding/onboardingData';
 import { GOAL_OPTIONS, labelOf } from '../../constants/codes';
@@ -58,6 +60,9 @@ export default function SettingsScreen() {
   const setPeriodOn = useAppStore((s) => s.setPeriodOn);
   const resetOnboarding = useAppStore((s) => s.resetOnboarding);
   const resetAll = useAppStore((s) => s.resetAll);
+  const stepSource = useAppStore((s) => s.stepSource);
+  const setStepSource = useAppStore((s) => s.setStepSource);
+  const { connect: connectSteps } = useConnectSteps();
 
   const authStatus = useAuthStore((s) => s.status);
   const authEmail = useAuthStore((s) => s.email);
@@ -245,6 +250,30 @@ export default function SettingsScreen() {
           <RowDivider />
           <SettingsRow label="알림" onPress={() => navigation.navigate('Notifications')} chevron />
           <RowDivider />
+          {/* 켜고 끄는 값이라 스위치(시안 규칙 20). 끄면 기기 쪽 권한도 거두고, 이미 받은 걸음 기록은 남긴다. */}
+          {STEP_SOURCE === 'none' ? (
+            <SettingsRow label="걸음 수 연결" desc="휴대폰 앱에서 연결할 수 있어요" value="앱 전용" />
+          ) : (
+            <SettingsRow
+              label="걸음 수 연결"
+              desc={STEP_SOURCE === 'health-connect' ? '헬스 커넥트에서 읽어요' : '기기 만보계에서 읽어요'}
+              right={
+                <ToggleSwitch
+                  value={stepSource !== 'none'}
+                  onChange={async (on) => {
+                    if (on) {
+                      await connectSteps();
+                      return;
+                    }
+                    await disconnectSteps().catch(() => {});
+                    setStepSource('none');
+                    showToast('걸음 수 연결을 끊었어요. 이미 받은 기록은 남아요');
+                  }}
+                />
+              }
+            />
+          )}
+          <RowDivider />
           {SCREEN_LOCK_SUPPORTED ? (
             <SettingsRow
               label="화면 잠금"
@@ -264,7 +293,8 @@ export default function SettingsScreen() {
             value="실행"
             onPress={() => {
               // 튜토리얼은 홈 카드를 가리키므로 홈으로 보낸 뒤 띄운다.
-              navigation.navigate('Home');
+              // 홈 탭에 상세 화면이 열려 있으면 그 위에 말풍선이 뜬다. 홈 첫 화면까지 내려간다.
+              navigation.navigate('Home', { screen: 'HomeMain' });
               startTutorial();
             }}
             chevron

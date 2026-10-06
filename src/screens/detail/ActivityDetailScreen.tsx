@@ -39,7 +39,8 @@ export default function ActivityDetailScreen() {
   const exercises = todayRecord?.exercises ?? [];
   const minutes = exercises.reduce((a, e) => a + e.minutes, 0);
   const weekAvg = Math.round(burnedByDay.reduce((a, v) => a + v, 0) / DAYS);
-  const stepsConnected = recentDays(records, 'steps').values.some((v) => v > 0);
+  // 연결했는지는 저장된 값으로 본다. 걸음이 0이라고 연결 전은 아니다(오늘 아직 안 걸었을 수 있다).
+  const stepsConnected = useAppStore((s) => s.stepSource) !== 'none';
 
   return (
     <ScreenBackground showTimeGradient={false}>

@@ -5,6 +5,7 @@ import {
   getDiet,
   getPeriod,
   getPeriodDaily,
+  getPeriodLogs,
   getRecipes,
   getRoutines,
   getSteps,
@@ -13,6 +14,7 @@ import {
   getWorkout,
 } from '../api/records';
 import { fromCustomIngredientDto, fromRecipeDto, fromRoutineDto, fromUser } from '../api/mappers';
+import { CONDITION_TO_MOOD } from '../constants/periodTags';
 import {
   useAppStore,
   type CustomIngredient,
@@ -190,6 +192,7 @@ async function pullOnce(token: string): Promise<void> {
   // 주기는 설정이 없으면 404다. 그건 오류가 아니라 "아직 입력 안 함"이라 조용히 넘어간다(명세 3-3).
   let periodSettings;
   let periodSetupDone;
+  let periodLogs;
   try {
     const period = await getPeriod(today, token);
     periodSettings = {
@@ -199,11 +202,20 @@ async function pullOnce(token: string): Promise<void> {
     };
     periodSetupDone = true;
 
+    // 기록 표가 생기기 전 계정은 목록이 비어 있다. 그땐 기기 목록(마지막 시작일에서 옮긴 한 건)을 지우지 않는다.
+    const logs = await getPeriodLogs(token);
+    if (logs.items.length) {
+      periodLogs = logs.items.map((l) => ({ start: l.startDate, end: l.endDate }));
+    }
+
     const daily = await getPeriodDaily(from, today, token);
     daily.items.forEach((item) => {
+      // 서버에 남은 옛 컨디션(good·normal·bad)은 기분 칩으로 바꿔 읽는다(기기 저장소 v9와 같은 규칙).
+      const mood = item.condition ? CONDITION_TO_MOOD[item.condition as keyof typeof CONDITION_TO_MOOD] : undefined;
+      const symptoms =
+        mood && !item.symptoms.some((c) => c.startsWith('mood.')) ? [...item.symptoms, mood] : item.symptoms;
       Object.assign(touch(item.date), {
-        periodCondition: item.condition ?? undefined,
-        periodSymptoms: item.symptoms,
+        periodSymptoms: symptoms,
         periodMedication: item.medication ?? undefined,
         periodMemo: item.memo ?? undefined,
       });
@@ -222,6 +234,7 @@ async function pullOnce(token: string): Promise<void> {
     weightLog,
     periodSettings,
     periodSetupDone,
+    periodLogs,
     ...templates,
   });
   useOutboxStore.getState().markSynced();

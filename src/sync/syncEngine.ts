@@ -14,6 +14,7 @@ import {
   putCustomIngredient,
   putMealMemo,
   putPeriodDaily,
+  putPeriodLogs,
   putPeriodSettings,
   putSteps,
   putWater,
@@ -215,12 +216,21 @@ async function send(op: SyncOp, token: string): Promise<void> {
       );
       return;
 
+    case 'period.logs':
+      await putPeriodLogs(
+        s.periodLogs.map((l) => ({ startDate: l.start, endDate: l.end })),
+        toDateKey(new Date()),
+        token
+      );
+      return;
+
     case 'period.daily': {
       const rec = s.dailyRecords[op.date];
       await putPeriodDaily(
         op.date,
         {
-          condition: rec?.periodCondition ?? null,
+          // 컨디션 3택은 기분 칩으로 옮겼다. 서버의 옛 컨디션 값은 이 저장으로 비워진다.
+          condition: null,
           symptoms: rec?.periodSymptoms ?? [],
           medication: rec?.periodMedication ?? null,
           memo: rec?.periodMemo ?? null,

@@ -6,7 +6,7 @@ import { typography } from '../theme/tokens';
 import { FITTO_FACE } from '../theme/assets';
 import { useAppStore } from '../store/useAppStore';
 import { useToastStore } from '../store/useToastStore';
-import { confirmOwner } from '../utils/deviceAuth';
+import { confirmOwner, type OwnerCheck } from '../utils/deviceAuth';
 
 /**
  * 이만큼 나가 있다 돌아오면 다시 잠근다.
@@ -70,8 +70,15 @@ export default function LockGate() {
   const unlock = useCallback(async () => {
     if (authenticating.current) return;
     authenticating.current = true;
-    const result = await confirmOwner('피또 잠금 해제');
-    authenticating.current = false;
+    let result: OwnerCheck;
+    try {
+      result = await confirmOwner('피또 잠금 해제');
+    } catch {
+      // 인증 창이 에러로 끝나도 "인증 중" 표시는 반드시 걷는다. 안 걷으면 그 뒤로는 나갔다 와도 영영 안 잠긴다.
+      result = 'failed';
+    } finally {
+      authenticating.current = false;
+    }
 
     if (result === 'ok') {
       setLocked(false);

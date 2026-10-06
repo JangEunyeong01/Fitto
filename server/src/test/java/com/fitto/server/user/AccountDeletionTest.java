@@ -109,7 +109,8 @@ class AccountDeletionTest {
 						  "weights": [{ "date": "2026-09-14", "weight": 52.0 }],
 						  "period": {
 						    "settings": { "startDate": "2026-09-01", "cycleLength": 28, "periodLength": 5 },
-						    "daily": [{ "date": "2026-09-02", "condition": "normal", "symptoms": ["cramps"], "memo": "보통" }]
+						    "daily": [{ "date": "2026-09-02", "condition": "normal", "symptoms": ["cramps"], "memo": "보통" }],
+						    "logs": [{ "startDate": "2026-08-04", "endDate": "2026-08-08" }, { "startDate": "2026-09-01", "endDate": "2026-09-05" }]
 						  },
 						  "recipes": [{
 						    "id": "55555555-5555-5555-5555-555555555555", "name": "닭가슴살 덮밥",

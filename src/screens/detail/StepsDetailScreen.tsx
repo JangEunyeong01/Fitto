@@ -1,23 +1,21 @@
 import React, { useState } from 'react';
-import { ScrollView, StyleSheet } from 'react-native';
+import { ScrollView, View, StyleSheet } from 'react-native';
+import TextLink from '../../components/TextLink';
+import { useConnectSteps } from '../../health/useConnectSteps';
+import StepsEmptyHint from '../../health/StepsEmptyHint';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { tabBarSpace } from '../../navigation/TabBar';
 import ScreenBackground from '../../components/ScreenBackground';
 import DetailHeader from './DetailHeader';
 import PeriodChips, { Period } from './PeriodChips';
-import PeriodBar, { MonthPreset } from './PeriodBar';
+import PeriodBar from './PeriodBar';
+import { usePeriodRange } from './usePeriodRange';
 import DetailSummaryCard from './DetailSummaryCard';
 import DetailBarChart, { hasChartData } from './DetailBarChart';
 import GoalField from './GoalField';
 import { useAppStore } from '../../store/useAppStore';
 import { dateKey } from '../../utils/timeOfDay';
-import { recentDays, weeklyTotals, monthlyTotals, daysWithRecordBetween, average } from '../../utils/history';
-import { ymAdd, ymRange, ymRangeLabel, YearMonth } from '../../utils/yearMonth';
-
-function currentYearMonth(): YearMonth {
-  const now = new Date();
-  return { year: now.getFullYear(), month: now.getMonth() + 1 };
-}
+import { recentDays, average } from '../../utils/history';
 
 export default function StepsDetailScreen() {
   const insets = useSafeAreaInsets();
@@ -26,31 +24,15 @@ export default function StepsDetailScreen() {
   const records = useAppStore((s) => s.dailyRecords);
   const today = records[dateKey()]?.steps ?? 0;
 
-  // 걸음 수는 폰의 건강 데이터에서 와야 한다. 연결 전에는 모든 기간이 0이므로 차트 대신 안내를 띄운다.
+  const connected = useAppStore((s) => s.stepSource) !== 'none';
+  const { connect, busy } = useConnectSteps();
+
+  // 걸음 수는 폰의 건강 데이터에서 온다. 연결 전엔 차트 대신 연결 안내, 연결했는데 기록이 없으면 그렇다고.
   const NOT_CONNECTED = '폰의 건강 데이터를 연결하면 걸음 수가 기록돼요.\n목표는 미리 정해둘 수 있어요.';
+  const NO_STEPS = '이 기간에는 걸음 기록이 없어요.';
 
   const [period, setPeriod] = useState<Period>('day');
-  const [preset, setPreset] = useState<MonthPreset>('1m');
-  const now = currentYearMonth();
-  const [anchor, setAnchor] = useState<YearMonth>(now);
-  const [customStart, setCustomStart] = useState<YearMonth>(ymAdd(now, -3));
-  const [customEnd, setCustomEnd] = useState<YearMonth>(now);
-
-  const windowSize = preset === '1m' ? 1 : preset === '3m' ? 3 : preset === '6m' ? 6 : null;
-  const start = preset === 'custom' ? customStart : ymAdd(anchor, -((windowSize ?? 1) - 1));
-  const end = preset === 'custom' ? customEnd : anchor;
-
-  const shift = (delta: number) => {
-    if (preset === 'custom') {
-      setCustomStart((s) => ymAdd(s, delta));
-      setCustomEnd((e) => ymAdd(e, delta));
-      return;
-    }
-    setAnchor((a) => {
-      const next = ymAdd(a, delta);
-      return next.year * 12 + next.month > now.year * 12 + now.month ? a : next;
-    });
-  };
+  const range = usePeriodRange(records, 'steps');
 
   let chartLabels: string[] = [];
   let chartValues: number[] = [];
@@ -58,7 +40,7 @@ export default function StepsDetailScreen() {
   let summaryValue = 0;
   let summaryDesc = '';
 
-  let emptyMessage = NOT_CONNECTED;
+  const emptyMessage = connected ? NO_STEPS : NOT_CONNECTED;
 
   if (period === 'day') {
     // 걸음 수는 하루 합계로만 들어온다. 시간대별로 나누려면 원본 기록이 있어야 한다.
@@ -74,16 +56,10 @@ export default function StepsDetailScreen() {
     summaryValue = average(week.values);
     summaryDesc = '기록한 날의 하루 평균';
   } else {
-    const months = ymRange(start, end);
-    const isSingle = months.length === 1;
-    chartLabels = isSingle ? ['1주', '2주', '3주', '4주'] : months.map((m) => `${m.month}월`);
-    chartValues = isSingle
-      ? weeklyTotals(records, 'steps', start.year, start.month)
-      : monthlyTotals(records, 'steps', months);
-    const recordedDays = daysWithRecordBetween(records, months);
-    const total = chartValues.reduce((a, v) => a + v, 0);
-    summaryValue = recordedDays > 0 ? Math.round(total / recordedDays) : 0;
-    summaryDesc = `${ymRangeLabel(start, end)} · 기록한 날의 하루 평균`;
+    chartLabels = range.labels;
+    chartValues = range.values;
+    summaryValue = range.dailyAverage;
+    summaryDesc = range.summaryDesc;
   }
 
   return (
@@ -97,18 +73,7 @@ export default function StepsDetailScreen() {
         <PeriodChips value={period} onChange={setPeriod} />
 
         {period === 'month' && (
-          <PeriodBar
-            preset={preset}
-            onPresetChange={setPreset}
-            start={start}
-            end={end}
-            onShift={shift}
-            onCustomChange={(s, e) => {
-              setCustomStart(s);
-              setCustomEnd(e);
-            }}
-            currentMonth={now}
-          />
+          <PeriodBar {...range.barProps} />
         )}
 
         <DetailSummaryCard
@@ -123,6 +88,14 @@ export default function StepsDetailScreen() {
           )}
         </DetailSummaryCard>
 
+        <StepsEmptyHint />
+
+        {!connected && (
+          <View style={styles.connectRow}>
+            <TextLink label={busy ? '연결하는 중…' : '건강 데이터 연결하기'} onPress={connect} disabled={busy} />
+          </View>
+        )}
+
         <GoalField title="걸음 목표" value={goal} min={3000} max={20000} unit="보" onCommit={(v) => setGoals({ steps: v })} />
       </ScrollView>
     </ScreenBackground>
@@ -135,5 +108,11 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: 16,
+  },
+  connectRow: {
+    minHeight: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
   },
 });

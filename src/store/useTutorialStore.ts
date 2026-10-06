@@ -27,8 +27,8 @@ export const TUTORIAL_STEPS: { target: TutorialTargetId; title: string; body: st
   },
   {
     target: 'water',
-    title: '물은 한 번의 탭으로',
-    body: '+250ml만 눌러주세요. 목표에 가까워지면 피또가 촉촉해져요.',
+    title: '물은 손끝으로',
+    body: '컵을 위아래로 끌거나 −/+ 버튼으로 마신 만큼 기록해요. 목표에 가까워지면 피또가 촉촉해져요.',
   },
   {
     target: 'steps',

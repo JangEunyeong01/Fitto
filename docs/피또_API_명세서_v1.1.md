@@ -26,9 +26,9 @@
 
 ## 구현 현황
 
-*마지막 갱신: 2026-09-26*
+*마지막 갱신: 2026-10-03*
 
-서버는 PostgreSQL 17에 실제로 연결해 가입·기록·조회 흐름을 확인했고, H2 인메모리 DB로 같은 흐름을 테스트 57개로 자동화했다.
+서버는 PostgreSQL 17에 실제로 연결해 가입·기록·조회 흐름을 확인했고, H2 인메모리 DB로 같은 흐름을 테스트 60개로 자동화했다.
 앱은 로컬 우선 구조로 서버와 양방향 동기화한다 — 기록은 기기에 먼저 저장하고 대기열을 통해 올리며, 앱 시작·로그인·복귀 시점에 서버 값을 받아온다.
 
 | 영역 | 앱 | 서버 |
@@ -43,7 +43,7 @@
 | 운동 (8장) | 완료 (로컬) | ✅ 조회·추가·수정·삭제 |
 | 루틴 (8장) | ✅ 저장·삭제 동기화·내려받기 | ✅ 목록·저장·수정·삭제·일괄 기록 |
 | 수분·걸음수·체중 (9~11장) | 완료 (로컬) | ✅ |
-| 생리 주기 (12장) | 완료 (로컬) | ✅ 주기 조회·설정·컨디션 |
+| 생리 주기 (12장) | 완료 (로컬) | ✅ 주기 조회·설정·일일 기록, 생리 기록 목록(`GET·PUT /period/logs`, V6), 생리 데이터 삭제(`DELETE /period`) |
 | 요약 (13장) | 완료 (로컬) | 미구현 |
 | 식품 검색 (14장) | 내장 데이터 | 미구현 |
 | 동기화 | ✅ 올리기(대기열)·내려받기·상태 표시 | — |
@@ -941,6 +941,7 @@ JSON에서는 "필드를 안 보냄"과 "null을 보냄"이 서버에서 똑같�
 | ID가 있는 기록 (식단, 운동, 레시피, 루틴, 재료) | 같은 ID가 서버에 있으면 건너뜀, 없으면 추가 |
 | 날짜당 값 하나인 기록 (수분, 걸음수, 체중, 식사 메모, 생리 컨디션) | 서버에 그 날짜 값이 있으면 **서버 값 유지**, 없으면 추가 |
 | 생리 주기 설정 | 서버에 설정이 없을 때만 적용 |
+| 생리 기록(`period.logs`) | 서버에 기록이 하나도 없을 때만 통째로. 섞으면 두 기기 기록이 겹칠 수 있다 |
 | 직접 입력 재료 | 같은 이름이 서버에 있으면 건너뜀 |
 | 칼로리 | import한 기록은 다시 계산하지 않는다. 게스트 때 본 숫자를 그대로 둔다 |
 
@@ -1566,7 +1567,7 @@ F-035 "사용" 버튼. 루틴 안의 운동을 그날 기록으로 한꺼번에 
 
 ---
 
-### PUT /period/daily/{date} — 날짜별 컨디션 저장
+### PUT /period/daily/{date} — 날짜별 생리 기록 저장
 
 같은 날짜는 덮어쓴다.
 
@@ -1583,12 +1584,26 @@ F-035 "사용" 버튼. 루틴 안의 운동을 그날 기록으로 한꺼번에 
 
 | 필드 | 규칙 |
 |------|------|
-| condition | nullable |
-| symptoms | 코드 배열, 중복 불가 |
+| condition | nullable. **앱은 더 쓰지 않는다**(아래) |
+| symptoms | 기록 칩 코드 배열, 최대 60개, 코드 30자 이하, 중복은 서버가 하나로 |
 | medication | 50자 이하, nullable |
 | memo | 200자 이하, nullable |
 
 네 필드가 모두 비어 있으면(`null`, `[]`) 그 날짜 기록을 삭제한다.
+
+**symptoms에 들어가는 코드** — 이름은 `symptoms`지만 그날의 기록 칩이 모두 들어간다. 항목이 늘어도 표·API를 바꾸지 않으려고 "분류.값" 꼴로 한 배열에 담는다.
+
+| 분류 | 코드 | 비고 |
+|---|---|---|
+| 증상 | `period_pain`, `cramp`, `headache`, `bloating`, `fatigue`, `irritability`, `back_pain`, `appetite`, `acne`, `breast_pain`, `libido`, `constipation`, `pelvic_pain`, `nausea`, `abdominal_bloating` | 접두어 없음(처음부터 있던 코드와 같은 꼴) |
+| 기분 | `mood.tired` `mood.stressed` `mood.happy` `mood.calm` `mood.irritated` `mood.swings` `mood.anxious` `mood.normal` `mood.energetic` `mood.lethargic` `mood.excited` `mood.tense` | 여러 개 |
+| 성생활 | `sex.yes` | |
+| 자궁경부 점액 | `mucus.egg_white` `mucus.watery` `mucus.creamy` `mucus.sticky` `mucus.dry` | 앱에서 하나만 |
+| 부정 출혈 | `spotting.yes` | |
+| 배란 테스트 | `ovtest.positive` `ovtest.negative` | 앱에서 하나만 |
+| 직접 입력 | `custom.<글자 20자 이하>` | |
+
+**condition(컨디션 3택)은 기분 칩으로 옮겼다.** 앱은 `null`을 보내고, 서버에 남은 옛 값은 받아올 때 `good→mood.happy`, `normal→mood.normal`, `bad→mood.tired`로 바꿔 읽는다(기기 저장소도 같은 규칙으로 한 번 옮김). 그날을 다시 저장하면 서버의 옛 값도 비워진다.
 
 **Response 200**
 
@@ -1609,6 +1624,58 @@ F-035 "사용" 버튼. 루틴 안의 운동을 그날 기록으로 한꺼번에 
 ```json
 { "items": [{ "date": "2026-09-12", "condition": "bad", "symptoms": ["cramp"], "medication": null, "memo": null }] }
 ```
+
+---
+
+### DELETE /period — 생리 데이터 삭제
+
+주기 설정·생리 기록 목록·날짜별 생리 기록을 모두 지운다. 계정과 다른 기록은 그대로. 지운 뒤 `GET /period`는 다시 `404 PERIOD_NOT_SET`(아직 입력 안 함)이다.
+
+**Response 204**
+
+앱은 회원이면 이 요청이 성공한 뒤에 기기 데이터를 지우고, 대기열에 남은 생리 작업(`period.*`)을 버린다 — 나중에 올라가면 지운 기록이 되살아난다.
+
+---
+
+### GET /period/logs — 생리 기록 목록
+
+실제로 입력한 생리 기록 전체, 시작일 순. `endDate`가 `null`이면 진행 중. 평균 주기·규칙성·주기 내역은 앱이 이 목록으로 계산한다.
+
+**Response 200**
+
+```json
+{ "items": [
+  { "startDate": "2026-08-10", "endDate": "2026-08-14" },
+  { "startDate": "2026-09-06", "endDate": null }
+] }
+```
+
+---
+
+### PUT /period/logs — 생리 기록 목록 바꾸기
+
+목록 **전체**를 보내면 통째로 바꾼다. 빈 배열이면 전부 지운다. 하나씩 고치는 API를 두지 않은 이유: 겹침 검사는 목록 전체를 봐야 하고, 앱 동기화 큐는 마지막 상태 하나만 보내면 된다.
+
+**Request**
+
+```json
+{ "today": "2026-10-03", "items": [
+  { "startDate": "2026-08-10", "endDate": "2026-08-14" },
+  { "startDate": "2026-09-06", "endDate": null }
+] }
+```
+
+| 규칙 | 어기면 |
+|---|---|
+| 시작일·끝날은 `today`까지 | 400 `INVALID_DATE` |
+| 끝날 ≥ 시작일, 한 번에 최대 15일 | 400 `INVALID_INPUT` |
+| 서로 겹치지 않음 | 400 `INVALID_INPUT` |
+| 진행 중(`endDate: null`)은 가장 최근 한 건만 | 400 `INVALID_INPUT` |
+| 최대 240건 | 400 `INVALID_INPUT` |
+
+**Response 200** — 시작일 순으로 정렬한 목록(`GET`과 같은 모양).
+
+가져오기(`POST /me/import`)의 `period.logs`도 같은 모양·같은 규칙이다. 서버에 기록이 하나도 없을 때만 넣고, 있으면 전부 `skipped.periodLogs`로 센다.
 
 ---
 
