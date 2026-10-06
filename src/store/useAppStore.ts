@@ -27,7 +27,10 @@ import {
 export type ThemeMode = 'light' | 'dark' | 'system';
 export type Persona = 'friendly' | 'strict' | 'neutral';
 
-export type CardId = 'kcal' | 'water' | 'act' | 'steps' | 'ex' | 'week' | 'period';
+/** 걸음을 읽는 곳. 안드로이드는 헬스 커넥트, iOS는 기기 만보계. */
+export type StepSource = 'none' | 'health-connect' | 'pedometer';
+
+export type CardId ='kcal' | 'water' | 'act' | 'steps' | 'ex' | 'week' | 'period';
 
 // B 히어로 순서: 칼로리 전폭 → 물·걸음 반폭 2열 → 활동 → 운동 → 주간 → 생리.
 export const DEFAULT_CARD_ORDER: CardId[] = ['kcal', 'water', 'steps', 'act', 'ex', 'week', 'period'];
@@ -237,6 +240,16 @@ interface AppState {
   birthdayShownYear: number | null;
   /** 드러눕기 모달을 띄운 날짜(dateKey). 하루 한 번만 뜨게 한다. */
   layDownShownDate: string | null;
+  /**
+   * 걸음을 어디서 읽는지. 'none'이면 연결 전.
+   * 예전엔 "최근 7일 걸음이 다 0이면 연결 전"으로 추측했는데, 연결하고 아직 안 걸은 날도 "연결 전"이 됐다.
+   */
+  stepSource: StepSource;
+  /**
+   * 연결은 됐는데 마지막으로 읽은 기간의 걸음이 전부 0인지. 삼성 헬스가 권한을 받고도 걸음을
+   * 헬스 커넥트로 안 넘기는 경우가 있어서(실기기에서 겪음), 그때 "어디를 켜야 하는지" 안내를 띄운다.
+   */
+  stepsSourceEmpty: boolean;
   timeSlotOverride: string | null;
 
   /** 온보딩 끝 계정 선택을 지나갔다고 표시한다. 가입했든 나중에 하기를 골랐든 같다. */
@@ -271,6 +284,12 @@ interface AppState {
   setBirthdayShownYear: (y: number) => void;
   setLayDownShownDate: (dateKey: string) => void;
   addWater: (dateKey: string, deltaMl: number) => void;
+  /**
+   * 폰 건강 데이터에서 읽은 날짜별 걸음을 반영한다. 폰 값이 정답이라 그대로 덮어쓰고,
+   * 값이 바뀐 날만 서버로 올린다(회원일 때).
+   */
+  applyDeviceSteps: (byDate: Record<string, number>) => void;
+  setStepSource: (source: StepSource) => void;
   addExercise: (dateKey: string, entry: ExerciseEntry) => void;
   removeExercise: (dateKey: string, id: string) => void;
   addMealItem: (dateKey: string, slot: MealSlot, item: MealItem) => void;
@@ -399,6 +418,8 @@ export const useAppStore = create<AppState>()(
       tutorialDone: false,
       birthdayShownYear: null,
       layDownShownDate: null,
+      stepSource: 'none',
+      stepsSourceEmpty: false,
       timeSlotOverride: null,
 
       dismissAccountPrompt: () => set({ accountPromptSeen: true }),
@@ -616,6 +637,25 @@ export const useAppStore = create<AppState>()(
         // 물은 절댓값으로 보낸다. 다섯 번 눌러도 큐에는 한 건만 남고, 보낼 때 최신 값을 읽는다.
         enqueueSync({ kind: 'water.put', date: dateKey });
       },
+
+      applyDeviceSteps: (byDate) => {
+        const changed: string[] = [];
+        set((s) => {
+          const records = { ...s.dailyRecords };
+          Object.entries(byDate).forEach(([day, steps]) => {
+            const rec = records[day] ?? emptyRecord();
+            if (rec.steps === steps) return;
+            records[day] = { ...rec, steps };
+            changed.push(day);
+          });
+          return changed.length ? { dailyRecords: records } : {};
+        });
+        changed.forEach((date) => enqueueSync({ kind: 'steps.put', date }));
+        const values = Object.values(byDate);
+        set({ stepsSourceEmpty: values.length > 0 && values.every((v) => v === 0) });
+      },
+
+      setStepSource: (source) => set({ stepSource: source }),
 
       addExercise: (dateKey, entry) => {
         set((s) => {
