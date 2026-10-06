@@ -21,7 +21,8 @@
       "predictiveBackGestureEnabled": false,
       "permissions": [
         "android.permission.USE_BIOMETRIC",
-        "android.permission.USE_FINGERPRINT"
+        "android.permission.USE_FINGERPRINT",
+        "android.permission.health.READ_STEPS"
       ]
     },
     "web": {
@@ -40,6 +41,21 @@
         "expo-local-authentication",
         {
           "faceIDPermission": "피또 화면 잠금을 풀 때 Face ID로 본인인지 확인해요."
+        }
+      ],
+      "react-native-health-connect",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "minSdkVersion": 26
+          }
+        }
+      ],
+      [
+        "expo-sensors",
+        {
+          "motionPermission": "피또가 걸음 수를 보여주려고 움직임 기록을 읽어요."
         }
       ]
     ],

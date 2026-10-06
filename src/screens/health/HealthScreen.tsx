@@ -60,7 +60,8 @@ export default function HealthScreen() {
 
   // 움직임 현황은 최근 7일 기록으로만 계산한다. 걸음은 건강 데이터를 연결해야 들어온다.
   const weekSteps = recentDays(records, 'steps');
-  const stepsConnected = weekSteps.values.some((v) => v > 0);
+  // 연결했는지는 저장된 값으로 본다. 걸음이 0이라고 연결 전은 아니다(오늘 아직 안 걸었을 수 있다).
+  const stepsConnected = useAppStore((s) => s.stepSource) !== 'none';
   const avgSteps = Math.round(weekSteps.values.reduce((a, v) => a + v, 0) / weekSteps.values.length);
   const workoutDays = recentDays(records, 'burn').values.filter((v) => v > 0).length;
   const weekMinutes = recentDateKeys().reduce(

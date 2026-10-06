@@ -19,6 +19,7 @@ import { lightColors } from './src/theme/tokens';
 import { useSyncRunner } from './src/sync/useSyncRunner';
 import { useNotificationRunner } from './src/notifications/useNotificationRunner';
 import { navigationRef } from './src/navigation/navigationRef';
+import { useStepRunner } from './src/health/useStepRunner';
 
 /**
  * 한글이 단어 중간에서 끊기지 않게 한다("드릴게 / 요.").
@@ -42,6 +43,8 @@ function AppShell() {
   useSyncRunner();
   // 기기 알림 예약. 웹에서는 아무것도 하지 않는다.
   useNotificationRunner();
+  // 걸음을 연결했으면 앱을 열 때마다 폰 건강 데이터에서 다시 읽는다.
+  useStepRunner();
   return (
     <>
       {/* 시트들은 화면 전체를 덮는 오버레이지만 useNavigation을 쓰므로
