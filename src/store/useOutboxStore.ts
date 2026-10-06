@@ -38,6 +38,8 @@ interface OutboxState {
   retryFailed: () => void;
   /** 실패 목록만 비운다. 사용자가 포기하기로 한 경우. */
   clearFailed: () => void;
+  /** 조건에 맞는 작업을 대기열·실패 목록에서 버린다. 서버에서 이미 지운 데이터를 되살리지 않게. */
+  drop: (match: (op: SyncOp) => boolean) => void;
   clear: () => void;
 }
 
@@ -101,6 +103,12 @@ export const useOutboxStore = create<OutboxState>()(
         })),
 
       clearFailed: () => set({ failed: [] }),
+
+      drop: (match) =>
+        set((s) => ({
+          items: s.items.filter((item) => !match(item.op)),
+          failed: s.failed.filter((item) => !match(item.op)),
+        })),
 
       /** 로그아웃·데이터 초기화 때 비운다. 남겨두면 다음 계정으로 올라간다. */
       clear: () => set({ items: [], failed: [], lastSyncedAt: null }),

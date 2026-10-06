@@ -4,8 +4,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ageFromBirth, calculateGoals } from '../utils/goals';
 // 기록이 바뀌면 동기화 대기열에 알린다. 게스트면 아무 일도 일어나지 않는다(sync/enqueue.ts).
 import { enqueueSync } from '../sync/enqueue';
+import { useOutboxStore } from './useOutboxStore';
 import { isUuid, newId } from '../utils/id';
-import { toDateKey, type PeriodSettings } from '../utils/periodCycle';
+import { CONDITION_TO_MOOD } from '../constants/periodTags';
+import { addDays, deriveSettings, sortLogs, toDateKey, type PeriodLog, type PeriodSettings } from '../utils/periodCycle';
 import type { WorkoutPreference } from '../utils/workoutRecommend';
 import {
   ACTIVITY_OPTIONS,
@@ -104,7 +106,7 @@ export interface DailyRecord {
   meals: Record<MealSlot, MealItem[]>;
   exercises: ExerciseEntry[];
   steps: number;
-  periodCondition?: 'good' | 'normal' | 'bad';
+  /** 그날 고른 생리 기록 칩 코드(증상·기분·점액 …, constants/periodTags). */
   periodSymptoms?: string[];
   /** 그날 먹은 약과 메모(명세 F-036). 비우면 키를 지운다. */
   periodMedication?: string;
@@ -114,6 +116,15 @@ export interface DailyRecord {
 }
 
 export type MealSlot = MealSlotCode;
+
+export interface PeriodDisplay {
+  /** 다음 생리 예측(옅은 띠, 예정일, "다음 생리까지"). */
+  predictPeriod: boolean;
+  /** 가임기·배란일 예측. */
+  predictFertile: boolean;
+  /** 기록 화면에서 숨길 묶음 키(constants/periodTags의 TagGroup.key). */
+  hiddenGroups: string[];
+}
 
 export interface Alarms {
   water: boolean;
@@ -208,6 +219,16 @@ interface AppState {
    * periodSettings는 계산이 깨지지 않게 늘 기본값을 들고 있어서, 값만 보고는 입력 여부를 알 수 없다.
    */
   periodSetupDone: boolean;
+  /**
+   * 실제로 입력한 생리 기록(시작일 순). 평균 주기·규칙성·주기 내역을 여기서 계산하고,
+   * 바뀔 때마다 periodSettings(마지막 시작일·평균 주기·평균 기간)를 다시 맞춘다.
+   */
+  periodLogs: PeriodLog[];
+  /**
+   * 생리 화면에 무엇을 보여줄지(이 기기에서만). 예측을 끄면 달력·요약·맨 위 한 줄에서 예측이 빠지고,
+   * hiddenGroups에 든 기록 묶음(sex, mucus·ovtest)은 기록 화면에 안 나온다. 이미 남긴 값은 지우지 않는다.
+   */
+  periodDisplay: PeriodDisplay;
   cardOrder: CardId[];
   cardHidden: CardId[];
   alarms: Alarms;
@@ -264,9 +285,12 @@ interface AppState {
   setPeriodOn: (v: boolean) => void;
   setScreenLock: (v: boolean) => void;
   setPeriodSettings: (patch: Partial<PeriodSettings>) => void;
-  setDayCondition: (dateKey: string, condition: DailyRecord['periodCondition']) => void;
-  toggleDaySymptom: (dateKey: string, symptom: string) => void;
-  setDayPeriodNote: (dateKey: string, patch: { medication?: string; memo?: string }) => void;
+  /** 생리 기록 목록을 통째로 바꾼다. 검사(checkLogs)는 부르는 쪽에서 먼저 한다. */
+  setPeriodLogs: (logs: PeriodLog[]) => void;
+  setPeriodDisplay: (patch: Partial<PeriodDisplay>) => void;
+  /** 생리 데이터만 처음 상태로. 서버는 부르는 쪽이 먼저 지운다(회원). 동기화 대기열의 생리 작업도 버린다. */
+  resetPeriodData: () => void;
+  setDayPeriodRecord: (dateKey: string, record: { symptoms: string[]; medication?: string; memo?: string }) => void;
   setCardOrder: (order: CardId[]) => void;
   setCardHidden: (hidden: CardId[]) => void;
   resetCardOrder: () => void;
@@ -313,6 +337,7 @@ interface AppState {
     weightLog?: Record<string, number>;
     periodSettings?: PeriodSettings;
     periodSetupDone?: boolean;
+    periodLogs?: PeriodLog[];
     recipes?: Recipe[];
     routines?: WorkoutRoutine[];
     customIngredients?: CustomIngredient[];
@@ -400,6 +425,8 @@ export const useAppStore = create<AppState>()(
       screenLock: false,
       periodSettings: defaultPeriodSettings(),
       periodSetupDone: false,
+      periodLogs: [],
+      periodDisplay: { predictPeriod: true, predictFertile: true, hiddenGroups: [] },
       // 전역 상수를 그대로 상태에 넣으면 어딘가에서 배열을 직접 수정했을 때 기본값이 오염된다.
       cardOrder: [...DEFAULT_CARD_ORDER],
       cardHidden: [],
@@ -499,37 +526,48 @@ export const useAppStore = create<AppState>()(
           enqueueSync({ kind: 'period.settings' });
         }
       },
-      setDayCondition: (dateKey, condition) => {
-        set((s) => {
-          const rec = s.dailyRecords[dateKey] ?? emptyRecord();
-          return { dailyRecords: { ...s.dailyRecords, [dateKey]: { ...rec, periodCondition: condition } } };
-        });
-        enqueueSync({ kind: 'period.daily', date: dateKey });
+      // 기록이 바뀌면 예측 설정도 같이 바뀐다. 둘 다 올려야 다른 기기에서 받았을 때 어긋나지 않는다.
+      setPeriodLogs: (logs) => {
+        const sorted = sortLogs(logs);
+        set((s) => ({
+          periodLogs: sorted,
+          periodSettings: deriveSettings(sorted, s.periodSettings),
+          periodSetupDone: s.periodSetupDone || sorted.length > 0,
+        }));
+        enqueueSync({ kind: 'period.logs' });
+        if (sorted.length) enqueueSync({ kind: 'period.settings' });
       },
-      toggleDaySymptom: (dateKey, symptom) => {
+      setPeriodDisplay: (patch) => set((s) => ({ periodDisplay: { ...s.periodDisplay, ...patch } })),
+      resetPeriodData: () => {
         set((s) => {
-          const rec = s.dailyRecords[dateKey] ?? emptyRecord();
-          const cur = rec.periodSymptoms ?? [];
-          const next = cur.includes(symptom) ? cur.filter((v) => v !== symptom) : [...cur, symptom];
-          return { dailyRecords: { ...s.dailyRecords, [dateKey]: { ...rec, periodSymptoms: next } } };
+          const dailyRecords: Record<string, DailyRecord> = {};
+          Object.entries(s.dailyRecords).forEach(([date, rec]) => {
+            const { periodSymptoms, periodMedication, periodMemo, ...rest } = rec;
+            dailyRecords[date] = rest;
+          });
+          return {
+            dailyRecords,
+            periodLogs: [],
+            periodSettings: defaultPeriodSettings(),
+            periodSetupDone: false,
+          };
         });
-        enqueueSync({ kind: 'period.daily', date: dateKey });
+        // 남은 생리 작업이 나중에 올라가면 서버에 지운 기록이 되살아난다.
+        useOutboxStore.getState().drop((op) => op.kind.startsWith('period.'));
       },
-      // 빈 문자열이면 지운다. 빈 메모가 기록에 남으면 "쓴 적 있음"처럼 보인다.
-      setDayPeriodNote: (dateKey, patch) => {
+      // 기록 화면에서 "완료"를 누를 때 하루치를 통째로 바꾼다. 칩 하나마다 저장하면 취소가 안 되고 동기화도 여러 번 나간다.
+      // 빈 문자열·빈 목록이면 키를 지운다. 빈 메모가 남으면 "쓴 적 있음"처럼 보인다.
+      setDayPeriodRecord: (dateKey, record) => {
         set((s) => {
-          const rec = s.dailyRecords[dateKey] ?? emptyRecord();
-          const next: DailyRecord = { ...rec };
-          if ('medication' in patch) {
-            const v = patch.medication?.trim();
-            if (v) next.periodMedication = v;
-            else delete next.periodMedication;
-          }
-          if ('memo' in patch) {
-            const v = patch.memo?.trim();
-            if (v) next.periodMemo = v;
-            else delete next.periodMemo;
-          }
+          const next: DailyRecord = { ...(s.dailyRecords[dateKey] ?? emptyRecord()) };
+          const medication = record.medication?.trim();
+          const memo = record.memo?.trim();
+          if (record.symptoms.length) next.periodSymptoms = record.symptoms;
+          else delete next.periodSymptoms;
+          if (medication) next.periodMedication = medication;
+          else delete next.periodMedication;
+          if (memo) next.periodMemo = memo;
+          else delete next.periodMemo;
           return { dailyRecords: { ...s.dailyRecords, [dateKey]: next } };
         });
         enqueueSync({ kind: 'period.daily', date: dateKey });
@@ -761,6 +799,7 @@ export const useAppStore = create<AppState>()(
             weightLog: patch.weightLog ? { ...s.weightLog, ...patch.weightLog } : s.weightLog,
             periodSettings: patch.periodSettings ?? s.periodSettings,
             periodSetupDone: patch.periodSetupDone ?? s.periodSetupDone,
+            periodLogs: patch.periodLogs ?? s.periodLogs,
             profile: patch.profile ?? s.profile,
             goals: patch.goals ?? s.goals,
             persona: patch.persona ?? s.persona,
@@ -773,7 +812,7 @@ export const useAppStore = create<AppState>()(
     {
       name: 'fitto-app-storage',
       storage: createJSONStorage(() => AsyncStorage),
-      version: 7,
+      version: 9,
       // 기본 병합은 얕은 병합이라 profile 같은 객체는 저장본이 통째로 덮어쓴다.
       // 그러면 나중에 필드를 추가했을 때 기존 사용자에게만 undefined가 남으므로,
       // 객체 필드는 기본값 위에 저장본을 얹는다.
@@ -786,6 +825,7 @@ export const useAppStore = create<AppState>()(
           goals: { ...current.goals, ...(p.goals ?? {}) },
           alarms: { ...current.alarms, ...(p.alarms ?? {}) },
           periodSettings: { ...current.periodSettings, ...(p.periodSettings ?? {}) },
+          periodDisplay: { ...current.periodDisplay, ...(p.periodDisplay ?? {}) },
           workoutPreference: { ...current.workoutPreference, ...(p.workoutPreference ?? {}) },
           obInfo: { ...current.obInfo, ...(p.obInfo ?? {}) },
           obTags: { ...current.obTags, ...(p.obTags ?? {}) },
@@ -809,6 +849,9 @@ export const useAppStore = create<AppState>()(
               startDate?: string | null;
               recipes?: any[];
               routines?: any[];
+              periodSettings?: PeriodSettings;
+              periodSetupDone?: boolean;
+              periodLogs?: PeriodLog[];
             }
           | undefined;
         if (!state) return state as unknown as AppState;
@@ -965,6 +1008,26 @@ export const useAppStore = create<AppState>()(
         // 앱을 열자마자 가입 화면을 띄우면 쓰던 흐름이 끊긴다. 물어본 것으로 친다.
         if (version < 7 && state.onboardingDone) {
           state.accountPromptSeen = true;
+        }
+
+        // v8: 생리 기록을 목록으로 쌓기 시작했다. 예전엔 마지막 시작일 하나뿐이라 그걸 기록 한 건으로 옮긴다.
+        // 끝날은 평균 기간으로 채우되, 아직 안 지났으면 진행 중으로 둔다(오늘 뒤 끝날은 서버가 안 받는다).
+        if (version < 8 && state.periodSetupDone && state.periodSettings && !state.periodLogs?.length) {
+          const { lastStartDate, periodLength } = state.periodSettings;
+          const end = addDays(lastStartDate, periodLength - 1);
+          state.periodLogs = [{ start: lastStartDate, end: end < toDateKey(new Date()) ? end : null }];
+        }
+
+        // v9: 컨디션 3택(좋음·보통·나쁨)을 기분 칩으로 옮긴다(사용자 결정). 이미 기분을 고른 날은 건드리지 않는다.
+        if (version < 9) {
+          Object.values(state.dailyRecords ?? {}).forEach((rec: any) => {
+            const mood = rec?.periodCondition && CONDITION_TO_MOOD[rec.periodCondition as keyof typeof CONDITION_TO_MOOD];
+            if (mood) {
+              const codes: string[] = rec.periodSymptoms ?? [];
+              if (!codes.some((c) => c.startsWith('mood.'))) rec.periodSymptoms = [...codes, mood];
+            }
+            if (rec) delete rec.periodCondition;
+          });
         }
 
         return state as AppState;

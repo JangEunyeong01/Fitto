@@ -113,6 +113,12 @@ export interface PeriodSettingsDto {
   periodLength: number;
 }
 
+/** 생리 한 번(명세 12장). endDate가 null이면 진행 중. */
+export interface PeriodLogDto {
+  startDate: DateKey;
+  endDate: DateKey | null;
+}
+
 export interface PeriodDailyDto {
   date: DateKey;
   condition: string | null;
@@ -191,7 +197,7 @@ export interface ImportPayload {
   water: WaterDto[];
   steps: StepsDto[];
   weights: WeightDto[];
-  period?: { settings?: PeriodSettingsDto; daily: PeriodDailyDto[] };
+  period?: { settings?: PeriodSettingsDto; daily: PeriodDailyDto[]; logs: PeriodLogDto[] };
   recipes: RecipeDto[];
   routines: RoutineDto[];
   customIngredients: CustomIngredientImportDto[];

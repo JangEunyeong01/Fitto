@@ -142,7 +142,8 @@ export default function PeriodBar({
   );
 }
 
-function DateChip({ label, value, onPress }: { label: string; value: string; onPress: () => void }) {
+/** 날짜 한 칸. 누르면 달력을 연다. 생리 기록 시트도 같은 모양을 쓴다. */
+export function DateChip({ label, value, onPress }: { label: string; value: string; onPress: () => void }) {
   const { colors } = useTheme();
   return (
     <Pressable

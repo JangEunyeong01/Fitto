@@ -7,17 +7,21 @@ import { useTheme } from '../../../theme/useTheme';
 import { typography } from '../../../theme/tokens';
 import { useAppStore } from '../../../store/useAppStore';
 import { dateKey } from '../../../utils/timeOfDay';
-import { getCycleDayNumber, getDaysUntilFertile } from '../../../utils/periodCycle';
+import { getDaysUntilFertile, getPeriodHeadline } from '../../../utils/periodCycle';
 
 export default function PeriodCard() {
   const { colors } = useTheme();
   const navigation = useNavigation<any>();
   const settings = useAppStore((s) => s.periodSettings);
+  const logs = useAppStore((s) => s.periodLogs);
+  const display = useAppStore((s) => s.periodDisplay);
 
   const today = dateKey();
-  const cycleDay = getCycleDayNumber(today, settings);
+  // 예전엔 "17일차 · 가임기까지 7일"이었는데 "17일차"가 생리 17일째로 읽혔다. 상세 화면 맨 위 한 줄과 같은 말을 쓴다.
+  const headline = getPeriodHeadline(today, settings, logs, { period: display.predictPeriod, fertile: display.predictFertile });
   const untilFertile = getDaysUntilFertile(today, settings);
-  const subtitle = untilFertile === 0 ? `${cycleDay}일차 · 가임기` : `${cycleDay}일차 · 가임기까지 ${untilFertile}일`;
+  const fertile = !display.predictFertile ? '' : untilFertile === 0 ? ' · 가임기' : ` · 가임기까지 ${untilFertile}일`;
+  const subtitle = headline + fertile;
 
   return (
     <Pressable onPress={() => navigation.navigate('PeriodDetail')} accessibilityRole="button">

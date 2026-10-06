@@ -18,6 +18,7 @@ import { dateKey } from '../../utils/timeOfDay';
 import { personaCopy } from '../../copy/persona';
 import { QUICK_WORKOUT_MINUTES, calcExerciseKcal, findExercise } from '../../data/workouts';
 import { recommendWorkouts } from '../../utils/workoutRecommend';
+import { isRoughDay } from '../../constants/periodTags';
 import { sumMealKcal } from '../../utils/health';
 import { recentDays, recentDateKeys } from '../../utils/history';
 import { usePastRecord } from '../../hooks/usePastRecord';
@@ -81,7 +82,8 @@ export default function HealthScreen() {
         weightKg: profile.weight,
         diseases: profile.conditions,
         kcalDiff: (todayRecord ? sumMealKcal(todayRecord.meals) : 0) - kcalGoal,
-        periodCondition: todayRecord?.periodCondition,
+        // 생리통·메스꺼움·피곤함처럼 힘든 날로 볼 칩이 있으면 가볍게 추천한다.
+        periodCondition: isRoughDay(todayRecord?.periodSymptoms) ? 'bad' : undefined,
       }),
     [preference, profile, todayRecord, kcalGoal]
   );

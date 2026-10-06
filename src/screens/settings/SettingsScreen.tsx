@@ -293,7 +293,8 @@ export default function SettingsScreen() {
             value="실행"
             onPress={() => {
               // 튜토리얼은 홈 카드를 가리키므로 홈으로 보낸 뒤 띄운다.
-              navigation.navigate('Home');
+              // 홈 탭에 상세 화면이 열려 있으면 그 위에 말풍선이 뜬다. 홈 첫 화면까지 내려간다.
+              navigation.navigate('Home', { screen: 'HomeMain' });
               startTutorial();
             }}
             chevron

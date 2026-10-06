@@ -79,6 +79,7 @@ export default function LoginScreen() {
           weightLog: s.weightLog,
           periodSettings: s.periodSettings,
           periodSetupDone: s.periodSetupDone,
+          periodLogs: s.periodLogs,
           recipes: s.recipes,
           routines: s.routines,
           customIngredients: s.customIngredients,
