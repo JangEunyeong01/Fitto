@@ -8,4 +8,9 @@ version = '1.0.0'
 
 android {
   namespace "expo.modules.healthrationale"
+  // expo-module-gradle-plugin이 꼭 요구한다. 없으면 EAS 빌드가 'versionName is not defined'로 멈춘다.
+  defaultConfig {
+    versionCode 1
+    versionName "1.0.0"
+  }
 }
