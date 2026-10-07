@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { View, Text, Pressable, ScrollView, Modal, StyleSheet, useWindowDimensions } from 'react-native';
+import { View, Text, Pressable, ScrollView, Modal, StyleSheet, useWindowDimensions, Linking } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import ScreenBackground from '../../components/ScreenBackground';
@@ -27,6 +27,7 @@ import { PERSONA_OPTIONS } from '../onboarding/onboardingData';
 import { GOAL_OPTIONS, labelOf } from '../../constants/codes';
 import { daysBetween, toDateKey } from '../../utils/periodCycle';
 import { typography, weight } from '../../theme/tokens';
+import { feedbackEnv, feedbackUrl } from '../../data/feedback';
 // 버전은 app.json 한 곳에서만 올린다. 화면에 따로 적어두면 배포 때 둘 중 하나를 꼭 까먹는다.
 import appConfig from '../../../app.json';
 
@@ -67,6 +68,8 @@ export default function SettingsScreen() {
   const authStatus = useAuthStore((s) => s.status);
   const authEmail = useAuthStore((s) => s.email);
   const emailUnverified = useAuthStore((s) => s.emailVerified) === false;
+  // 버그 제보에 어느 빌드·OS인지 미리 채운다. 이메일 같은 사람을 알아볼 값은 넣지 않는다.
+  const feedbackLink = feedbackUrl(feedbackEnv(appConfig.expo.version, authStatus === 'member'));
 
   // 계정 줄에 띄울 경고. 실패한 기록은 폰을 바꾸면 사라져서, 계정 화면에 들어가야 아는 건 늦다.
   const failedCount = useOutboxStore((s) => s.failed.length);
@@ -320,6 +323,18 @@ export default function SettingsScreen() {
         </GlassCard>
 
         <GlassCard style={styles.card} noPadding>
+          {/* 비공개 테스트 동안 구글 폼으로 받는다. 폼 주소를 넣기 전에는 줄을 안 보인다(data/feedback.ts). */}
+          {feedbackLink && (
+            <>
+              <SettingsRow
+                label="의견 보내기"
+                desc="불편한 점이나 버그를 알려 주세요"
+                onPress={() => Linking.openURL(feedbackLink).catch(() => showToast('브라우저를 열 수 없어요'))}
+                chevron
+              />
+              <RowDivider />
+            </>
+          )}
           <SettingsRow label="앱 버전" value={appConfig.expo.version} />
           <RowDivider />
           <SettingsRow label="약관 및 정책" onPress={() => navigation.navigate('TermsList')} chevron />
