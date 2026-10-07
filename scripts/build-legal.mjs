@@ -8,7 +8,7 @@
  * site/는 GitHub Pages로 올라간다(.github/workflows/pages.yml).
  */
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, rmSync, readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
+import { mkdtempSync, rmSync, readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync, unlinkSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createRequire } from 'node:module';
@@ -90,10 +90,13 @@ try {
   const links = docs.map((d) => `<li><a href="${FILES[d.id]}">${esc(d.title)}</a></li>`).join('\n');
   files['index.html'] = page('약관 및 정책', `<h1>피또 약관 및 정책</h1>\n<ul>\n${links}\n</ul>`);
 
+  // 문서를 빼거나 파일 이름을 바꾸면 예전 HTML이 site/에 남아 계속 공개된다. 만들지 않는 .html은 남은 파일로 본다.
+  const leftovers = existsSync(SITE) ? readdirSync(SITE).filter((f) => f.endsWith('.html') && !(f in files)) : [];
+
   if (CHECK) {
     // 윈도우 git은 받을 때 줄바꿈을 CRLF로 바꿀 수 있어서 맞춰서 비교한다.
     const read = (f) => readFileSync(join(SITE, f), 'utf8').replace(/\r\n/g, '\n');
-    const stale = Object.keys(files).filter((f) => !existsSync(join(SITE, f)) || read(f) !== files[f]);
+    const stale = [...Object.keys(files).filter((f) => !existsSync(join(SITE, f)) || read(f) !== files[f]), ...leftovers];
     if (stale.length) {
       console.error(`약관 웹 페이지가 terms.ts와 달라요: ${stale.join(', ')} — npm run build:legal`);
       process.exit(1);
@@ -103,6 +106,7 @@ try {
     console.log('약관 웹 페이지 점검 통과');
   } else {
     mkdirSync(SITE, { recursive: true });
+    for (const f of leftovers) unlinkSync(join(SITE, f));
     for (const [f, html] of Object.entries(files)) writeFileSync(join(SITE, f), html);
     console.log(`site/에 ${Object.keys(files).length}개 만듦`);
   }

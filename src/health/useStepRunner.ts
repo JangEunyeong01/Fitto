@@ -61,10 +61,17 @@ const HealthRationale =
 /** 그 링크로 들어왔으면 처리방침을 연다. 플레이 심사가 요구한다. */
 function openPolicyIfAsked(): void {
   if (!HealthRationale?.consume()) return;
+  // 꺼진 앱이 이 링크로 켜지면 저장된 기록을 불러오기 전이라 잠깐 온보딩 화면만 있다(Main 없음).
+  // 신호는 이미 소비했으니 여기서 버리면 다시 기회가 없다 — Main이 생길 때까지 잠시 기다린다.
+  let tries = 0;
   const open = () => {
-    // 걸음 연결은 온보딩을 마친 뒤에만 있어서 보통 Main이 있다. 없으면(앱을 지웠다 다시 깐 직후 등) 그냥 둔다.
-    if (!navigationRef.isReady()) return setTimeout(open, 300);
-    if (!navigationRef.getRootState()?.routeNames.includes('Main')) return;
+    const ready = navigationRef.isReady() && useAppStore.persist.hasHydrated();
+    const hasMain = ready && navigationRef.getRootState()?.routeNames.includes('Main');
+    if (!hasMain) {
+      // 걸음 연결은 온보딩을 마친 뒤에만 있어서 보통 곧 Main이 생긴다. 3초 넘게 없으면(앱을 지웠다 다시 깐 직후 등) 둔다.
+      if (++tries < 10) setTimeout(open, 300);
+      return;
+    }
     navigationRef.navigate('Main', { screen: 'Settings', params: { screen: 'Terms', params: { id: 'policy' } } });
   };
   open();

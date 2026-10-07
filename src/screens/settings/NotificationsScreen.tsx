@@ -44,9 +44,11 @@ export default function NotificationsScreen() {
   const [exact, setExact] = useState(canScheduleExact);
   useEffect(() => {
     getPermission().then(setPermission);
-    // 설정 앱에서 정확한 알람을 켜고 돌아오면 안내를 바로 거둔다. 예약은 useNotificationRunner가 다시 건다.
+    // 설정 앱에서 알림 권한이나 정확한 알람을 켜고 돌아오면 안내를 바로 바꾼다. 예약은 useNotificationRunner가 다시 건다.
     const sub = AppState.addEventListener('change', (next) => {
-      if (next === 'active') setExact(canScheduleExact());
+      if (next !== 'active') return;
+      getPermission().then(setPermission);
+      setExact(canScheduleExact());
     });
     return () => sub.remove();
   }, []);
