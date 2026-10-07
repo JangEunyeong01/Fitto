@@ -12,6 +12,7 @@ import { mkdtempSync, rmSync, readFileSync, writeFileSync, mkdirSync, existsSync
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createRequire } from 'node:module';
+import { testerGuide } from './tester-guide.mjs';
 
 const CHECK = process.argv.includes('--check');
 const SITE = 'site';
@@ -19,23 +20,25 @@ const HISTORY = 'https://github.com/JangEunyeong01/Fitto/commits/main/src/data/t
 const out = mkdtempSync(join(tmpdir(), 'fitto-legal-'));
 
 /** 문서 id → 웹 파일 이름. 처리방침 주소는 스토어에 등록하니 바꾸지 않는다. */
-const FILES = { policy: 'privacy.html', terms: 'terms.html', privacy: 'consent-privacy.html', health: 'consent-health.html', deletion: 'delete-account.html' };
+const FILES = { policy: 'privacy.html', terms: 'terms.html', privacy: 'consent-privacy.html', health: 'consent-health.html', deletion: 'delete-account.html', guide: 'beta.html' };
 
 const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+/** 이스케이프한 글에서 https 주소만 링크로. 약관 본문에는 https가 없어 테스터 안내에만 걸린다. */
+const linkify = (s) => esc(s).replace(/https:\/\/[^\s<]+/g, (u) => `<a href="${u}">${u}</a>`);
 
 /** "· "로 시작하는 줄은 목록으로, 나머지는 문단으로. */
 function body(text) {
   const html = [];
   let list = [];
   const flush = () => {
-    if (list.length) html.push(`<ul>${list.map((l) => `<li>${esc(l)}</li>`).join('')}</ul>`);
+    if (list.length) html.push(`<ul>${list.map((l) => `<li>${linkify(l)}</li>`).join('')}</ul>`);
     list = [];
   };
   for (const line of text.split('\n')) {
     if (line.startsWith('· ')) list.push(line.slice(2));
     else {
       flush();
-      html.push(`<p>${esc(line)}</p>`);
+      html.push(`<p>${linkify(line)}</p>`);
     }
   }
   flush();
@@ -59,7 +62,7 @@ h2 { font-size: 17px; margin: 32px 0 8px; }
 p, li { margin: 6px 0; }
 ul { padding-left: 20px; }
 .sub { color: var(--sub); font-size: 14px; }
-a { color: var(--link); }
+a { color: var(--link); overflow-wrap: anywhere; }
 footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--line); }
 </style>
 </head>
@@ -83,9 +86,11 @@ try {
   const files = {};
   const footer = `<footer class="sub"><a href="index.html">문서 목록</a> · <a href="${HISTORY}">변경 기록</a></footer>`;
   const docs = [...ALL_DOCS, DELETION_DOC];
-  for (const doc of docs) {
+  // 테스터 안내는 약관 목록(index)에는 넣지 않는다. 문의 메일은 약관과 같은 값을 쓴다.
+  const guide = testerGuide(PRIVACY_OFFICER.email);
+  for (const doc of [...docs, guide]) {
     const sections = doc.sections.map((s) => `<h2>${esc(s.heading)}</h2>\n${body(s.body)}`).join('\n');
-    files[FILES[doc.id]] = page(doc.title, `<h1>${esc(doc.title)}</h1>\n<p class="sub">시행일 ${esc(doc.effective)}</p>\n${sections}\n${footer}`);
+    files[FILES[doc.id]] = page(doc.title, `<h1>${esc(doc.title)}</h1>\n${doc.effective ? `<p class="sub">시행일 ${esc(doc.effective)}</p>\n` : ''}${sections}\n${footer}`);
   }
   const links = docs.map((d) => `<li><a href="${FILES[d.id]}">${esc(d.title)}</a></li>`).join('\n');
   files['index.html'] = page('약관 및 정책', `<h1>피또 약관 및 정책</h1>\n<ul>\n${links}\n</ul>`);
