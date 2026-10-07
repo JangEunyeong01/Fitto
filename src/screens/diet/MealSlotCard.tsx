@@ -72,7 +72,8 @@ export default function MealSlotCard({ date, slot, items, memo, onAdd }: MealSlo
       <View style={styles.list}>
         {items.map((item) => (
           <View key={item.id} style={styles.itemRow}>
-            <Text style={[styles.itemName, { color: colors.textPrimary }]} numberOfLines={1}>
+            {/* 두 줄까지. 한 줄이면 글씨를 키웠을 때 "현미밥과 …"만 남아 무엇을 먹었는지 안 보인다. */}
+            <Text style={[styles.itemName, { color: colors.textPrimary }]} numberOfLines={2}>
               {item.name}
             </Text>
             <Text style={[styles.itemAmount, { color: colors.textSecondary }]}>{formatAmount(item)}</Text>

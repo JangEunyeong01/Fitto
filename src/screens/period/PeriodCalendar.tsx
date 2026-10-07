@@ -214,7 +214,7 @@ function Summary({
       {items.map((it) => (
         <View key={it.label} style={styles.summaryItem}>
           <View style={[styles.summaryBar, { backgroundColor: it.bar }]} />
-          <View>
+          <View style={styles.summaryText}>
             <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>{it.label}</Text>
             <Text style={[styles.summaryValue, { color: colors.textPrimary }]}>{it.value}</Text>
           </View>
@@ -327,6 +327,11 @@ const styles = StyleSheet.create({
   summaryBar: {
     width: 3,
     borderRadius: 2,
+  },
+  // 글씨를 키우면 "9월 26일 - 10월 1일"이 반 칸을 넘친다. 줄어들 수 있어야 칸 안에서 줄바꿈된다(옆 칸과 안 겹친다).
+  summaryText: {
+    flex: 1,
+    paddingRight: 8,
   },
   summaryLabel: {
     fontSize: 12,

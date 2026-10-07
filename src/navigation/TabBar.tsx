@@ -8,7 +8,7 @@ import { useTheme } from '../theme/useTheme';
 import Icon, { type IconName } from '../components/Icon';
 import { useQuickLogSheetStore } from '../store/useQuickLogSheetStore';
 import { useTutorialStore } from '../store/useTutorialStore';
-import { alpha, radius, tabBarShadowColor, weight } from '../theme/tokens';
+import { BIG_TEXT_MAX, alpha, radius, tabBarShadowColor, weight } from '../theme/tokens';
 
 const TAB_LABELS: Record<string, string> = {
   Home: '홈',
@@ -87,7 +87,10 @@ export default function TabBar({ state, navigation }: BottomTabBarProps) {
         accessibilityLabel={label}
       >
         <Icon name={icon} size={20} color={tint} strokeWidth={focused ? 2 : 1.8} />
-        <Text style={[styles.label, { color: tint }, weight(focused ? 700 : 500)]}>{label}</Text>
+        {/* 떠 있는 탭바는 높이 64 고정이라 이름이 끝없이 커지면 아이콘과 겹친다. 이름은 아이콘과 함께라 1.3배까지만. */}
+        <Text style={[styles.label, { color: tint }, weight(focused ? 700 : 500)]} maxFontSizeMultiplier={BIG_TEXT_MAX}>
+          {label}
+        </Text>
       </Pressable>
     );
   };

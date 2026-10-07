@@ -41,11 +41,9 @@ export default function SettingsRow({
     <>
       <View style={styles.textCol}>
         <Text style={[styles.label, { color: danger ? colors.textDanger : colors.textPrimary }]}>{label}</Text>
+        {/* 한 줄로 자르지 않는다. 글씨를 키우면 "태어난 연도를 넣어 …"처럼 들어가 보기 전에 알아야 할 말이 잘린다. */}
         {desc ? (
-          <Text
-            style={[styles.desc, { color: descTone === 'danger' ? colors.textDanger : colors.textSecondary }]}
-            numberOfLines={1}
-          >
+          <Text style={[styles.desc, { color: descTone === 'danger' ? colors.textDanger : colors.textSecondary }]}>
             {desc}
           </Text>
         ) : null}
