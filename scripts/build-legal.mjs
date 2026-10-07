@@ -19,7 +19,7 @@ const HISTORY = 'https://github.com/JangEunyeong01/Fitto/commits/main/src/data/t
 const out = mkdtempSync(join(tmpdir(), 'fitto-legal-'));
 
 /** 문서 id → 웹 파일 이름. 처리방침 주소는 스토어에 등록하니 바꾸지 않는다. */
-const FILES = { policy: 'privacy.html', terms: 'terms.html', privacy: 'consent-privacy.html', health: 'consent-health.html' };
+const FILES = { policy: 'privacy.html', terms: 'terms.html', privacy: 'consent-privacy.html', health: 'consent-health.html', deletion: 'delete-account.html' };
 
 const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
@@ -78,15 +78,16 @@ try {
     ['node_modules/typescript/bin/tsc', 'src/data/terms.ts', '--outDir', out, '--target', 'es2020', '--module', 'commonjs', '--skipLibCheck', '--ignoreConfig'],
     { stdio: 'inherit' }
   );
-  const { ALL_DOCS, PRIVACY_OFFICER } = createRequire(import.meta.url)(join(out, 'terms.js'));
+  const { ALL_DOCS, DELETION_DOC, PRIVACY_OFFICER } = createRequire(import.meta.url)(join(out, 'terms.js'));
 
   const files = {};
   const footer = `<footer class="sub"><a href="index.html">문서 목록</a> · <a href="${HISTORY}">변경 기록</a></footer>`;
-  for (const doc of ALL_DOCS) {
+  const docs = [...ALL_DOCS, DELETION_DOC];
+  for (const doc of docs) {
     const sections = doc.sections.map((s) => `<h2>${esc(s.heading)}</h2>\n${body(s.body)}`).join('\n');
     files[FILES[doc.id]] = page(doc.title, `<h1>${esc(doc.title)}</h1>\n<p class="sub">시행일 ${esc(doc.effective)}</p>\n${sections}\n${footer}`);
   }
-  const links = ALL_DOCS.map((d) => `<li><a href="${FILES[d.id]}">${esc(d.title)}</a></li>`).join('\n');
+  const links = docs.map((d) => `<li><a href="${FILES[d.id]}">${esc(d.title)}</a></li>`).join('\n');
   files['index.html'] = page('약관 및 정책', `<h1>피또 약관 및 정책</h1>\n<ul>\n${links}\n</ul>`);
 
   if (CHECK) {

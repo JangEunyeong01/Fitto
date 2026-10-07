@@ -16,8 +16,8 @@ const officerEmail = PRIVACY_OFFICER.email || '(출시 전 입력)';
 
 /** 가입할 때 하나하나 동의받는 문서. */
 export type ConsentId = 'terms' | 'privacy' | 'health';
-/** 동의 문서 + 개인정보처리방침(동의가 아니라 공개하는 문서). */
-export type TermsId = ConsentId | 'policy';
+/** 동의 문서 + 개인정보처리방침(동의가 아니라 공개하는 문서) + 웹 전용 계정 삭제 안내. */
+export type TermsId = ConsentId | 'policy' | 'deletion';
 
 export interface TermsDoc<I extends TermsId = TermsId> {
   id: I;
@@ -226,6 +226,38 @@ const policy: TermsDoc = {
     {
       heading: '14. 방침의 변경',
       body: '이 방침을 바꾸면 시행 7일 전에 앱과 이 페이지에서 알려요. 이전 버전은 이 페이지의 변경 기록에서 볼 수 있어요.',
+    },
+  ],
+};
+
+/**
+ * 계정 삭제 안내. 웹에만 둔다(site/delete-account.html) — 플레이는 앱을 지운 사람도 삭제를 요청할 수 있게
+ * 웹 주소를 요구한다. 앱 안에서는 설정 > 계정 > 탈퇴가 같은 일을 한다.
+ */
+export const DELETION_DOC: TermsDoc<'deletion'> = {
+  id: 'deletion',
+  title: '피또 계정과 데이터 삭제',
+  effective: EFFECTIVE,
+  sections: [
+    {
+      heading: '앱에서 지우기',
+      body: '· 계정째 지우기: 설정 > 계정 > 탈퇴. 비밀번호를 한 번 더 확인하고 바로 지워요.\n· 계정은 두고 기록만 지우기: 설정 > 데이터 초기화\n· 생리 기록만 지우기: 생리 설정 > 생리 데이터 삭제',
+    },
+    {
+      heading: '앱 없이 요청하기',
+      body: `앱을 지웠거나 로그인할 수 없으면 가입한 이메일로 ${officerEmail}에 "계정 삭제 요청"이라고 보내 주세요. 가입한 이메일에서 온 요청인지 확인한 뒤 10일 안에 지우고 알려 드려요.`,
+    },
+    {
+      heading: '지워지는 것',
+      body: '계정(이메일, 비밀번호, 프로필)과 서버에 저장된 모든 기록(식단, 운동, 물, 걸음, 체중, 생리, 레시피, 루틴, 직접 입력한 재료)이 지워져요. 되살릴 수 없어요.',
+    },
+    {
+      heading: '잠시 남는 것',
+      body: '· 데이터베이스 업체의 장애 복구용 기록: 최대 7일 뒤 자동 삭제\n· 보안 기록(접속 IP, 일부를 가린 이메일): 7일 뒤 자동 삭제\n· 탈퇴 사유: 누가 떠났는지 알 수 없게(사유와 날짜만) 남아요',
+    },
+    {
+      heading: '기기에 남은 기록',
+      body: '계정 없이 쓴 기록과 레시피 사진은 서버에 없고 휴대폰에만 있어요. 앱을 지우면 함께 지워져요.',
     },
   ],
 };
