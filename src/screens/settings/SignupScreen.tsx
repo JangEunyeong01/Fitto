@@ -58,6 +58,11 @@ export default function SignupScreen() {
   const openConsent = () => {
     if (busy) return;
     if (!validate()) return;
+    // 만 14세 미만은 법정대리인 동의가 필요해 계정을 받지 않는다(서버도 막는다). 게스트로는 다 쓸 수 있다고 같이 알린다.
+    if (profile.age !== null && profile.age < 14) {
+      showToast('만 14세 이상만 계정을 만들 수 있어요. 계정 없이도 모든 기능을 쓸 수 있어요');
+      return;
+    }
     setConsentOpen(true);
   };
 

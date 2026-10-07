@@ -1,5 +1,7 @@
 import { useEffect } from 'react';
-import { AppState } from 'react-native';
+import { AppState, Platform } from 'react-native';
+import { requireOptionalNativeModule } from 'expo';
+import { navigationRef } from '../navigation/navigationRef';
 import { useAppStore } from '../store/useAppStore';
 import { STEP_SOURCE, getAvailability, hasStepPermission, readDailySteps, requestStepPermission, type StepAvailability } from './steps';
 
@@ -42,9 +44,28 @@ export async function refreshSteps(): Promise<void> {
 export function useStepRunner(): void {
   useEffect(() => {
     refreshSteps();
+    openPolicyIfAsked();
     const sub = AppState.addEventListener('change', (next) => {
-      if (next === 'active') refreshSteps();
+      if (next !== 'active') return;
+      refreshSteps();
+      openPolicyIfAsked();
     });
     return () => sub.remove();
   }, []);
+}
+
+// 헬스 커넥트 권한 창의 "개인정보처리방침" 링크로 들어왔는지(modules/health-rationale). 모듈이 없는 환경은 null.
+const HealthRationale =
+  Platform.OS === 'android' ? requireOptionalNativeModule<{ consume(): boolean }>('HealthRationale') : null;
+
+/** 그 링크로 들어왔으면 처리방침을 연다. 플레이 심사가 요구한다. */
+function openPolicyIfAsked(): void {
+  if (!HealthRationale?.consume()) return;
+  const open = () => {
+    // 걸음 연결은 온보딩을 마친 뒤에만 있어서 보통 Main이 있다. 없으면(앱을 지웠다 다시 깐 직후 등) 그냥 둔다.
+    if (!navigationRef.isReady()) return setTimeout(open, 300);
+    if (!navigationRef.getRootState()?.routeNames.includes('Main')) return;
+    navigationRef.navigate('Main', { screen: 'Settings', params: { screen: 'Terms', params: { id: 'policy' } } });
+  };
+  open();
 }

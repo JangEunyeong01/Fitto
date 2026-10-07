@@ -51,7 +51,8 @@ public record SignupRequest(
 	public record Profile(
 			@NotBlank @Size(min = 1, max = 20) String name,
 			@NotNull Gender gender,
-			@NotNull @Min(10) @Max(100) Integer age,
+			// 만 14세 미만은 법정대리인 동의가 필요해서 받지 않는다(개인정보처리방침 8번). 게스트로는 다 쓸 수 있다.
+			@NotNull @Min(value = 14, message = "만 14세 이상만 계정을 만들 수 있어요.") @Max(100) Integer age,
 			@NotNull @Min(100) @Max(250) Double height,
 			@NotNull @Min(25) @Max(250) Double weight,
 			@Min(25) @Max(250) Double targetWeight,

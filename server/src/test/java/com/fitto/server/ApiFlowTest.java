@@ -133,6 +133,25 @@ class ApiFlowTest {
 	}
 
 	@Test
+	@Order(2)
+	void 만_14세_미만은_가입할_수_없다() throws Exception {
+		String body = """
+				{ "email": "young@fitto.app", "password": "fitto1234",
+				  "profile": { "name": "어린이", "gender": "female", "age": 13, "height": 155.0, "weight": 45.0,
+				    "activityLevel": "light", "goal": "maintain", "personality": "friendly" },
+				  "agreements": { "terms": true, "privacy": true, "health": true, "version": "2026-10-07" } }
+				""";
+
+		MvcResult result = mvc.perform(post("/auth/signup")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(body))
+				.andReturn();
+
+		assertEquals(400, result.getResponse().getStatus());
+		assertTrue(result.getResponse().getContentAsString().contains("만 14세"));
+	}
+
+	@Test
 	@Order(3)
 	void 토큰_없이_부르면_401이다() throws Exception {
 		assertEquals(401, mvc.perform(get("/users/me")).andReturn().getResponse().getStatus());
