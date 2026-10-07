@@ -9,7 +9,7 @@ export const TERMS_VERSION = '2026-10-07';
 const EFFECTIVE = '2026년 10월 7일';
 
 /** 개인정보 보호책임자. 출시 전에 실명과 문의 전용 메일로 채운다(비어 있으면 `npm run check`가 경고한다). */
-export const PRIVACY_OFFICER = { name: '', email: 'fitto.team.kr@gmail.com' };
+export const PRIVACY_OFFICER = { name: '', email: 'team.fitto.kr@gmail.com' };
 
 const officerName = PRIVACY_OFFICER.name || '(출시 전 입력)';
 const officerEmail = PRIVACY_OFFICER.email || '(출시 전 입력)';
