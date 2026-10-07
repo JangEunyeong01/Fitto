@@ -447,7 +447,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 14,
-    height: 64,
+    // 고정 높이면 글씨를 키웠을 때 두 줄이 다음 줄과 겹친다. 최소만 정하고 늘어나게.
+    minHeight: 64,
+    paddingVertical: 10,
     paddingHorizontal: 18,
   },
   linkText: {

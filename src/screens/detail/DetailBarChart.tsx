@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useTheme } from '../../theme/useTheme';
-import { weight } from '../../theme/tokens';
+import { BIG_TEXT_MAX, weight } from '../../theme/tokens';
 
 interface DetailBarChartProps {
   labels: string[];
@@ -36,7 +36,7 @@ export default function DetailBarChart({ labels, values, highlightIndex, maxHeig
         const textStyle = { color: on ? colors.textPrimary : colors.textSecondary, ...weight(on ? 700 : 500) };
         return (
           <View key={i} style={styles.col}>
-            <Text style={[styles.text, styles.value, textStyle]} numberOfLines={1}>
+            <Text style={[styles.text, styles.value, textStyle]} numberOfLines={1} maxFontSizeMultiplier={BIG_TEXT_MAX}>
               {v === 0 || dense ? '' : v >= 1000 ? `${(v / 1000).toFixed(1)}천` : v.toLocaleString()}
             </Text>
             <View style={[styles.track, { height: maxHeight }]}>
@@ -53,10 +53,10 @@ export default function DetailBarChart({ labels, values, highlightIndex, maxHeig
             {dense ? (
               <View style={styles.labelSlot}>
                 {/* numberOfLines를 주면 웹에서 폭이 칸에 묶여(max-width 100%) 다시 잘린다. 라벨이 짧아서 줄바꿈 걱정은 없다. */}
-                <Text style={[styles.text, styles.labelWide, textStyle]}>{labels[i]}</Text>
+                <Text style={[styles.text, styles.labelWide, textStyle]} maxFontSizeMultiplier={BIG_TEXT_MAX}>{labels[i]}</Text>
               </View>
             ) : (
-              <Text style={[styles.text, textStyle]} numberOfLines={1}>
+              <Text style={[styles.text, textStyle]} numberOfLines={1} maxFontSizeMultiplier={BIG_TEXT_MAX}>
                 {labels[i]}
               </Text>
             )}

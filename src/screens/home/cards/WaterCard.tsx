@@ -12,7 +12,7 @@ import { dateKey } from '../../../utils/timeOfDay';
 import { getWaterStageSpec } from '../../../utils/health';
 import { waterStageNames } from '../../../copy/persona';
 import { useToastStore } from '../../../store/useToastStore';
-import { typography, weight } from '../../../theme/tokens';
+import { BIG_TEXT_MAX, typography, weight } from '../../../theme/tokens';
 
 export default function WaterCard() {
   const navigation = useNavigation<any>();
@@ -90,7 +90,7 @@ export default function WaterCard() {
       accessibilityLabel={label}
       style={({ pressed }) => [styles.stepBtn, { opacity: delta < 0 && water <= 0 ? 0.35 : pressed ? 0.6 : 1 }]}
     >
-      <Text style={[styles.stepLabel, { color: colors.textAccent }]}>
+      <Text style={[styles.stepLabel, { color: colors.textAccent }]} maxFontSizeMultiplier={BIG_TEXT_MAX}>
         {delta > 0 ? '+' : '−'}
         {Math.abs(delta)}
       </Text>
@@ -104,7 +104,9 @@ export default function WaterCard() {
         <TextLink label="상세" onPress={() => navigation.navigate('WaterDetail')} />
       </View>
       <View style={styles.numRow}>
-        <Text style={[styles.bigNum, { color: colors.textPrimary }]}>{shown.toLocaleString()}</Text>
+        <Text style={[styles.bigNum, { color: colors.textPrimary }]} maxFontSizeMultiplier={BIG_TEXT_MAX}>
+          {shown.toLocaleString()}
+        </Text>
         <Text style={[styles.goalNum, { color: colors.textSecondary }]}>/ {goal.toLocaleString()} ml</Text>
       </View>
       {/* 끄는 동안엔 단계 이름 자리에 얼마나 바뀌는지 보여 준다. 놓으면 이만큼 기록된다. */}
