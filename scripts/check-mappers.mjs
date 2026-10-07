@@ -52,8 +52,9 @@ try {
         },
         mealMemos: { breakfast: '많이 먹음', lunch: '' },
         exercises: [{ id: 'w1', code: 'walking', name: '걷기', minutes: 20, kcal: 130 }],
+        // 옛 컨디션 3택은 저장소 v9에서 기분 칩(mood.*)으로 옮겼다. 남아 있어도 서버로 보내지 않는다.
         periodCondition: 'bad',
-        periodSymptoms: ['cramp'],
+        periodSymptoms: ['symptom.cramps', 'mood.tired'],
       },
       '2026-09-15': {
         water: 0,
@@ -114,17 +115,29 @@ try {
   assert.deepEqual(p.weights, [{ date: '2026-09-16', weight: 54.6 }]);
   assert.deepEqual(p.period.settings, { startDate: '2026-09-05', cycleLength: 30, periodLength: 5 });
   assert.deepEqual(p.period.daily, [
-    { date: '2026-09-16', condition: 'bad', symptoms: ['cramp'], medication: null, memo: null },
+    { date: '2026-09-16', condition: null, symptoms: ['symptom.cramps', 'mood.tired'], medication: null, memo: null },
   ]);
   // 생리 기록은 서버 이름(startDate·endDate)으로, 진행 중은 null 그대로.
   assert.deepEqual(p.period.logs, [
     { startDate: '2026-08-06', endDate: '2026-08-10' },
     { startDate: '2026-09-05', endDate: null },
   ]);
-  assert.equal(p.recipes[0].photoUrl, null);
-  assert.deepEqual(p.recipes[0].ingredients, [{ name: '현미밥', grams: 210, calories: 310 }]);
+  // 기기 안 사진 경로(file://)는 서버가 못 읽어서 아예 안 보낸다. 재료 양은 서버 이름 amount(그램).
+  assert.deepEqual(p.recipes, [
+    {
+      id: 'r1',
+      name: '닭가슴살 덮밥',
+      ingredients: [
+        {
+          name: '현미밥', foodId: null, customIngredientId: null, amount: 210, calories: 310,
+          carbs: null, protein: null, fat: null, sodium: null, sugar: null,
+        },
+      ],
+    },
+  ]);
   assert.deepEqual(p.routines[0].exercises, [{ exerciseCode: 'walking', name: '걷기', duration: 15 }]);
-  assert.equal(p.customIngredients[0].caloriesPer100g, 900);
+  assert.equal(p.customIngredients[0].calories, 900);
+  assert.equal(p.customIngredients[0].fat, 100);
   assert.equal(p.customIngredients[0].allergy, false);
 
   // 시작일을 고른 적이 없으면 주기 설정은 안 올린다(기본값을 사용자 값처럼 보내지 않는다).
