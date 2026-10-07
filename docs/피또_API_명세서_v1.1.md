@@ -28,7 +28,7 @@
 
 *마지막 갱신: 2026-10-03*
 
-서버는 PostgreSQL 17에 실제로 연결해 가입·기록·조회 흐름을 확인했고, H2 인메모리 DB로 같은 흐름을 테스트 60개로 자동화했다.
+서버는 PostgreSQL 17에 실제로 연결해 가입·기록·조회 흐름을 확인했고, H2 인메모리 DB로 같은 흐름을 테스트 61개로 자동화했다.
 앱은 로컬 우선 구조로 서버와 양방향 동기화한다 — 기록은 기기에 먼저 저장하고 대기열을 통해 올리며, 앱 시작·로그인·복귀 시점에 서버 값을 받아온다.
 
 | 영역 | 앱 | 서버 |
@@ -525,7 +525,7 @@ fertileEnd    = ovulation
     "birthdayDay": 14
   },
   "startedAt": "2026-08-01T09:00:00Z",
-  "agreements": { "terms": true, "privacy": true, "health": true, "version": "2026-10-01" }
+  "agreements": { "terms": true, "privacy": true, "health": true, "version": "2026-10-07" }
 }
 ```
 
@@ -535,6 +535,7 @@ fertileEnd    = ovulation
 | password | 필수, 8~64자, 영문·숫자 모두 포함 |
 | profile.name | 필수, 1~20자 |
 | profile.gender, age, height, weight, activityLevel, goal, personality | 필수 |
+| profile.age | 14~100. **만 14세 미만은 `400`**("만 14세 이상만 계정을 만들 수 있어요.") — 법정대리인 동의가 필요해 계정을 받지 않는다. 게스트로는 다 쓸 수 있다 |
 | profile.targetWeight | 선택, 25~250 |
 | profile.birthYear | 선택, 1900~2100. `age`는 앱이 생년월일로 계산해 함께 보낸다 |
 | profile.birthdayMonth, birthdayDay | 선택 |

@@ -7,7 +7,7 @@ import ScreenBackground from '../../components/ScreenBackground';
 import GlassCard from '../../components/GlassCard';
 import DetailHeader from '../detail/DetailHeader';
 import SettingsRow, { RowDivider } from './SettingsRow';
-import { TERMS } from '../../data/terms';
+import { ALL_DOCS } from '../../data/terms';
 
 /** 설정 > 약관 및 정책. 가입할 때 동의한 문서를 나중에도 다시 볼 수 있게 한다. */
 export default function TermsListScreen() {
@@ -23,7 +23,7 @@ export default function TermsListScreen() {
       >
         <DetailHeader title="약관 및 정책" />
         <GlassCard noPadding>
-          {TERMS.map((t, i) => (
+          {ALL_DOCS.map((t, i) => (
             <React.Fragment key={t.id}>
               {i > 0 && <RowDivider />}
               <SettingsRow label={t.title} onPress={() => navigation.navigate('Terms', { id: t.id })} chevron />

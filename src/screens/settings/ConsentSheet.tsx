@@ -5,10 +5,10 @@ import PrimaryButton from '../../components/PrimaryButton';
 import { RadioMark } from '../onboarding/OptionRow';
 import { useTheme } from '../../theme/useTheme';
 import { typography, weight } from '../../theme/tokens';
-import { TERMS, TermsId, findTerms } from '../../data/terms';
+import { CONSENTS, ConsentId, TermsId, findTerms } from '../../data/terms';
 import { TermsBody } from './TermsScreen';
 
-export type Agreed = Record<TermsId, boolean>;
+export type Agreed = Record<ConsentId, boolean>;
 
 interface ConsentSheetProps {
   visible: boolean;
@@ -27,7 +27,7 @@ interface ConsentSheetProps {
 export default function ConsentSheet({ visible, agreed, onChange, onConfirm, onClose, busy }: ConsentSheetProps) {
   const { colors } = useTheme();
   const [viewing, setViewing] = useState<TermsId | null>(null);
-  const all = TERMS.every((t) => agreed[t.id]);
+  const all = CONSENTS.every((t) => agreed[t.id]);
   const setAll = (v: boolean) => onChange({ terms: v, privacy: v, health: v });
 
   // 닫혔다 다시 열리면 목록부터 보여준다.
@@ -61,7 +61,7 @@ export default function ConsentSheet({ visible, agreed, onChange, onConfirm, onC
       </Pressable>
       <View style={[styles.divider, { backgroundColor: colors.borderDivider }]} />
 
-      {TERMS.map((t, i) => (
+      {CONSENTS.map((t, i) => (
         <React.Fragment key={t.id}>
           {i > 0 && <View style={[styles.divider, { backgroundColor: colors.borderDivider }]} />}
           <View style={styles.row}>
