@@ -7,7 +7,10 @@ import { Platform } from 'react-native';
  * - envEntry: 폼에 "앱 정보" 단답형 질문을 만들고 "미리 채운 링크 받기"로 얻은 번호(예: 'entry.123456789').
  *   버전·OS를 미리 채워 두면 테스터가 적지 않아도 어느 빌드에서 난 버그인지 안다.
  */
-export const FEEDBACK = { formUrl: '', envEntry: '' };
+export const FEEDBACK = {
+  formUrl: 'https://docs.google.com/forms/d/e/1FAIpQLSfnIiK3NGGsl6vcHP1E1EtX7xPlby2ZuomvSeSWcOIzI2fA2Q/viewform',
+  envEntry: 'entry.1999675877', // 6. 앱 정보(자동 입력)
+};
 
 /** 앱 버전·OS·계정 여부. 사람을 알아볼 수 있는 값은 넣지 않는다. */
 export function feedbackEnv(appVersion: string, signedIn: boolean): string {
