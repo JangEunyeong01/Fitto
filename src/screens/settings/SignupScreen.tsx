@@ -16,6 +16,7 @@ import { signup, importGuestData } from '../../api/auth';
 import { toImportPayload } from '../../api/mappers';
 import { ApiError, NetworkError } from '../../api/client';
 import { useWakeNotice } from '../../hooks/useWakeNotice';
+import { ageFromBirth } from '../../utils/goals';
 
 /**
  * 계정 만들기(명세 3장, 4장).
@@ -29,6 +30,9 @@ export default function SignupScreen() {
   const { colors } = useTheme();
 
   const profile = useAppStore((s) => s.profile);
+  // 저장된 profile.age는 온보딩·프로필 저장 때 계산한 값이라 그 뒤 생일이 지나도 그대로다.
+  // 만 14세 검사와 서버로 보내는 나이는 가입하는 오늘 기준으로 다시 센다.
+  const age = ageFromBirth(profile.birthYear, profile.birthdayMonth, profile.birthdayDay) ?? profile.age;
   const persona = useAppStore((s) => s.persona);
   const startDate = useAppStore((s) => s.startDate);
   const signIn = useAuthStore((s) => s.signIn);
@@ -59,7 +63,7 @@ export default function SignupScreen() {
     if (busy) return;
     if (!validate()) return;
     // 만 14세 미만은 법정대리인 동의가 필요해 계정을 받지 않는다(서버도 막는다). 게스트로는 다 쓸 수 있다고 같이 알린다.
-    if (profile.age !== null && profile.age < 14) {
+    if (age !== null && age < 14) {
       showToast('만 14세 이상만 계정을 만들 수 있어요. 계정 없이도 모든 기능을 쓸 수 있어요');
       return;
     }
@@ -77,7 +81,7 @@ export default function SignupScreen() {
         profile: {
           name: profile.nickname,
           gender: profile.gender,
-          age: profile.age,
+          age,
           height: profile.height,
           weight: profile.weight,
           targetWeight: profile.targetWeight,

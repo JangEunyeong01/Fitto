@@ -86,7 +86,11 @@ let queue: Promise<void> = Promise.resolve();
 
 /** 지금 설정·기록으로 예약을 갈아끼운다. 권한이 없으면 지우기만 한다. */
 export function reschedule(): Promise<void> {
-  queue = queue.then(rescheduleNow, rescheduleNow);
+  // 한 번 실패해도 줄이 끊기지 않게, 부르는 쪽이 받지 않는 실패가 경고로 새지 않게 여기서 삼킨다.
+  // 다음 기회(앱을 다시 열 때, 기록이 바뀔 때)에 전부 다시 거니 이번 실패는 버려도 된다.
+  queue = queue.then(rescheduleNow).catch((e) => {
+    if (__DEV__) console.warn('알림 예약 실패', e);
+  });
   return queue;
 }
 
