@@ -28,12 +28,15 @@ class ExactAlarmModule : Module() {
     }
 
     // 피또 한 앱의 "알람 및 리마인더" 화면으로 바로 보낸다.
+    // 중간에 return@Function으로 빠져나가면 돌려줄 값의 타입이 Unit과 Any?로 갈려 컴파일이 안 된다(EAS 빌드에서 확인).
+    // 조건 하나로 감싸 끝까지 내려가게 한다.
     Function("openSettings") {
-      if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return@Function
-      val context = appContext.reactContext ?: return@Function
-      val intent = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, Uri.parse("package:${context.packageName}"))
-        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-      context.startActivity(intent)
+      val context = appContext.reactContext
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && context != null) {
+        val intent = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, Uri.parse("package:${context.packageName}"))
+          .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        context.startActivity(intent)
+      }
     }
   }
 }
