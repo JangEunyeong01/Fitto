@@ -33,8 +33,8 @@ import tools.jackson.databind.ObjectMapper;
 @AutoConfigureMockMvc
 class ResetRecordsTest {
 
-	/** 초기화 뒤에도 남아야 하는 표. 계정과 로그인, 프로필 목록(질환·선호 음식·알레르기). */
-	private static final Set<String> KEPT = Set.of("USERS", "REFRESH_TOKENS", "EMAIL_CODES",
+	/** 초기화 뒤에도 남아야 하는 표. 계정과 로그인, 약관 동의 이력, 프로필 목록(질환·선호 음식·알레르기). */
+	private static final Set<String> KEPT = Set.of("USERS", "REFRESH_TOKENS", "EMAIL_CODES", "USER_AGREEMENTS",
 			"USER_DISEASES", "USER_CUSTOM_DISEASES", "USER_PREFERRED_FOODS", "USER_CUSTOM_PREFERRED_FOODS",
 			"USER_ALLERGIES", "USER_CUSTOM_ALLERGIES");
 

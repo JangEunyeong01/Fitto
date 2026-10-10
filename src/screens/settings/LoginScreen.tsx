@@ -64,6 +64,7 @@ export default function LoginScreen() {
         refreshToken: result.refreshToken,
         email: result.user.email,
         emailVerified: result.user.emailVerified,
+        agreedTermsVersion: result.user.agreedTermsVersion ?? null,
       });
 
       // 서버 값이 최종값이다(명세 2장). 로그인하면 기기 프로필을 서버 값으로 맞춘다.

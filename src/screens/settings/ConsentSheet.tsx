@@ -17,6 +17,11 @@ interface ConsentSheetProps {
   onConfirm: () => void;
   onClose: () => void;
   busy?: boolean;
+  /** 다시 동의 때 바꿔 쓴다. 기본은 가입 시트의 문구. */
+  title?: string;
+  confirmLabel?: string;
+  /** 체크 목록 위에 얹는 내용(다시 동의의 "바뀐 점"). */
+  intro?: React.ReactNode;
 }
 
 /**
@@ -24,7 +29,17 @@ interface ConsentSheetProps {
  * "보기"는 화면을 옮기지 않고 시트 안 내용을 본문으로 바꾼다. 다른 화면으로 가면 탭바가 보여 설정으로 넘어간 것처럼
  * 느껴지고, 시트 위에 창을 하나 더 띄우면 닫히는 순서가 꼬인다. ‹로 돌아오면 체크 목록 그대로다.
  */
-export default function ConsentSheet({ visible, agreed, onChange, onConfirm, onClose, busy }: ConsentSheetProps) {
+export default function ConsentSheet({
+  visible,
+  agreed,
+  onChange,
+  onConfirm,
+  onClose,
+  busy,
+  title = '약관 동의',
+  confirmLabel = '동의하고 계정 만들기',
+  intro,
+}: ConsentSheetProps) {
   const { colors } = useTheme();
   const [viewing, setViewing] = useState<TermsId | null>(null);
   const all = CONSENTS.every((t) => agreed[t.id]);
@@ -46,10 +61,11 @@ export default function ConsentSheet({ visible, agreed, onChange, onConfirm, onC
   return (
     <BottomSheet
       visible={visible}
-      title="약관 동의"
+      title={title}
       onClose={onClose}
-      footer={<PrimaryButton label="동의하고 계정 만들기" onPress={onConfirm} loading={busy} disabled={!all} />}
+      footer={<PrimaryButton label={confirmLabel} onPress={onConfirm} loading={busy} disabled={!all} />}
     >
+      {intro}
       <Pressable
         onPress={() => setAll(!all)}
         accessibilityRole="checkbox"

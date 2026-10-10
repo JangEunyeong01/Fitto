@@ -81,10 +81,30 @@ try {
     ['node_modules/typescript/bin/tsc', 'src/data/terms.ts', '--outDir', out, '--target', 'es2020', '--module', 'commonjs', '--skipLibCheck', '--ignoreConfig'],
     { stdio: 'inherit' }
   );
-  const { ALL_DOCS, DELETION_DOC, PRIVACY_OFFICER } = createRequire(import.meta.url)(join(out, 'terms.js'));
+  const { ALL_DOCS, DELETION_DOC, PRIVACY_OFFICER, TERMS_HISTORY } = createRequire(import.meta.url)(join(out, 'terms.js'));
+
+  // 약관 버전 목록이 앱과 서버에서 같아야 한다. 서버가 앱이 모르는 버전을 "지금 버전"으로 내세우면
+  // 다시 동의 시트가 보여 줄 문안이 없다(반대면 서버가 동의를 거절한다).
+  const problems = [];
+  const appVersions = TERMS_HISTORY.map((t) => t.version);
+  for (const yml of ['server/src/main/resources/application.yaml', 'server/src/test/resources/application.yaml']) {
+    const m = readFileSync(yml, 'utf8').match(/^\s*versions:\s*(.+)$/m);
+    const serverVersions = m ? m[1].split(',').map((s) => s.trim()) : [];
+    if (serverVersions.join(',') !== appVersions.join(',')) {
+      problems.push(`${yml}의 fitto.terms.versions(${serverVersions.join(',')})가 terms.ts TERMS_HISTORY(${appVersions.join(',')})와 달라요`);
+    }
+  }
+  // 아직 시행 전인 버전은 7일 이상 미리 알려야 한다(처리방침 14번). 지난 버전은 기록이라 보지 않는다.
+  const today = new Date().toISOString().slice(0, 10);
+  TERMS_HISTORY.forEach((t, i) => {
+    if (i > 0 && t.version <= TERMS_HISTORY[i - 1].version) problems.push(`TERMS_HISTORY 순서가 틀렸어요: ${t.version}`);
+    if (t.changes.length === 0) problems.push(`${t.version}의 바뀐 점(changes)이 비어 있어요`);
+    const days = (Date.parse(t.version) - Date.parse(t.noticeFrom)) / 86400000;
+    if (t.version > today && days < 7) problems.push(`${t.version}은 시행 7일 전부터 알려야 해요(noticeFrom ${t.noticeFrom})`);
+  });
 
   const files = {};
-  const footer = `<footer class="sub"><a href="index.html">문서 목록</a> · <a href="${HISTORY}">변경 기록</a></footer>`;
+  const footer = `<footer class="sub"><a href="index.html">문서 목록</a> · <a href="changes.html">변경 기록</a></footer>`;
   const docs = [...ALL_DOCS, DELETION_DOC];
   // 테스터 안내는 약관 목록(index)에는 넣지 않는다. 문의 메일은 약관과 같은 값을 쓴다.
   const guide = testerGuide(PRIVACY_OFFICER.email);
@@ -93,10 +113,20 @@ try {
     files[FILES[doc.id]] = page(doc.title, `<h1>${esc(doc.title)}</h1>\n${doc.effective ? `<p class="sub">시행일 ${esc(doc.effective)}</p>\n` : ''}${sections}\n${footer}`);
   }
   const links = docs.map((d) => `<li><a href="${FILES[d.id]}">${esc(d.title)}</a></li>`).join('\n');
-  files['index.html'] = page('약관 및 정책', `<h1>피또 약관 및 정책</h1>\n<ul>\n${links}\n</ul>`);
+  files['index.html'] = page('약관 및 정책', `<h1>피또 약관 및 정책</h1>\n<ul>\n${links}\n</ul>\n<p class="sub"><a href="changes.html">변경 기록</a></p>`);
+  // 최신 버전이 위로. 이전 문안 원문은 저장소 기록(HISTORY)에서 본다.
+  const history = [...TERMS_HISTORY].reverse()
+    .map((t) => `<h2>${esc(t.version)} 시행</h2>\n<ul>${t.changes.map((c) => `<li>${esc(c)}</li>`).join('')}</ul>`)
+    .join('\n');
+  files['changes.html'] = page('변경 기록', `<h1>약관 변경 기록</h1>\n${history}\n<p class="sub">이전 문안 원문: <a href="${HISTORY}">저장소 기록</a></p>\n<footer class="sub"><a href="index.html">문서 목록</a></footer>`);
 
   // 문서를 빼거나 파일 이름을 바꾸면 예전 HTML이 site/에 남아 계속 공개된다. 만들지 않는 .html은 남은 파일로 본다.
   const leftovers = existsSync(SITE) ? readdirSync(SITE).filter((f) => f.endsWith('.html') && !(f in files)) : [];
+
+  if (problems.length) {
+    problems.forEach((p) => console.error(p));
+    process.exit(1);
+  }
 
   if (CHECK) {
     // 윈도우 git은 받을 때 줄바꿈을 CRLF로 바꿀 수 있어서 맞춰서 비교한다.

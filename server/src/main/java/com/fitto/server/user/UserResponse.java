@@ -30,6 +30,8 @@ public record UserResponse(
 		WorkoutPreferenceResponse workoutPreference,
 		boolean periodEnabled,
 		GoalsResponse goals,
+		/** 마지막으로 동의한 약관 버전. 지금 버전(GET /terms)과 다르면 앱이 다시 동의를 묻는다. 동의 칸이 생기기 전 가입자는 null. */
+		String agreedTermsVersion,
 		Instant startedAt,
 		Instant createdAt,
 		Instant updatedAt) {
@@ -76,6 +78,7 @@ public record UserResponse(
 				user.isPeriodEnabled(),
 				new GoalsResponse(goals.getTargetCalorie(), goals.getWaterGoal(), goals.isWaterGoalCustom(),
 						goals.getStepGoal(), goals.getCupSize()),
+				user.getTermsVersion(),
 				user.getStartedAt(),
 				user.getCreatedAt(),
 				user.getUpdatedAt());

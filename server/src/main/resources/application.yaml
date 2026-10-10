@@ -38,6 +38,9 @@ spring:
         read-enums-using-to-string: true
 
 fitto:
+  terms:
+    # 약관 버전(= 시행일). 앱 src/data/terms.ts의 TERMS_HISTORY와 같게 둔다. 지금 유효한 버전은 날짜로 정해진다(TermsPolicy).
+    versions: 2026-10-01,2026-10-07
   jwt:
     # 로컬 개발용 기본값. 배포에서는 반드시 환경변수로 덮어쓴다(이 값이 있으면 토큰을 위조할 수 있다).
     secret: ${JWT_SECRET:local-dev-secret-change-me-32bytes-minimum}

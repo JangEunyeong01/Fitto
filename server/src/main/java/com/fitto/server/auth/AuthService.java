@@ -23,6 +23,7 @@ import com.fitto.server.auth.dto.SignupRequest;
 import com.fitto.server.auth.dto.TokenResponse;
 import com.fitto.server.common.error.ApiException;
 import com.fitto.server.common.error.ErrorCode;
+import com.fitto.server.terms.AgreementService;
 import com.fitto.server.user.User;
 import com.fitto.server.user.UserGoalService;
 import com.fitto.server.user.UserRepository;
@@ -46,6 +47,7 @@ public class AuthService {
 	private final UserGoalService userGoalService;
 	private final LoginAttemptGuard loginAttemptGuard;
 	private final EmailCodeService emailCodeService;
+	private final AgreementService agreementService;
 
 	/** 현재 비밀번호를 찍어보는 걸 막는다. 토큰이 있어야 부를 수 있으니 로그인보다 좁게 잡아도 된다. */
 	private final AttemptCounter passwordAttempts = new AttemptCounter(5, Duration.ofMinutes(10));
@@ -58,7 +60,7 @@ public class AuthService {
 
 	public AuthService(UserRepository userRepository, RefreshTokenRepository refreshTokenRepository,
 			PasswordEncoder passwordEncoder, JwtTokenProvider tokenProvider, UserGoalService userGoalService,
-			LoginAttemptGuard loginAttemptGuard, EmailCodeService emailCodeService) {
+			LoginAttemptGuard loginAttemptGuard, EmailCodeService emailCodeService, AgreementService agreementService) {
 		this.userRepository = userRepository;
 		this.refreshTokenRepository = refreshTokenRepository;
 		this.passwordEncoder = passwordEncoder;
@@ -66,6 +68,7 @@ public class AuthService {
 		this.userGoalService = userGoalService;
 		this.loginAttemptGuard = loginAttemptGuard;
 		this.emailCodeService = emailCodeService;
+		this.agreementService = agreementService;
 	}
 
 	@Transactional
@@ -88,8 +91,8 @@ public class AuthService {
 			user.changeStartedAt(request.startedAt());
 		}
 
-		// 동의 시각은 앱이 보낸 값이 아니라 서버 시계로 찍는다.
-		user.recordAgreements(request.agreements().version(), Instant.now());
+		// 동의 시각은 서버 시계로, 이력도 함께 남긴다(다시 동의와 같은 길).
+		agreementService.recordOnSignup(user, request.agreements().version());
 
 		userGoalService.recalculate(user);
 		userRepository.save(user);

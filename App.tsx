@@ -20,6 +20,8 @@ import { useSyncRunner } from './src/sync/useSyncRunner';
 import { useNotificationRunner } from './src/notifications/useNotificationRunner';
 import { navigationRef } from './src/navigation/navigationRef';
 import { useStepRunner } from './src/health/useStepRunner';
+import { useTermsRunner } from './src/terms/useTermsRunner';
+import ReconsentSheet from './src/screens/settings/ReconsentSheet';
 
 /**
  * 한글이 단어 중간에서 끊기지 않게 한다("드릴게 / 요.").
@@ -45,6 +47,8 @@ function AppShell() {
   useNotificationRunner();
   // 걸음을 연결했으면 앱을 열 때마다 폰 건강 데이터에서 다시 읽는다.
   useStepRunner();
+  // 계정이 옛 약관에 동의했으면 다시 동의를 묻는다. 게스트면 아무 일도 하지 않는다.
+  useTermsRunner();
   return (
     <>
       {/* 시트들은 화면 전체를 덮는 오버레이지만 useNavigation을 쓰므로
@@ -57,6 +61,7 @@ function AppShell() {
           <ExerciseSheet />
           {/* 로그인 화면으로 보내야 해서 NavigationContainer 안에 둔다. */}
           <SessionExpiredModal />
+          <ReconsentSheet />
         </View>
       </NavigationContainer>
       <BirthdayModal />

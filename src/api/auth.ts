@@ -129,6 +129,25 @@ export function importGuestData(payload: ImportPayload, token: string): Promise<
   return request<ImportResult>('/me/import', { method: 'POST', body: payload, token });
 }
 
+/** 지금 유효한 약관 버전과 곧 시행될 버전(명세 5-5). 로그인 없이 부른다. */
+export function getTermsVersions(): Promise<{ current: string; upcoming: string | null }> {
+  return request<{ current: string; upcoming: string | null }>('/terms');
+}
+
+/**
+ * 바뀐 약관에 다시 동의. 셋 다 true여야 서버가 받는다.
+ * 앱에 든 문안이 서버의 지금 버전과 다르면 409(TERMS_OUTDATED) — 옛 앱이라 새 문안을 보여 줄 수 없는 경우.
+ */
+export function agreeTerms(version: string, token: string): Promise<User> {
+  return awake(() =>
+    request<User>('/users/me/agreements', {
+      method: 'POST',
+      body: { terms: true, privacy: true, health: true, version },
+      token,
+    })
+  );
+}
+
 export function getMe(token: string): Promise<User> {
   return request<User>('/users/me', { token });
 }

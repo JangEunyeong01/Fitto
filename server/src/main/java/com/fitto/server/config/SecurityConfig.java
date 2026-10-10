@@ -45,7 +45,7 @@ public class SecurityConfig {
 				.formLogin(AbstractHttpConfigurer::disable)
 				.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 				.authorizeHttpRequests(auth -> auth
-						.requestMatchers("/auth/**", "/health").permitAll()
+						.requestMatchers("/auth/**", "/health", "/terms").permitAll()
 						.anyRequest().authenticated())
 				.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
 				// 인증 실패도 명세 0-6의 모양으로 내려보낸다. 기본 응답은 본문이 비어 있어 앱이 처리할 게 없다.

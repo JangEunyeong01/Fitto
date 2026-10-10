@@ -16,6 +16,7 @@ import PeriodCard from './cards/PeriodCard';
 import LayDownModal from './LayDownModal';
 import CardOrderSheet from './CardOrderSheet';
 import BirthdayBanner from './BirthdayBanner';
+import TermsNoticeBanner from './TermsNoticeBanner';
 import { useAppStore, CardId } from '../../store/useAppStore';
 import { useCardOrderSheetStore } from '../../store/useCardOrderSheetStore';
 import { useBirthdayModalStore } from '../../store/useBirthdayModalStore';
@@ -147,6 +148,7 @@ export default function HomeScreen() {
           <HomeHeader />
         </View>
         {isBirthday && <BirthdayBanner name={profile.nickname} onPress={openBirthday} />}
+        <TermsNoticeBanner />
 
         <Pressable onLongPress={showSheet} delayLongPress={550} style={styles.grid}>
           {visibleCards.map((id, index) => {
