@@ -50,6 +50,8 @@ export interface User {
   workoutPreference: WorkoutPreferenceDto;
   periodEnabled: boolean;
   goals: UserGoals;
+  /** 마지막으로 동의한 약관 버전(명세 5-5). 동의 칸이 생기기 전 가입자는 null. */
+  agreedTermsVersion: string | null;
   /** 앱을 쓰기 시작한 시점(명세 F-008). */
   startedAt: string;
   createdAt: string;

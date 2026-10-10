@@ -111,6 +111,7 @@ export default function SignupScreen() {
         refreshToken: result.refreshToken,
         email: result.user.email,
         emailVerified: result.user.emailVerified,
+        agreedTermsVersion: result.user.agreedTermsVersion ?? null,
       });
 
       // 가입과 기록 이전은 따로 실패할 수 있다. 이전이 실패해도 계정은 이미 만들어졌으므로

@@ -2,11 +2,52 @@
  * 약관·개인정보 문서. 앱(가입 동의 시트, 설정 > 약관 및 정책)과 웹 페이지(site/)가 이 파일 하나에서 나온다.
  * 웹은 `npm run build:legal`로 다시 만든다. 문안과 웹이 어긋나면 `npm run check`가 알려준다.
  *
- * 문안을 고치면 TERMS_VERSION도 새 시행일로 올린다 — 서버는 누가 어느 버전에 동의했는지 이 값으로 남긴다.
+ * 문안을 고치면 TERMS_HISTORY 끝에 새 버전(= 시행일)을 붙인다. 서버 설정 fitto.terms.versions도 같은 목록이어야 한다
+ * (`npm run check`가 두 목록을 대조한다). 서버는 누가 어느 버전에 동의했는지 이 값으로 남기고,
+ * 옛 버전에 동의한 계정에는 앱이 다시 동의를 묻는다.
  * 쓰는 사실(서버 위치, 저장하는 항목, 로그 보관 기간)이 바뀌면 문안도 같이 고친다.
  */
-export const TERMS_VERSION = '2026-10-07';
-const EFFECTIVE = '2026년 10월 7일';
+export interface TermsVersion {
+  /** 시행일(YYYY-MM-DD). 버전 이름이기도 하다. */
+  version: string;
+  /** 앱·웹에서 미리 알리기 시작하는 날. 시행 7일 전(불리한 변경은 30일 전) — 처리방침 14번의 약속. */
+  noticeFrom: string;
+  /** 바뀐 점. 다시 동의 시트 맨 위와 웹 변경 기록에 그대로 나온다. */
+  changes: string[];
+}
+
+/** 오래된 것부터. 지난 버전은 지우지 않는다 — 누가 어느 문안에 동의했는지의 기준이다. */
+export const TERMS_HISTORY: TermsVersion[] = [
+  {
+    version: '2026-10-01',
+    noticeFrom: '2026-10-01',
+    changes: ['가입할 때 이용약관·개인정보·건강 정보 동의를 받기 시작했어요.'],
+  },
+  {
+    version: '2026-10-07',
+    noticeFrom: '2026-10-07',
+    changes: [
+      '임시 문안을 실제 문안으로 바꾸고 개인정보처리방침을 공개했어요.',
+      '만 14세 미만은 계정을 만들 수 없어요.',
+      '서버가 싱가포르에 있어 정보가 국외로 옮겨진다는 것과, 의견 보내기(구글 폼)로 받는 정보를 적었어요.',
+    ],
+  },
+];
+
+/** 이 앱에 들어 있는 문안의 버전(가장 최근). 가입·다시 동의 때 서버로 보낸다. */
+export const TERMS_VERSION = TERMS_HISTORY[TERMS_HISTORY.length - 1].version;
+
+/** '2026-10-07' → '2026년 10월 7일' */
+export const formatTermsDate = (v: string) => {
+  const [y, m, d] = v.split('-').map(Number);
+  return `${y}년 ${m}월 ${d}일`;
+};
+
+/** agreed보다 뒤에 나온 버전들의 바뀐 점. 동의한 적이 없으면(옛 가입자) 전부. */
+export const changesSince = (agreed: string | null): TermsVersion[] =>
+  TERMS_HISTORY.filter((t) => agreed === null || t.version > agreed);
+
+const EFFECTIVE = formatTermsDate(TERMS_VERSION);
 
 /** 개인정보 보호책임자. 출시 전에 실명과 문의 전용 메일로 채운다(비어 있으면 `npm run check`가 경고한다). */
 export const PRIVACY_OFFICER = { name: '', email: 'team.fitto.kr@gmail.com' };

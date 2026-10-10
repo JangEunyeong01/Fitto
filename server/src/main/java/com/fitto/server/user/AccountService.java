@@ -41,8 +41,8 @@ public class AccountService {
 	private static final List<String> RECORD_ENTITIES = List.of("MealItem", "MealMemo", "DailyWater", "DailySteps",
 			"WeightLog", "Workout", "CustomIngredient", "PeriodSetting", "PeriodLog");
 
-	/** 계정에 딸린 것. 탈퇴 때만 지운다 — 초기화는 로그인을 유지한다. */
-	private static final List<String> ACCOUNT_ENTITIES = List.of("RefreshToken", "EmailCode");
+	/** 계정에 딸린 것. 탈퇴 때만 지운다 — 초기화는 로그인과 약관 동의 이력을 유지한다. */
+	private static final List<String> ACCOUNT_ENTITIES = List.of("RefreshToken", "EmailCode", "UserAgreement");
 
 	/**
 	 * 비밀번호 확인 시도 제한.

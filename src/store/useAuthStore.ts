@@ -31,8 +31,23 @@ interface AuthState {
    * 알려주지 않으면 기록이 서버에 안 올라가는 걸 한참 뒤에야 알게 된다.
    */
   sessionExpired: boolean;
-  signIn: (params: { accessToken: string; refreshToken: string; email: string; emailVerified: boolean }) => void;
+  /**
+   * 이 계정이 마지막으로 동의한 약관 버전. 서버의 지금 버전과 다르면 다시 동의를 묻는다(useTermsRunner).
+   * undefined는 "아직 모름" — 서버에서 받아오기 전에는 묻지 않는다.
+   */
+  agreedTermsVersion?: string | null;
+  /** 다시 동의를 "나중에"로 미룬 날. 하루에 한 번까지만 다시 묻는다. */
+  reconsentAskedOn?: string;
+  signIn: (params: {
+    accessToken: string;
+    refreshToken: string;
+    email: string;
+    emailVerified: boolean;
+    agreedTermsVersion?: string | null;
+  }) => void;
   setEmailVerified: (v: boolean) => void;
+  setAgreedTermsVersion: (v: string | null) => void;
+  setReconsentAskedOn: (date: string) => void;
   updateTokens: (params: { accessToken: string; refreshToken: string }) => void;
   signOut: () => void;
   /** 갱신이 거절돼 로그인이 풀렸을 때. 로그아웃과 달리 사용자에게 알린다. */
@@ -50,10 +65,12 @@ export const useAuthStore = create<AuthState>()(
       emailVerified: null,
       sessionExpired: false,
 
-      signIn: ({ accessToken, refreshToken, email, emailVerified }) =>
-        set({ status: 'member', accessToken, refreshToken, email, emailVerified, sessionExpired: false }),
+      signIn: ({ accessToken, refreshToken, email, emailVerified, agreedTermsVersion }) =>
+        set({ status: 'member', accessToken, refreshToken, email, emailVerified, agreedTermsVersion, sessionExpired: false }),
 
       setEmailVerified: (v) => set({ emailVerified: v }),
+      setAgreedTermsVersion: (v) => set({ agreedTermsVersion: v }),
+      setReconsentAskedOn: (date) => set({ reconsentAskedOn: date }),
 
       // 토큰 갱신(명세 0-4). 갱신할 때마다 새 refreshToken으로 바꿔야 한다 —
       // 서버가 쓴 토큰을 사용 처리하므로 예전 것을 들고 있으면 다음 갱신이 막힌다.
@@ -66,6 +83,8 @@ export const useAuthStore = create<AuthState>()(
           refreshToken: null,
           email: null,
           emailVerified: null,
+          agreedTermsVersion: undefined,
+          reconsentAskedOn: undefined,
           sessionExpired: false,
         }),
 

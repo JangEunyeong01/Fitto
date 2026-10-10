@@ -133,6 +133,8 @@ async function pullOnce(token: string): Promise<void> {
   const mapped = fromUser(user);
   // 다른 기기에서 인증했을 수 있다. 서버 값을 따른다.
   useAuthStore.getState().setEmailVerified(user.emailVerified);
+  // 다른 기기에서 다시 동의했을 수 있다. 서버 값을 따른다.
+  useAuthStore.getState().setAgreedTermsVersion(user.agreedTermsVersion ?? null);
 
   const dailyRecords: Record<string, Partial<DailyRecord>> = {};
   const touch = (date: string) => (dailyRecords[date] ??= {});

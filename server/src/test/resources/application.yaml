@@ -29,6 +29,8 @@ spring:
         read-enums-using-to-string: true
 
 fitto:
+  terms:
+    versions: 2026-10-01,2026-10-07
   jwt:
     secret: test-secret-key-for-integration-tests-32bytes
     access-ttl: 30m
