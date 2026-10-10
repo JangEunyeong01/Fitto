@@ -27,9 +27,12 @@ export function useTheme() {
   const system = useColorScheme();
   const mode = themeMode === 'system' ? (system === 'dark' ? 'dark' : 'light') : themeMode;
   const colors = resolveColors(mode);
+  // 간단히 보기. 공통 부품(링크·버튼·설정 줄·토스트)이 이 값을 보고 스스로 모양을 바꾼다 — 화면을 두 벌 만들지 않는다.
+  const easy = useAppStore((s) => s.easyView);
 
   return {
     mode,
+    easy,
     colors,
     shadow: glassShadow[mode],
     brand,

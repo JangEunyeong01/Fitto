@@ -35,15 +35,15 @@ export default function SettingsRow({
   onPress,
   a11yHint,
 }: SettingsRowProps) {
-  const { colors } = useTheme();
+  const { colors, easy } = useTheme();
 
   const body = (
     <>
       <View style={styles.textCol}>
-        <Text style={[styles.label, { color: danger ? colors.textDanger : colors.textPrimary }]}>{label}</Text>
+        <Text style={[styles.label, easy && styles.labelEasy, { color: danger ? colors.textDanger : colors.textPrimary }]}>{label}</Text>
         {/* 한 줄로 자르지 않는다. 글씨를 키우면 "태어난 연도를 넣어 …"처럼 들어가 보기 전에 알아야 할 말이 잘린다. */}
         {desc ? (
-          <Text style={[styles.desc, { color: descTone === 'danger' ? colors.textDanger : colors.textSecondary }]}>
+          <Text style={[styles.desc, easy && styles.descEasy, { color: descTone === 'danger' ? colors.textDanger : colors.textSecondary }]}>
             {desc}
           </Text>
         ) : null}
@@ -54,7 +54,7 @@ export default function SettingsRow({
     </>
   );
 
-  const rowStyle = [styles.row, desc ? styles.rowTall : null];
+  const rowStyle = [styles.row, desc ? styles.rowTall : null, easy && styles.rowEasy];
   if (!onPress) return <View style={rowStyle}>{body}</View>;
   return (
     <Pressable
@@ -95,6 +95,18 @@ const styles = StyleSheet.create({
     ...weight(600),
   },
   desc: typography.caption,
+  // 간단히 보기: 줄을 키워 손가락이 닿기 쉽게, 글씨도 한 단계씩.
+  rowEasy: {
+    minHeight: 64,
+    paddingVertical: 12,
+  },
+  labelEasy: {
+    fontSize: 17,
+  },
+  descEasy: {
+    fontSize: 14,
+    lineHeight: 20,
+  },
   value: {
     fontSize: 14,
     ...weight(400),

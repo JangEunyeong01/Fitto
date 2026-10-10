@@ -205,6 +205,13 @@ export interface ObPick {
 
 interface AppState {
   theme: ThemeMode;
+  /**
+   * 간단히 보기(기획에서는 시니어 모드). 글씨·버튼을 키우고 누를 수 있는 것을 모양으로 보여준다.
+   * 다크 모드처럼 기기에만 저장한다 — 폰마다 다를 수 있는 보기 설정이라 서버에 올리지 않는다.
+   */
+  easyView: boolean;
+  /** 폰 글씨를 크게 쓰는 사람에게 간단히 보기를 한 번 제안했는지. 거절하면 다시 묻지 않는다. */
+  easyViewOffered: boolean;
   persona: Persona;
   profile: Profile;
   goals: Goals;
@@ -277,6 +284,8 @@ interface AppState {
   dismissAccountPrompt: () => void;
 
   setTheme: (t: ThemeMode) => void;
+  setEasyView: (on: boolean) => void;
+  setEasyViewOffered: () => void;
   setPersona: (p: Persona) => void;
   setProfile: (patch: Partial<Profile>) => void;
   setGoals: (patch: Partial<Goals>) => void;
@@ -417,6 +426,8 @@ export const useAppStore = create<AppState>()(
   persist(
     (set, get, api) => ({
       theme: 'system',
+      easyView: false,
+      easyViewOffered: false,
       persona: 'neutral',
       profile: defaultProfile,
       goals: defaultGoals,
@@ -452,6 +463,8 @@ export const useAppStore = create<AppState>()(
       dismissAccountPrompt: () => set({ accountPromptSeen: true }),
 
       setTheme: (t) => set({ theme: t }),
+      setEasyView: (on) => set({ easyView: on }),
+      setEasyViewOffered: () => set({ easyViewOffered: true }),
       setPersona: (p) => set({ persona: p }),
       // 계산에 쓰는 값이 바뀌면 목표 칼로리를 다시 잡는다(명세 F-040·F-041).
       // 모든 프로필 수정이 여기를 지나므로 화면마다 재계산을 부를 필요가 없다.

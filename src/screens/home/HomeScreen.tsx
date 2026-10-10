@@ -17,6 +17,7 @@ import LayDownModal from './LayDownModal';
 import CardOrderSheet from './CardOrderSheet';
 import BirthdayBanner from './BirthdayBanner';
 import TermsNoticeBanner from './TermsNoticeBanner';
+import EasyViewOffer from './EasyViewOffer';
 import { useAppStore, CardId } from '../../store/useAppStore';
 import { useCardOrderSheetStore } from '../../store/useCardOrderSheetStore';
 import { useBirthdayModalStore } from '../../store/useBirthdayModalStore';
@@ -176,6 +177,8 @@ export default function HomeScreen() {
 
       <CardOrderSheet visible={sheetVisible} onClose={hideSheet} />
       <LayDownModal visible={layDownOpen} onClose={() => setLayDownOpen(false)} />
+      {/* 드러눕기 창과 겹치지 않게. 그 창이 닫히면 다음에 열 때 제안한다. */}
+      {!layDownOpen && <EasyViewOffer />}
     </ScreenBackground>
   );
 }
