@@ -13,6 +13,10 @@ import { alpha, motion, radius, spacing, tabBarShadowColor, typography } from '.
  */
 const ACTION_VISIBLE = 5000;
 
+/** 간단히 보기: 읽고 누르기까지 시간을 더 준다. 3초 안에 못 읽거나 "되돌리기"를 놓치는 일이 없게. */
+const EASY_VISIBLE = 6000;
+const EASY_ACTION_VISIBLE = 9000;
+
 /**
  * 밝은 유리 토스트 — 탭바·카드와 같은 계열(흐림 + 흰 면 95% + 유리 테두리 + 탭바 그림자), 글씨는 진하게.
  * 시안은 어두운 반투명(.9)이었는데 탭바와 겹쳐 뒤가 비쳤고, 불투명 남색으로 바꾸니 홈에서 너무 무거웠다.
@@ -21,7 +25,7 @@ const ACTION_VISIBLE = 5000;
  */
 export default function Toast() {
   const insets = useSafeAreaInsets();
-  const { colors, mode } = useTheme();
+  const { colors, mode, easy } = useTheme();
   const { message, action, seq } = useToastStore();
   const opacity = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(motion.fadeInOffsetY)).current;
@@ -63,7 +67,13 @@ export default function Toast() {
       }),
     ]).start();
 
-    const visibleFor = action ? ACTION_VISIBLE : motion.toastVisible;
+    const visibleFor = easy
+      ? action
+        ? EASY_ACTION_VISIBLE
+        : EASY_VISIBLE
+      : action
+        ? ACTION_VISIBLE
+        : motion.toastVisible;
 
     // 사라지는 건 타이머로 확정한다. 애니메이션 완료 콜백에 맡기면
     // 앱이 백그라운드로 가서 rAF가 멈췄을 때 토스트가 화면에 그대로 남는다.
@@ -100,7 +110,7 @@ export default function Toast() {
       >
       <View style={[styles.face, shownAction && styles.faceWithAction, { backgroundColor: alpha(colors.surfaceSolid, 0.95) }]}>
         <View style={styles.row}>
-          <Text style={[styles.text, { color: colors.textPrimary }, shownAction && styles.textLeft]}>{text}</Text>
+          <Text style={[styles.text, easy && styles.textEasy, { color: colors.textPrimary }, shownAction && styles.textLeft]}>{text}</Text>
           {shownAction && (
             <Pressable
               onPress={() => {
@@ -109,9 +119,9 @@ export default function Toast() {
               }}
               accessibilityRole="button"
               hitSlop={4}
-              style={styles.actionBtn}
+              style={[styles.actionBtn, easy && [styles.actionBtnEasy, { borderColor: colors.textAccent }]]}
             >
-              <Text style={[styles.actionLabel, { color: colors.textAccent }]}>{shownAction.label}</Text>
+              <Text style={[styles.actionLabel, easy && styles.textEasy, { color: colors.textAccent }]}>{shownAction.label}</Text>
             </Pressable>
           )}
         </View>
@@ -174,5 +184,16 @@ const styles = StyleSheet.create({
   },
   actionLabel: {
     ...typography.value,
+  },
+  textEasy: {
+    fontSize: 17,
+    lineHeight: 24,
+  },
+  // 간단히 보기: "되돌리기"도 글씨가 아니라 버튼 모양으로.
+  actionBtnEasy: {
+    borderWidth: 1.5,
+    borderRadius: 22,
+    paddingHorizontal: 14,
+    marginVertical: 4,
   },
 });

@@ -68,6 +68,16 @@ export default function SettingsScreen() {
   const authStatus = useAuthStore((s) => s.status);
   const authEmail = useAuthStore((s) => s.email);
   const emailUnverified = useAuthStore((s) => s.emailVerified) === false;
+  const easyView = useAppStore((s) => s.easyView);
+  const setEasyView = useAppStore((s) => s.setEasyView);
+  // 켜자마자 되돌릴 길을 크게 준다. 실수로 켰거나 다른 사람이 켰을 때 어디서 끄는지 찾지 않아도 되게.
+  const toggleEasyView = (on: boolean) => {
+    setEasyView(on);
+    showToast(on ? '간단히 보기로 바꿨어요' : '보통 화면으로 바꿨어요', {
+      label: '되돌리기',
+      onPress: () => setEasyView(!on),
+    });
+  };
   // 버그 제보에 어느 빌드·OS인지 미리 채운다. 이메일 같은 사람을 알아볼 값은 넣지 않는다.
   const feedbackLink = feedbackUrl(feedbackEnv(appConfig.expo.version, authStatus === 'member'));
 
@@ -160,6 +170,15 @@ export default function SettingsScreen() {
         showsVerticalScrollIndicator={false}
       >
         <Text style={[styles.title, { color: colors.textPrimary }]}>설정</Text>
+
+        {/* 간단히 보기는 맨 위. 필요한 사람일수록 깊이 찾아 들어가기 어렵다. 켜도 끄는 자리·이름은 그대로다. */}
+        <GlassCard style={styles.card} noPadding>
+          <SettingsRow
+            label="간단히 보기"
+            desc="글씨가 크고 버튼이 또렷해져요. 기록은 그대로예요."
+            right={<ToggleSwitch value={easyView} onChange={toggleEasyView} />}
+          />
+        </GlassCard>
 
         {/* 내 정보와 계정은 "나"에 대한 것이라 한 장에 둔다. 계정 속내용은 화면을 따로 팠다. */}
         <GlassCard style={styles.card} noPadding>

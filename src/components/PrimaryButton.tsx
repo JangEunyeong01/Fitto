@@ -57,7 +57,7 @@ export default function PrimaryButton({
   loading,
   accessibilityLabel,
 }: PrimaryButtonProps) {
-  const { colors, radius } = useTheme();
+  const { colors, radius, easy } = useTheme();
   const resolvedSize: ButtonSize = size ?? (small ? 'md' : 'lg');
   const muted = disabled || inactive;
 
@@ -70,12 +70,14 @@ export default function PrimaryButton({
         : colors.textAccent;
 
   const labelStyle = resolvedSize === 'lg' ? typography.buttonLabel : typography.buttonLabelSm;
+  // 간단히 보기: 글씨를 한 단계 키우고, 길면 잘리지 않게 두 줄까지. 높이는 그만큼 늘어나게 최소만 정한다.
+  const easyLabel = easy ? { fontSize: resolvedSize === 'lg' ? 18 : 16, lineHeight: resolvedSize === 'lg' ? 24 : 22 } : null;
   // 로딩 물방울은 글씨색을 따르지 않는다(탈퇴 버튼에서 빨간 원이 돌던 문제). 칠한 면 위만 면에 맞춘 색.
   const dropColor = variant === 'primary' ? colors.textOnPrimary : colors.textAccent;
   const content = loading ? (
     <LoadingDrops color={dropColor} />
   ) : (
-    <Text style={[labelStyle, { color: labelColor }]} numberOfLines={1}>
+    <Text style={[labelStyle, easyLabel, { color: labelColor }]} numberOfLines={easy ? 2 : 1}>
       {label}
     </Text>
   );
@@ -93,7 +95,7 @@ export default function PrimaryButton({
         const focused = (state as { focused?: boolean }).focused;
         return [
           {
-            height: HEIGHT[resolvedSize],
+            ...(easy ? { minHeight: HEIGHT[resolvedSize] + 8, paddingVertical: 8 } : { height: HEIGHT[resolvedSize] }),
             borderRadius: radius.button,
             transform: [{ scale: state.pressed && !muted ? 0.97 : 1 }],
           },

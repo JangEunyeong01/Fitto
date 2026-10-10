@@ -2,6 +2,7 @@ import React from 'react';
 import { Pressable, Text, StyleSheet, StyleProp, ViewStyle } from 'react-native';
 import { useTheme } from '../theme/useTheme';
 import { typography, weight } from '../theme/tokens';
+import Icon from './Icon';
 
 interface TextLinkProps {
   label: string;
@@ -26,8 +27,29 @@ interface TextLinkProps {
  * 화살표는 목록 줄 오른쪽 끝의 이동 표시(아이콘)에만 남긴다.
  */
 export default function TextLink({ label, onPress, disabled, tone = 'accent', style }: TextLinkProps) {
-  const { colors } = useTheme();
+  const { colors, easy } = useTheme();
   const color = disabled ? colors.textDisabled : tone === 'muted' ? colors.textSecondary : colors.textAccent;
+
+  // 간단히 보기: 파란 글씨만으로는 누를 수 있다는 게 안 읽힌다(기기가 낯선 사람에게는 그냥 글씨다).
+  // 테두리 있는 버튼 + 화살표로 바꾼다. 글씨 크기도 한 단계 키운다.
+  if (easy) {
+    return (
+      <Pressable
+        onPress={onPress}
+        disabled={disabled}
+        accessibilityRole="button"
+        accessibilityState={{ disabled: !!disabled }}
+        style={({ pressed }) => [
+          styles.easyBtn,
+          { borderColor: tone === 'muted' ? colors.borderInput : color, opacity: pressed ? 0.6 : 1 },
+          style,
+        ]}
+      >
+        <Text style={[styles.easyLabel, { color }]}>{label}</Text>
+        <Icon name="chevronRight" size={16} color={color} />
+      </Pressable>
+    );
+  }
 
   return (
     <Pressable
@@ -50,5 +72,19 @@ const styles = StyleSheet.create({
   muted: {
     fontSize: 14,
     ...weight(600),
+  },
+  easyBtn: {
+    minHeight: 44,
+    paddingHorizontal: 14,
+    borderWidth: 1.5,
+    borderRadius: 22,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+  },
+  easyLabel: {
+    fontSize: 16,
+    ...weight(700),
   },
 });
