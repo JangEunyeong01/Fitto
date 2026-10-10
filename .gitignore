@@ -64,3 +64,7 @@ docs/피또_UI_기준서.md
 # UI 개선 시안과 작업 지시서 (디자인 캔버스에서 받은 파일, 저장소에는 올리지 않는다)
 design-handoff/
 Claude outputs/
+
+# 서버 빌드 결과물. server/.gitignore에도 있지만 EAS 빌드는 맨 바깥 .gitignore만 봐서, 여기 없으면 앱 빌드 때 60MB가 같이 올라간다.
+server/build/
+server/.gradle/

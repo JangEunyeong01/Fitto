@@ -19,15 +19,16 @@ class HealthRationaleModule : Module() {
     Name("HealthRationale")
 
     OnNewIntent { intent ->
-      if (intent.action in ACTIONS) pending = true
+      if (isRationale(intent.action)) pending = true
     }
 
     // 한 번 읽으면 지운다. 앞으로 나올 때마다 처리방침이 다시 열리지 않게.
     Function("consume") {
       val launch = appContext.currentActivity?.intent
-      val hit = pending || launch?.action in ACTIONS
+      val fromLaunch = isRationale(launch?.action)
+      if (fromLaunch) launch?.action = null
+      val hit = pending || fromLaunch
       pending = false
-      if (launch?.action in ACTIONS) launch?.action = null
       hit
     }
   }
@@ -37,5 +38,8 @@ class HealthRationaleModule : Module() {
       "androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE",
       "android.intent.action.VIEW_PERMISSION_USAGE",
     )
+
+    // action은 null일 수 있다. null을 따로 걸러 두면 Set<String> 검사에 타입 해석 여지가 없다.
+    private fun isRationale(action: String?): Boolean = action != null && action in ACTIONS
   }
 }
