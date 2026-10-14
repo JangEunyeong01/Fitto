@@ -18,12 +18,12 @@ export const TUTORIAL_STEPS: { target: TutorialTargetId; title: string; body: st
   {
     target: 'hero',
     title: '피또가 먼저 인사해요',
-    body: '시간대와 오늘 기록에 맞춰 한마디를 건네요. 기록이 쌓일수록 말이 달라져요.',
+    body: '물을 마실수록 피또가 또렷해지고 둥실 떠다녀요. 시간대와 기록에 맞춰 한마디도 건네요.',
   },
   {
     target: 'kcal',
-    title: '칼로리는 숫자보다 표정으로',
-    body: '피또 얼굴이 5단계로 오늘 상태를 알려줘요. 숫자는 그 다음에 보면 돼요.',
+    title: '칼로리는 한눈에',
+    body: '먹은 양과 남은 양을 막대 하나로 봐요. 아래 음식 기록으로 바로 남겨요.',
   },
   {
     target: 'water',
