@@ -27,10 +27,13 @@ export const personaCopy = {
     strict: (v: { consumedKcal: number; percent: number }) => `섭취 ${v.consumedKcal}kcal. 목표 대비 ${v.percent}%입니다.`,
     neutral: (v: { remainKcal: number }) => `남은 칼로리 ${v.remainKcal}kcal.`,
   },
+  // 예전엔 세 문장이 고정이라 기록과 상관없이 "어제 많이 걸으셨으니", "목표는 체중 감량", "추천 2개"라고 했다.
+  // 피또 말이 사실과 다르면 캐릭터를 못 믿게 되니, 확인된 값이 있을 때만 그 말을 한다.
   exerciseComment: {
-    friendly: () => '어제 많이 걸으셨으니 오늘은 가볍게 몸 풀어요!',
-    strict: () => '목표는 체중 감량입니다. 유산소 20분을 채우세요.',
-    neutral: () => '추천 운동 2개가 있습니다.',
+    friendly: (v: { count: number; walkedYesterday: boolean }) =>
+      v.walkedYesterday ? '어제 많이 걸으셨으니 오늘은 가볍게 몸 풀어요!' : '오늘 컨디션에 맞춰 골라봤어요. 가볍게 시작해요!',
+    strict: (v: { count: number; walkedYesterday: boolean }) => '추천 운동 중 하나는 오늘 채우세요.',
+    neutral: (v: { count: number; walkedYesterday: boolean }) => `추천 운동 ${v.count}개가 있습니다.`,
   },
   periodComment: {
     friendly: (v: { day: number }) => `${v.day}일차예요. 오늘은 무리하지 말고 따뜻하게 있어요.`,
