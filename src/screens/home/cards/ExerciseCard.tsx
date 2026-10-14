@@ -25,6 +25,8 @@ export default function ExerciseCard() {
   const exercises = record?.exercises ?? [];
   const shown = exercises.slice(0, MAX_ROWS);
   const restCount = exercises.length - shown.length;
+  // 활동 카드를 기본 숨김으로 바꾸면서 그 카드의 "운동 시간"을 여기 제목 옆으로 옮겼다.
+  const totalMinutes = exercises.reduce((a, e) => a + e.minutes, 0);
 
   // 헬스 탭 퀵칩과 같은 규칙으로 기록한다(MET × 체중 × 시간).
   const handleQuickAdd = (code: string) => {
@@ -44,7 +46,11 @@ export default function ExerciseCard() {
   return (
     <GlassCard>
       <View style={styles.headerRow}>
-        <Text style={[styles.title, { color: colors.textPrimary }]}>오늘 운동</Text>
+        {/* 칼로리 카드 제목 옆 상태 글씨와 같은 모양. 기록이 있을 때만. */}
+        <Text style={[styles.title, { color: colors.textPrimary }]}>
+          오늘 운동
+          {totalMinutes > 0 && <Text style={[styles.total, { color: colors.textSecondary }]}>{`  · ${totalMinutes}분`}</Text>}
+        </Text>
         {/* "헬스 탭"은 앱 내부 이름이다. 누르면 얻는 것으로 적는다. */}
         <TextLink label="운동 보기" onPress={() => navigation.navigate('Health')} />
       </View>
@@ -82,6 +88,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   title: typography.cardTitle,
+  total: typography.unit,
   link: typography.label,
   empty: {
     ...typography.body,

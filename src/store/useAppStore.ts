@@ -43,6 +43,12 @@ export const DEFAULT_CARD_ORDER: CardId[] = ['kcal', 'water', 'steps', 'act', 'e
  */
 export const ESSENTIAL_CARDS: CardId[] = ['kcal', 'steps'];
 
+/**
+ * 처음부터 숨겨 두는 카드. 활동 카드는 걸음(걸음 카드)·운동 시간(운동 카드)·소모 칼로리(칼로리 카드)를
+ * 다시 모아 보여줄 뿐이라, 기본 홈에선 같은 숫자가 두 번씩 나왔다. 지우지 않고 카드 순서 시트에서 켤 수 있게 둔다.
+ */
+export const DEFAULT_CARD_HIDDEN: CardId[] = ['act'];
+
 export interface Profile {
   nickname: string;
   /** 생년월일. 연도는 나중에 생겨서 예전 사용자는 비어 있을 수 있다(그땐 age만 있다). */
@@ -440,7 +446,7 @@ export const useAppStore = create<AppState>()(
       periodDisplay: { predictPeriod: true, predictFertile: true, hiddenGroups: [] },
       // 전역 상수를 그대로 상태에 넣으면 어딘가에서 배열을 직접 수정했을 때 기본값이 오염된다.
       cardOrder: [...DEFAULT_CARD_ORDER],
-      cardHidden: [],
+      cardHidden: [...DEFAULT_CARD_HIDDEN],
       obInfo: { name: '', gender: '', birthYear: '', birthMonth: '', birthDay: '', height: '', weight: '' },
       obTags: emptyTags(),
       obPick: { activity: '', goal: '', persona: null },
@@ -588,7 +594,7 @@ export const useAppStore = create<AppState>()(
       setCardOrder: (order) => set({ cardOrder: order }),
       // 기본 카드는 어떤 경로로 들어와도 숨김 목록에 들어가지 않게 걸러낸다.
       setCardHidden: (hidden) => set({ cardHidden: hidden.filter((id) => !ESSENTIAL_CARDS.includes(id)) }),
-      resetCardOrder: () => set({ cardOrder: [...DEFAULT_CARD_ORDER], cardHidden: [] }),
+      resetCardOrder: () => set({ cardOrder: [...DEFAULT_CARD_ORDER], cardHidden: [...DEFAULT_CARD_HIDDEN] }),
       setObInfo: (patch) => set((s) => ({ obInfo: { ...s.obInfo, ...patch } })),
       // 선택 배열을 통째로 받으면 리렌더 전에 두 번 누를 때 앞선 선택이 덮어써진다.
       // 항상 스토어의 최신 값을 기준으로 토글한다.
@@ -825,7 +831,7 @@ export const useAppStore = create<AppState>()(
     {
       name: 'fitto-app-storage',
       storage: createJSONStorage(() => AsyncStorage),
-      version: 9,
+      version: 10,
       // 기본 병합은 얕은 병합이라 profile 같은 객체는 저장본이 통째로 덮어쓴다.
       // 그러면 나중에 필드를 추가했을 때 기존 사용자에게만 undefined가 남으므로,
       // 객체 필드는 기본값 위에 저장본을 얹는다.
@@ -1041,6 +1047,13 @@ export const useAppStore = create<AppState>()(
             }
             if (rec) delete rec.periodCondition;
           });
+        }
+
+        // v10: 활동 카드를 기본 숨김으로. v2처럼 홈 카드를 한 번도 안 건드린 사람(기본 순서 + 숨긴 것 없음)만 옮긴다.
+        if (version < 10) {
+          if (state.cardOrder?.join() === DEFAULT_CARD_ORDER.join() && (state.cardHidden ?? []).length === 0) {
+            state.cardHidden = [...DEFAULT_CARD_HIDDEN];
+          }
         }
 
         return state as AppState;
