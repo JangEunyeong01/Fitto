@@ -79,7 +79,7 @@ export default function DietScreen() {
             ) : (
               <View style={styles.emptyInner}>
                 <View style={styles.emptyChar}>
-                  <FittoCharacter current={1} goal={5} size={96} glow={false} />
+                  <FittoCharacter current={1} goal={5} size={96} state="empty" />
                 </View>
                 {/* 명세 F-051 빈 상태 문구. */}
                 <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>

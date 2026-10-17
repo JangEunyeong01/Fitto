@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, Image, Pressable, StyleSheet } from 'react-native';
+import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import TextLink from '../../../components/TextLink';
 import GlassCard from '../../../components/GlassCard';
@@ -11,7 +11,7 @@ import { useFoodSearchStore } from '../../../store/useFoodSearchStore';
 import { dateKey } from '../../../utils/timeOfDay';
 import { getKcalStatus, kcalStatusColor, kcalStatusLabel, sumMealKcal, getBurnedKcal } from '../../../utils/health';
 import { personaCopy } from '../../../copy/persona';
-import { FITTO_FACE } from '../../../theme/assets';
+import FittoPic from '../../../components/FittoPic';
 import { spacing, typography, weight } from '../../../theme/tokens';
 
 /**
@@ -59,10 +59,9 @@ export default function KcalCard() {
           <Text style={[styles.bigNum, { color: colors.textPrimary }]}>{consumed.toLocaleString()}</Text>
           <Text style={[styles.goalNum, { color: colors.textSecondary }]}>/ {goal.toLocaleString()} kcal</Text>
         </View>
-        {/* 피또 얼굴은 작게. 캐릭터가 숫자보다 크면 무엇을 봐야 할지 흐려진다. */}
-        <View style={[styles.faceWrap, { backgroundColor: colors.surfaceSubtle, borderColor: colors.borderDivider }]}>
-          <Image source={FITTO_FACE} style={styles.face} resizeMode="contain" accessible={false} />
-        </View>
+        {/* 피또는 작게. 캐릭터가 숫자보다 크면 무엇을 봐야 할지 흐려진다.
+            v3부터 동그란 받침을 뺐다 — 테두리 없는 면 그림이라 받침 안에 넣으면 스티커처럼 보였다. */}
+        <FittoPic state="water2_normal" size={40} />
       </View>
 
       <View style={styles.barWrap}>
@@ -129,18 +128,6 @@ const styles = StyleSheet.create({
   goalNum: {
     fontSize: 14,
     ...weight(600),
-  },
-  faceWrap: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  face: {
-    width: 30,
-    height: 30,
   },
   barWrap: {
     marginTop: 16,

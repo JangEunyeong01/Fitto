@@ -8,6 +8,7 @@ import PeriodChips, { Period } from './PeriodChips';
 import PeriodBar from './PeriodBar';
 import { usePeriodRange } from './usePeriodRange';
 import DetailSummaryCard from './DetailSummaryCard';
+import FittoCharacter from '../../components/FittoCharacter';
 import DetailBarChart, { hasChartData } from './DetailBarChart';
 import GoalField from './GoalField';
 import CupSizeField from './CupSizeField';
@@ -78,6 +79,8 @@ export default function WaterDetailScreen() {
           goal={goal}
           periodDesc={summaryDesc}
           note={hasChartData(chartValues) ? undefined : emptyMessage}
+          // 오늘 물 단계 표정. 평균을 보는 주간·월간에는 하루 표정이 맞지 않아 뺀다.
+          aside={period === 'day' ? <FittoCharacter current={today} goal={goal} size={52} /> : undefined}
         >
           {hasChartData(chartValues) && (
             <DetailBarChart labels={chartLabels} values={chartValues} highlightIndex={highlightIndex} />
