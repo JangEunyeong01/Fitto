@@ -19,6 +19,7 @@ import { personaCopy } from '../../copy/persona';
 import { QUICK_WORKOUT_MINUTES, calcExerciseKcal, findExercise } from '../../data/workouts';
 import { recommendWorkouts } from '../../utils/workoutRecommend';
 import { isRoughDay } from '../../constants/periodTags';
+import { addDays } from '../../utils/periodCycle';
 import { sumMealKcal } from '../../utils/health';
 import { recentDays, recentDateKeys } from '../../utils/history';
 import { usePastRecord } from '../../hooks/usePastRecord';
@@ -44,6 +45,7 @@ export default function HealthScreen() {
   const profile = useAppStore((s) => s.profile);
   const weightKg = profile.weight;
   const kcalGoal = useAppStore((s) => s.goals.kcal);
+  const stepsGoal = useAppStore((s) => s.goals.steps);
   const preference = useAppStore((s) => s.workoutPreference);
   const addExercise = useAppStore((s) => s.addExercise);
   const removeExercise = useAppStore((s) => s.removeExercise);
@@ -70,8 +72,6 @@ export default function HealthScreen() {
     0
   );
 
-  const trainingComment = personaCopy.exerciseComment[persona]();
-
   // 명세 F-032: 설정·목표·질환·칼로리 상태·생리 컨디션을 반영한 추천. 오늘 기준으로만 계산한다.
   const suggestions = useMemo(
     () =>
@@ -87,6 +87,13 @@ export default function HealthScreen() {
       }),
     [preference, profile, todayRecord, kcalGoal]
   );
+
+  // "어제 많이 걸었다"는 어제 걸음이 목표를 넘었을 때만 말한다. 연결 전이면 걸음이 없으니 자연히 거짓이 된다.
+  const yesterdaySteps = records[addDays(dateKey(), -1)]?.steps ?? 0;
+  const trainingComment = personaCopy.exerciseComment[persona]({
+    count: suggestions.length,
+    walkedYesterday: stepsGoal > 0 && yesterdaySteps >= stepsGoal,
+  });
 
   const handleAdd = (name: string, minutes: number, kcal: number, code?: string) => {
     addExercise(date, { id: newId(), code, name, minutes, kcal });
