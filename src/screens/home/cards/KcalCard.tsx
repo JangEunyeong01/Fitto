@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, Image, Pressable, StyleSheet } from 'react-native';
+import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import TextLink from '../../../components/TextLink';
 import GlassCard from '../../../components/GlassCard';
@@ -11,7 +11,6 @@ import { useFoodSearchStore } from '../../../store/useFoodSearchStore';
 import { dateKey } from '../../../utils/timeOfDay';
 import { getKcalStatus, kcalStatusColor, kcalStatusLabel, sumMealKcal, getBurnedKcal } from '../../../utils/health';
 import { personaCopy } from '../../../copy/persona';
-import { FITTO_FACE } from '../../../theme/assets';
 import { spacing, typography, weight } from '../../../theme/tokens';
 
 /**
@@ -54,15 +53,10 @@ export default function KcalCard() {
         <TextLink label="식단" onPress={() => navigation.navigate('Diet')} />
       </View>
 
+      {/* 피또 얼굴은 홈 맨 위로 옮겼다(HomeHeader). 여기 얼굴은 상태와 상관없이 늘 같은 그림이었다. */}
       <View style={styles.numRow}>
-        <View style={styles.numLeft}>
-          <Text style={[styles.bigNum, { color: colors.textPrimary }]}>{consumed.toLocaleString()}</Text>
-          <Text style={[styles.goalNum, { color: colors.textSecondary }]}>/ {goal.toLocaleString()} kcal</Text>
-        </View>
-        {/* 피또 얼굴은 작게. 캐릭터가 숫자보다 크면 무엇을 봐야 할지 흐려진다. */}
-        <View style={[styles.faceWrap, { backgroundColor: colors.surfaceSubtle, borderColor: colors.borderDivider }]}>
-          <Image source={FITTO_FACE} style={styles.face} resizeMode="contain" accessible={false} />
-        </View>
+        <Text style={[styles.bigNum, { color: colors.textPrimary }]}>{consumed.toLocaleString()}</Text>
+        <Text style={[styles.goalNum, { color: colors.textSecondary }]}>/ {goal.toLocaleString()} kcal 섭취</Text>
       </View>
 
       <View style={styles.barWrap}>
@@ -71,8 +65,8 @@ export default function KcalCard() {
       </View>
 
       <View style={[styles.summaryRow, { borderTopColor: colors.borderDivider }]}>
-        <SummaryCol label="섭취" value={consumed} color={colors.textPrimary} labelColor={colors.textSecondary} />
-        <SummaryCol label="소모" value={burned} color={colors.textPrimary} labelColor={colors.textSecondary} />
+        {/* 섭취는 위 큰 숫자와 같은 값이라 뺐다. */}
+        <SummaryCol label="운동 소모" value={burned} color={colors.textPrimary} labelColor={colors.textSecondary} />
         <SummaryCol label="남음" value={remain} color={colors.textAccent} labelColor={colors.textSecondary} />
       </View>
 
@@ -113,14 +107,10 @@ const styles = StyleSheet.create({
   status: typography.unit,
   numRow: {
     flexDirection: 'row',
-    alignItems: 'flex-end',
-    justifyContent: 'space-between',
-    marginTop: 12,
-  },
-  numLeft: {
-    flexDirection: 'row',
     alignItems: 'baseline',
+    flexWrap: 'wrap',
     gap: 4,
+    marginTop: 12,
   },
   bigNum: {
     ...typography.heroNumber,
@@ -129,18 +119,6 @@ const styles = StyleSheet.create({
   goalNum: {
     fontSize: 14,
     ...weight(600),
-  },
-  faceWrap: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  face: {
-    width: 30,
-    height: 30,
   },
   barWrap: {
     marginTop: 16,

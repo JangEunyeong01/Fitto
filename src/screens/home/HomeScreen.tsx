@@ -57,6 +57,7 @@ export default function HomeScreen() {
   const tutorialDone = useAppStore((s) => s.tutorialDone);
   const setTutorialDone = useAppStore((s) => s.setTutorialDone);
   const dailyRecords = useAppStore((s) => s.dailyRecords);
+  const startDate = useAppStore((s) => s.startDate);
   const layDownShownDate = useAppStore((s) => s.layDownShownDate);
   const setLayDownShownDate = useAppStore((s) => s.setLayDownShownDate);
   const [layDownOpen, setLayDownOpen] = useState(false);
@@ -89,10 +90,10 @@ export default function HomeScreen() {
     if (!tutorialDone || tutorialOpen) return;
     const today = dateKey();
     if (layDownShownDate === today) return;
-    if (!hasNoExerciseForDays(dailyRecords, 3)) return;
+    if (!hasNoExerciseForDays(dailyRecords, 3, startDate)) return;
     setLayDownOpen(true);
     setLayDownShownDate(today);
-  }, [tutorialDone, tutorialOpen, dailyRecords, layDownShownDate]);
+  }, [tutorialDone, tutorialOpen, dailyRecords, layDownShownDate, startDate]);
 
   // 온보딩을 막 끝낸 사용자에게 한 번만 보여준다. 이후에는 설정에서 다시 볼 수 있다.
   useEffect(() => {
