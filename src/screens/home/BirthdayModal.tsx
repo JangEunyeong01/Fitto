@@ -1,12 +1,12 @@
 import React, { useEffect, useRef } from 'react';
-import { Text, StyleSheet, Image, Animated, Easing } from 'react-native';
+import { Text, StyleSheet, Animated, Easing } from 'react-native';
+import FittoPic from '../../components/FittoPic';
 import AlertModal from '../../components/AlertModal';
 import { useTheme } from '../../theme/useTheme';
 import { birthday, motion, weight } from '../../theme/tokens';
 import { personaCopy } from '../../copy/persona';
 import { useAppStore } from '../../store/useAppStore';
 import { useBirthdayModalStore } from '../../store/useBirthdayModalStore';
-import { FITTO_HELLO } from '../../theme/assets';
 
 /**
  * 생일 축하(시안 38). 생일 배너(홈)와 미리보기(설정) 양쪽에서 열려서 전역 스토어로 연다.
@@ -43,7 +43,7 @@ export default function BirthdayModal() {
         <>
           <Text style={[styles.label, { color: colors.textAccent }]}>HAPPY BIRTHDAY</Text>
           <Animated.View style={[styles.charWrap, { transform: [{ translateY: floatY }] }]}>
-            <Image source={FITTO_HELLO} style={styles.char} resizeMode="contain" accessibilityLabel="축하하는 피또" />
+            <FittoPic state="birthday" size={112} />
           </Animated.View>
         </>
       }
@@ -62,12 +62,6 @@ const styles = StyleSheet.create({
   },
   charWrap: {
     marginTop: 10,
-    width: 128,
-    height: 128,
-  },
-  char: {
-    width: '100%',
-    height: '100%',
   },
   message: {
     fontSize: 14,

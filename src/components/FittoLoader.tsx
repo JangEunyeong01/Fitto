@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, Text, Image, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -11,7 +11,7 @@ import Animated, {
   useReducedMotion,
 } from 'react-native-reanimated';
 import { useTheme } from '../theme/useTheme';
-import { FITTO_HELLO } from '../theme/assets';
+import FittoPic from './FittoPic';
 
 /**
  * 피또 로딩(버튼 안 · 화면 안 두 가지).
@@ -78,7 +78,7 @@ export function FittoLoading({ text, size = 72 }: { text: string; size?: number 
   return (
     <View style={styles.page} accessible accessibilityRole="progressbar" accessibilityLabel={text}>
       <Animated.View style={float}>
-        <Image source={FITTO_HELLO} style={{ width: size, height: size }} resizeMode="contain" />
+        <FittoPic state="hello" size={size} />
       </Animated.View>
       <Text style={[styles.pageText, { color: colors.textSecondary }]}>{text}</Text>
       <LoadingDrops color={colors.textAccent} />

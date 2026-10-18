@@ -1,12 +1,12 @@
 import React from 'react';
-import { View, Text, Image, Pressable, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import Icon from '../../components/Icon';
 import { useTheme } from '../../theme/useTheme';
 import { lightColors, radius, typography, weight } from '../../theme/tokens';
-import { FITTO_HELLO } from '../../theme/assets';
+import FittoPic from '../../components/FittoPic';
 import { useAppStore } from '../../store/useAppStore';
 
 /**
@@ -28,9 +28,8 @@ const HEADER_SUB = '#34506A';
 
 /** 상태 표시줄 아래로 시트가 시작되는 높이(시안 기준 292 − 상태 표시줄 44). */
 const HEADER_BODY = 248;
-/** 피또 전신 그림 비율(578×731). 폭 128이면 높이 약 162. */
+/** 피또 폭. 높이는 그림 비율(200:244)로 약 156. 자리는 v3 전과 같다(옮길지는 아직 결정 전). */
 const FITTO_W = 128;
-const FITTO_H = Math.round((FITTO_W * 731) / 578);
 
 /**
  * "나중에 하기" — 들어온 길과 상관없이 홈으로 간다.
@@ -112,12 +111,7 @@ export default function AuthSheetLayout({ heading, title, subtitle, onBack, chil
           </View>
 
           {/* 장식이라 스크린리더는 건너뛴다. 아래쪽은 시트가 덮어서 고개만 내민 모양이 된다. */}
-          <Image
-            source={FITTO_HELLO}
-            style={[styles.fitto, { top: insets.top + 130 }]}
-            resizeMode="contain"
-            accessible={false}
-          />
+          <FittoPic state="hello" size={FITTO_W} style={[styles.fitto, { top: insets.top + 130 }]} />
         </View>
 
         <View
@@ -183,8 +177,6 @@ const styles = StyleSheet.create({
   fitto: {
     position: 'absolute',
     right: 18,
-    width: FITTO_W,
-    height: FITTO_H,
   },
   sheet: {
     flexGrow: 1,

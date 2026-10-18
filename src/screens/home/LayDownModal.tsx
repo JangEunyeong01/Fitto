@@ -1,12 +1,12 @@
 import React from 'react';
-import { View, Image, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import AlertModal from '../../components/AlertModal';
 import { personaCopy } from '../../copy/persona';
 import { useAppStore } from '../../store/useAppStore';
 import { useToastStore } from '../../store/useToastStore';
 import { newId } from '../../utils/id';
 import { dateKey } from '../../utils/timeOfDay';
-import { FITTO_HELLO } from '../../theme/assets';
+import FittoPic from '../../components/FittoPic';
 
 interface LayDownModalProps {
   visible: boolean;
@@ -18,7 +18,7 @@ const WALK_MINUTES = 5;
 const WALK_KCAL = 25;
 
 // 운동 기록이 3일 비면 뜨는 알림(시안 37). 문구는 피또 성격 카피를 그대로 쓴다.
-// 전용 "드러누운 포즈" 일러스트가 아직 없어 기본 캐릭터를 눕혀서 쓴다.
+// 그림은 녹아서 웅덩이가 된 피또(v3 laydown_puddle). 예전엔 기본 그림을 98도 눕혀서 썼다.
 export default function LayDownModal({ visible, onClose }: LayDownModalProps) {
   const persona = useAppStore((s) => s.persona);
   const addExercise = useAppStore((s) => s.addExercise);
@@ -36,7 +36,7 @@ export default function LayDownModal({ visible, onClose }: LayDownModalProps) {
       onClose={onClose}
       top={
         <View style={styles.charSlot}>
-          <Image source={FITTO_HELLO} style={styles.char} resizeMode="contain" accessibilityLabel="드러누운 피또" />
+          <FittoPic state="laydown_puddle" size={120} />
         </View>
       }
       title={personaCopy.layDownTitle[persona]()}
@@ -50,14 +50,6 @@ export default function LayDownModal({ visible, onClose }: LayDownModalProps) {
 
 const styles = StyleSheet.create({
   charSlot: {
-    height: 104,
     alignItems: 'center',
-    justifyContent: 'flex-end',
-  },
-  char: {
-    width: 132,
-    height: 132,
-    // 프로토타입과 같은 각도로 눕힌다.
-    transform: [{ rotate: '98deg' }, { translateY: 6 }],
   },
 });

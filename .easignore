@@ -1,0 +1,74 @@
+# EAS 빌드 업로드 규칙. 이 파일이 있으면 EAS는 .gitignore 대신 이것만 본다.
+# .gitignore와 같고 피또 그림(src/theme/fittoSvgs.ts)만 뺐다 — 저장소엔 안 올리지만 앱 빌드엔 들어가야 해서.
+# .gitignore를 고치면 여기도 같이 고친다.
+
+# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
+
+# dependencies
+node_modules/
+
+# Expo
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+
+# Native
+.kotlin/
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# Metro
+.metro-health-check*
+
+# debug
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# macOS
+.DS_Store
+*.pem
+
+# 환경변수 파일. 예시(.env.example)만 올리고 실제 값이 든 파일은 전부 제외한다.
+# 한 줄로 .env*를 막고 예시만 되살리는 편이, 새 파일 이름이 생길 때마다 규칙을 추가하는 것보다 안전하다.
+.env
+.env.*
+!.env.example
+!*/.env.example
+
+# 로컬 개발 도구 설정 (저장소에는 올리지 않는다)
+CLAUDE.md
+AGENTS.md
+.claude/
+
+# typescript
+*.tsbuildinfo
+
+# generated native folders
+/ios
+/android
+
+# 디자인 핸드오프 프로토타입 (5.6MB 단독 실행 번들)
+# 로컬에서 브라우저로 열어 동작 확인하는 용도라 저장소에는 넣지 않는다.
+# 스펙 자체는 같은 폴더의 README.md에 모두 적혀 있다.
+design-source/design_handoff_fitto/Fitto 건강관리 앱.html
+# Playwright CLI output (may contain credentials)
+.playwright-cli/
+# 로컬에 받아둔 도구 저장소(자체 .git 보유, 앱 코드 아님)
+graph-engineering/
+# 개인 작업 메모 (저장소에는 올리지 않는다)
+docs/피또_진행현황_정리.md
+docs/피또_기술선택_정리.md
+docs/피또_UI_기준서.md
+# UI 개선 시안과 작업 지시서 (디자인 캔버스에서 받은 파일, 저장소에는 올리지 않는다)
+design-handoff/
+Claude outputs/
+
+# 서버 빌드 결과물. server/.gitignore에도 있지만 EAS 빌드는 맨 바깥 .gitignore만 봐서, 여기 없으면 앱 빌드 때 60MB가 같이 올라간다.
+server/build/
+server/.gradle/

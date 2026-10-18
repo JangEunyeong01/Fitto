@@ -17,7 +17,7 @@ import { daysBetween, getCycleDayNumber, getUpcomingDates } from '../../utils/pe
  * 예전에는 그라데이션이 화면 위 300px에 옅게 깔려서, 같은 회색 글씨가 카드 위치마다 다르게 보였다.
  *
  * 피또는 여기 한 번만 나온다. 예전엔 칼로리 카드 구석의 30px 얼굴이 전부라 "숫자 대신 표정으로"라는
- * 앱 소개와 달리 36px 숫자가 주인공이었다. 첫 줄로 올려 물 단계(크기·떠다니는 속도·흐림)를 보여 준다.
+ * 앱 소개와 달리 36px 숫자가 주인공이었다. 첫 줄로 올려 물 단계(v3 표정 그림·크기·떠다니는 속도)를 보여 준다.
  * 설정 아이콘은 뺐다 — 탭바 설정 탭과 같은 곳으로 가는 길이 두 개였다.
  */
 export default function HomeHeader() {
@@ -69,8 +69,7 @@ export default function HomeHeader() {
       <View style={styles.heroRow}>
         {/* 그림만으로는 상태가 전달되지 않으니 스크린리더에는 단계 이름을 읽어 준다. */}
         <View accessible accessibilityRole="image" accessibilityLabel={`피또, ${stage.name}`}>
-          {/* 뒤 동그라미(glow)는 끈다. 그라데이션 위에서 동그라미가 피또를 가두는 판처럼 보였다. */}
-          <FittoCharacter current={water} goal={goals.water} size={HERO_SIZE} glow={false} />
+          <FittoCharacter current={water} goal={goals.water} size={HERO_SIZE} />
         </View>
         <View style={styles.textCol}>
           <Text style={[styles.greeting, { color: colors.textPrimary }]}>{briefing.greeting}</Text>

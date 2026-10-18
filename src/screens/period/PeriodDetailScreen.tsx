@@ -88,7 +88,7 @@ export default function PeriodDetailScreen() {
             문구가 "N일차, 무리하지 말고 따뜻하게"라 생리 중일 때만 보인다. 주기 17일째에 그 말을 하면 틀린 말이 된다. */}
         {onPeriod && (
           <View style={styles.characterRow}>
-            <FittoCharacter current={3} goal={5} size={52} variant="face" glow={false} />
+            <FittoCharacter current={3} goal={5} size={52} state="period_care" />
             <Text style={[styles.comment, { color: colors.textPrimary }]}>{comment}</Text>
           </View>
         )}

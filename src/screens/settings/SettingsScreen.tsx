@@ -8,6 +8,7 @@ import AlertModal from '../../components/AlertModal';
 import ToggleSwitch from '../../components/ToggleSwitch';
 import Icon from '../../components/Icon';
 import SegmentedControl from '../../components/SegmentedControl';
+import FittoPic from '../../components/FittoPic';
 import SettingsRow, { RowDivider, ROW_PAD } from './SettingsRow';
 import { useTheme } from '../../theme/useTheme';
 import { useAppStore, ThemeMode } from '../../store/useAppStore';
@@ -237,6 +238,14 @@ export default function SettingsScreen() {
 
         <GlassCard style={styles.card}>
           <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>피또 성격</Text>
+          {/* 성격마다 그림이 다르다(v3). 아래 칸과 같은 폭으로 나눠 각 칸 위에 그 성격의 피또를 둔다. */}
+          <View style={styles.personaFaces}>
+            {PERSONA_OPTIONS.map((p) => (
+              <View key={p.key} style={[styles.personaFace, { opacity: p.key === persona ? 1 : 0.4 }]}>
+                <FittoPic state="water2_normal" persona={p.key} size={44} />
+              </View>
+            ))}
+          </View>
           <View style={styles.segmentWrap}>
             <SegmentedControl
               options={PERSONA_OPTIONS.map((p) => ({ value: p.key, label: p.label }))}
@@ -463,8 +472,16 @@ const styles = StyleSheet.create({
   goalSummary: typography.bodySm,
   together: typography.caption,
   cardTitle: typography.cardTitle,
-  segmentWrap: {
+  personaFaces: {
+    flexDirection: 'row',
     marginTop: 12,
+  },
+  personaFace: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  segmentWrap: {
+    marginTop: 8,
   },
   previewText: {
     ...typography.bodySm,

@@ -40,7 +40,7 @@ export default function AccountChoiceScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.hero}>
-          <FittoCharacter current={4} goal={5} size={92} glowSize={112} />
+          <FittoCharacter current={4} goal={5} size={92} state="hello" />
           <Text style={[styles.title, { color: colors.textPrimary }]}>기록을 어디에 저장할까요?</Text>
           <Text style={[styles.desc, { color: colors.textSecondary }]}>
             {nickname}님의 기록은 지금 이 폰에 저장돼요. 계정을 만들면 서버에도 함께 보관할 수 있어요.

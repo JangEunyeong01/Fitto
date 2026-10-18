@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Pressable, TextInput, Image, ScrollView, StyleSheet, AppState } from 'react-native';
+import { View, Text, Pressable, TextInput, ScrollView, StyleSheet, AppState } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { tabBarSpace } from '../../navigation/TabBar';
 import GlassCard from '../../components/GlassCard';
 import ScreenBackground from '../../components/ScreenBackground';
 import DetailHeader from '../detail/DetailHeader';
 import ToggleSwitch from '../../components/ToggleSwitch';
-import FittoCharacter from '../../components/FittoCharacter';
+import FittoPic from '../../components/FittoPic';
 import SelectChip from '../../components/SelectChip';
 import TextField from '../../components/TextField';
 import { useTheme } from '../../theme/useTheme';
@@ -27,7 +27,7 @@ import {
 } from '../../notifications/schedule';
 import { personaCopy, waterStageNames } from '../../copy/persona';
 import { dateKey } from '../../utils/timeOfDay';
-import { FITTO_FACE } from '../../theme/assets';
+import { WATER_FACES } from '../../theme/assets';
 
 const WATER_INTERVALS = [1, 2, 3, 4];
 
@@ -186,7 +186,8 @@ export default function NotificationsScreen() {
         <GlassCard style={styles.card}>
           <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>알림 미리보기</Text>
           <View style={styles.previewRow}>
-            <Image source={FITTO_FACE} style={styles.previewFace} resizeMode="contain" />
+            {/* 물 마시라는 알림이라 목마른 표정. */}
+            <FittoPic state="water1_thirsty" size={40} />
             <Text style={[styles.previewText, { color: colors.textPrimary }]}>{previewCopy}</Text>
           </View>
         </GlassCard>
@@ -212,7 +213,7 @@ export default function NotificationsScreen() {
                       on && { backgroundColor: colors.surfaceSolid, borderWidth: 2, borderColor: brand.blue },
                     ]}
                   >
-                    <FittoCharacter current={i} goal={4} size={34} variant="face" glow={false} />
+                    <FittoPic state={WATER_FACES[i]} size={32} />
                   </View>
                   <Text
                     style={[
@@ -400,10 +401,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
     marginTop: 12,
-  },
-  previewFace: {
-    width: 44,
-    height: 44,
   },
   previewText: {
     fontSize: 14,

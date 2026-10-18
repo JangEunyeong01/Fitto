@@ -67,7 +67,7 @@ export default function CompleteStep() {
   return (
     <View>
       <View style={styles.greetRow}>
-        <FittoCharacter current={4} goal={5} size={62} variant="face" glowSize={74} />
+        <FittoCharacter current={4} goal={5} size={56} persona={obPick.persona ?? 'friendly'} />
         <View style={styles.greetText}>
           <Text style={[styles.greetName, { color: colors.textPrimary }]}>{name}님, 반가워요!</Text>
           <Text style={[styles.greetMeta, { color: colors.textSecondary }]}>

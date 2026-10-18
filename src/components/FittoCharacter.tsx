@@ -1,20 +1,25 @@
 import React, { useEffect, useRef } from 'react';
-import { Image, View, StyleSheet, Animated, Easing } from 'react-native';
-import { FITTO_FACE, FITTO_HELLO } from '../theme/assets';
-import { getWaterStageSpec } from '../utils/health';
-import { brand, motion } from '../theme/tokens';
+import { View, StyleSheet, Animated, Easing } from 'react-native';
+import FittoPic from './FittoPic';
+import { FITTO_RATIO, WATER_FACES, type FittoState } from '../theme/assets';
+import { getWaterStageIndex, getWaterStageSpec } from '../utils/health';
+import { motion } from '../theme/tokens';
+import type { Persona } from '../store/useAppStore';
 
 interface FittoCharacterProps {
   current: number;
   goal: number;
+  /** 가로. 세로는 그림 비율(200:244)을 따른다. */
   size?: number;
-  variant?: 'full' | 'face';
-  glow?: boolean;
-  glowSize?: number;
+  /** 물 단계 표정 대신 보여줄 그림. 크기·둥둥 주기는 그대로 물 단계를 따른다. */
+  state?: FittoState;
+  persona?: Persona;
 }
 
-// 물 단계는 크기·떠다니는 속도·흐림으로 보여준다. 단계별 표정 그림이 준비되면 이미지를 바꾼다.
-export default function FittoCharacter({ current, goal, size = 78, variant = 'full', glow = true, glowSize }: FittoCharacterProps) {
+// 물 단계는 표정 그림 + 크기 + 떠다니는 속도로 보여준다.
+// v3 그림은 마를수록 색이 바래 있어서 예전의 흐림 처리는 뺐다. 뒤의 파란 빛 원도 뺐다 —
+// 하늘색 바탕 위에선 피또와 같은 색이라 오히려 경계를 흐렸다.
+export default function FittoCharacter({ current, goal, size = 78, state, persona }: FittoCharacterProps) {
   const spec = getWaterStageSpec(current, goal);
   const scale = useRef(new Animated.Value(spec.scale)).current;
   const floatY = useRef(new Animated.Value(0)).current;
@@ -58,55 +63,18 @@ export default function FittoCharacter({ current, goal, size = 78, variant = 'fu
     return () => loop.stop();
   }, [spec.floatDurationMs]);
 
-  // 마른 단계일수록 흐리게. 예전엔 그림 위에 동그란 반투명 판을 덮어 회색빛을 흉내 냈는데,
-  // 새 그림은 배경이 투명이라 그 판이 피또 뒤 동그라미로 드러났다. 그림 자체의 투명도로 바꾼다.
-  // ponytail: 단계별 표정 그림이 들어오면 이 흐림도 빼고 이미지를 바꾼다.
-  const dryOpacity = 1 - spec.grayscale * 0.6;
-
-  const source = variant === 'face' ? FITTO_FACE : FITTO_HELLO;
-
   return (
-    <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
-      {glow && (
-        <View
-          style={[
-            styles.glow,
-            {
-              width: glowSize ?? size + 28,
-              height: glowSize ?? size + 28,
-              borderRadius: (glowSize ?? size + 28) / 2,
-              backgroundColor: brand.blue,
-              opacity: 0.18,
-            },
-          ]}
-        />
-      )}
-      <Animated.View
-        style={[
-          styles.stage,
-          { width: size, height: size, transform: [{ translateY: floatY }, { scale }] },
-        ]}
-      >
-        {/* absoluteFill에는 width/height가 없어 웹에서 Image가 원본 크기(578x731)로 삐져나온다.
-            크기를 명시해 컨테이너에 맞춘다. */}
-        <Image source={source} style={[styles.fill, { opacity: dryOpacity }]} resizeMode="contain" />
+    <View style={[styles.box, { width: size, height: size * FITTO_RATIO }]}>
+      <Animated.View style={{ transform: [{ translateY: floatY }, { scale }] }}>
+        <FittoPic state={state ?? WATER_FACES[getWaterStageIndex(current, goal)]} size={size} persona={persona} />
       </Animated.View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  glow: {
-    position: 'absolute',
-  },
-  stage: {
-    overflow: 'hidden',
-  },
-  fill: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    width: '100%',
-    height: '100%',
+  box: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

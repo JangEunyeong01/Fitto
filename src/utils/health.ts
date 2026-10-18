@@ -5,19 +5,17 @@ export type WaterStage = 0 | 1 | 2 | 3 | 4;
 export interface WaterStageSpec {
   stage: WaterStage;
   name: string;
-  grayscale: number;
-  saturate: number;
-  brightness: number;
   scale: number;
   floatDurationMs: number | null; // null = 정지(부유 없음)
 }
 
+// 마른 정도(바랜 색)는 v3 표정 그림에 들어 있어서 여기엔 크기와 둥둥 주기만 남긴다.
 const WATER_STAGE_SPECS: WaterStageSpec[] = [
-  { stage: 0, name: '바싹 마름', grayscale: 0.5, saturate: 0.55, brightness: 1.04, scale: 0.9, floatDurationMs: null },
-  { stage: 1, name: '목마름', grayscale: 0.22, saturate: 0.8, brightness: 1.0, scale: 0.94, floatDurationMs: 7000 },
-  { stage: 2, name: '보통', grayscale: 0, saturate: 1.0, brightness: 1.0, scale: 1.0, floatDurationMs: 5500 },
-  { stage: 3, name: '촉촉', grayscale: 0, saturate: 1.18, brightness: 1.03, scale: 1.03, floatDurationMs: 4200 },
-  { stage: 4, name: '완전 만족', grayscale: 0, saturate: 1.32, brightness: 1.06, scale: 1.06, floatDurationMs: 3200 },
+  { stage: 0, name: '바싹 마름', scale: 0.9, floatDurationMs: null },
+  { stage: 1, name: '목마름', scale: 0.94, floatDurationMs: 7000 },
+  { stage: 2, name: '보통', scale: 1.0, floatDurationMs: 5500 },
+  { stage: 3, name: '촉촉', scale: 1.03, floatDurationMs: 4200 },
+  { stage: 4, name: '완전 만족', scale: 1.06, floatDurationMs: 3200 },
 ];
 
 export function getWaterStageIndex(current: number, goal: number): WaterStage {

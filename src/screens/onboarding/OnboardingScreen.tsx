@@ -14,6 +14,7 @@ import { useAppStore, type ObInfo } from '../../store/useAppStore';
 import { useToastStore } from '../../store/useToastStore';
 import { INPUT_LIMITS, birthYearLimits } from '../../utils/goals';
 import { typography, weight } from '../../theme/tokens';
+import { FITTO_RATIO } from '../../theme/assets';
 import GlassCard from '../../components/GlassCard';
 import { PERSONA_OPTIONS, STEP_LABELS, TOTAL_STEPS } from './onboardingData';
 import { ACTIVITY_OPTIONS, AVOID_TAGS, DISEASE_TAGS, GOAL_OPTIONS, TASTE_TAGS } from '../../constants/codes';
@@ -68,10 +69,11 @@ const DESC_LINE_H = 19;
 const STEP_LABEL_LINE_H = 16;
 const HEADER_MIN_H = STEP_LABEL_LINE_H + 8 + typography.onboardingTitle.lineHeight * 2 + 10 + DESC_LINE_H;
 
-const COMMENT_FACE_SIZE = 56;
+/** 피또 가로. 그림이 세로로 길어서(200:244) 예전 얼굴 56px과 높이가 비슷해지게 48로 둔다. */
+const COMMENT_FACE_SIZE = 48;
 const COMMENT_GAP = 10;
-/** 얼굴 + 간격 + 한 줄. 임계값을 눈대중 상수로 두면 상단 높이가 조금만 바뀌어도 경계에서 깜빡인다. */
-const COMMENT_BLOCK_H = COMMENT_FACE_SIZE + COMMENT_GAP + 17;
+/** 그림 + 간격 + 한 줄. 임계값을 눈대중 상수로 두면 상단 높이가 조금만 바뀌어도 경계에서 깜빡인다. */
+const COMMENT_BLOCK_H = Math.ceil(COMMENT_FACE_SIZE * FITTO_RATIO) + COMMENT_GAP + 17;
 /** 위아래로 숨 쉴 자리까지 나오는 단계에만 끼워 넣는다. */
 const COMMENT_MIN_ROOM = COMMENT_BLOCK_H + 16;
 
@@ -333,13 +335,21 @@ export default function OnboardingScreen() {
             */}
             {step === 0 && room > 0 && (
               <View style={[styles.centerFill, { height: room }]}>
-                <FittoCharacter current={2} goal={5} size={172} glowSize={210} />
+                {/* 아직 성격을 안 골랐으니 친근형으로 인사한다. */}
+                <FittoCharacter current={2} goal={5} size={172} state="hello" persona="friendly" />
               </View>
             )}
 
             {showComment && (
               <View style={[styles.centerFill, { height: room }]}>
-                <FittoCharacter current={3} goal={5} size={COMMENT_FACE_SIZE} variant="face" glowSize={68} />
+                {/* 성격을 고르면 그 성격의 피또로 바로 바뀐다. 고르기 전엔 친근형. */}
+                <FittoCharacter
+                  current={3}
+                  goal={5}
+                  size={COMMENT_FACE_SIZE}
+                  state="water2_normal"
+                  persona={obPick.persona ?? 'friendly'}
+                />
                 <Text style={[styles.commentText, { color: colors.textSecondary }]}>{comment}</Text>
               </View>
             )}

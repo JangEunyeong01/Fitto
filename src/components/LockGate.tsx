@@ -1,9 +1,9 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { AppState, Image, View, Text, StyleSheet } from 'react-native';
+import { AppState, View, Text, StyleSheet } from 'react-native';
 import PrimaryButton from './PrimaryButton';
+import FittoPic from './FittoPic';
 import { useTheme } from '../theme/useTheme';
 import { typography } from '../theme/tokens';
-import { FITTO_FACE } from '../theme/assets';
 import { useAppStore } from '../store/useAppStore';
 import { useToastStore } from '../store/useToastStore';
 import { confirmOwner, type OwnerCheck } from '../utils/deviceAuth';
@@ -110,7 +110,7 @@ export default function LockGate() {
 
   return (
     <View style={[styles.cover, { backgroundColor: colors.bg }]} accessibilityViewIsModal>
-      <Image source={FITTO_FACE} style={styles.face} resizeMode="contain" />
+      <FittoPic state="lock" size={96} />
       {locked && (
         <>
           <Text style={[styles.title, { color: colors.textPrimary }]}>피또가 잠겨 있어요</Text>
@@ -134,10 +134,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 32,
-  },
-  face: {
-    width: 96,
-    height: 90,
   },
   title: {
     ...typography.itemTitle,
