@@ -67,12 +67,16 @@ export function sumMealKcal(meals: Record<string, { kcal: number }[]>): number {
 export function hasNoExerciseForDays(
   records: Record<string, { exercises: unknown[] }>,
   days: number,
+  startDate: string | null,
   today: Date = new Date()
 ): boolean {
   for (let i = 0; i < days; i++) {
     const d = new Date(today);
     d.setDate(today.getDate() - i);
     const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    // 앱을 쓰기 전 날은 "운동 안 한 날"이 아니다. 시작일보다 앞이면 아직 N일이 안 찬 것.
+    // 예전엔 이걸 안 봐서 가입 당일에 "3일 동안 운동 기록이 없어요"가 떴다.
+    if (!startDate || key < startDate) return false;
     if ((records[key]?.exercises.length ?? 0) > 0) return false;
   }
   return true;

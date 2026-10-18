@@ -31,9 +31,9 @@ export default function BirthDateFields({ value, onChange, onCommit, onBackgroun
     maxLength: number;
     flex: number;
   }[] = [
-    { key: 'year', unit: '년', a11y: '태어난 연도', placeholder: '1998', maxLength: 4, flex: 1.5 },
-    { key: 'month', unit: '월', a11y: '태어난 월', placeholder: '3', maxLength: 2, flex: 1 },
-    { key: 'day', unit: '일', a11y: '태어난 일', placeholder: '14', maxLength: 2, flex: 1 },
+    { key: 'year', unit: '년', a11y: '태어난 연도', placeholder: '1900', maxLength: 4, flex: 1.5 },
+    { key: 'month', unit: '월', a11y: '태어난 월', placeholder: '01', maxLength: 2, flex: 1 },
+    { key: 'day', unit: '일', a11y: '태어난 일', placeholder: '01', maxLength: 2, flex: 1 },
   ];
 
   return (
@@ -51,7 +51,7 @@ export default function BirthDateFields({ value, onChange, onCommit, onBackgroun
             accessibilityLabel={p.a11y}
             onBackground={onBackground}
             center
-            style={styles.input}
+            style={[styles.input, value[p.key] ? weight(700) : weight(400)]}
           />
         </Part>
       ))}
