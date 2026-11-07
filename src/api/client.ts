@@ -154,17 +154,26 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
   };
 
   let res: Response;
+  let text: string;
   try {
     res = await fetchWithTimeout(url, init, timeoutMs, wakeRetries);
+    // 204 No Content(삭제 계열)는 본문이 없다.
+    if (res.status === 204) return undefined as T;
+    // 본문을 받는 도중에 끊길 수도 있다. 그것도 연결 문제다.
+    text = await res.text();
   } catch {
     throw new NetworkError();
   }
 
-  // 204 No Content(삭제 계열)는 본문이 없다.
-  if (res.status === 204) return undefined as T;
-
-  const text = await res.text();
-  const data = text ? JSON.parse(text) : null;
+  // 프록시·와이파이 로그인 화면이 HTML을 주면 JSON이 아니다. 예전엔 여기서 SyntaxError가 나서
+  // "알 수 없는 이유로 실패"로 세어졌다.
+  let data: any = null;
+  try {
+    data = text ? JSON.parse(text) : null;
+  } catch {
+    // 성공 응답인데 JSON이 아니면 우리 서버에 닿지 못한 것이다(와이파이 로그인 화면 등).
+    if (res.ok) throw new NetworkError();
+  }
 
   if (!res.ok) {
     // 서버가 형식을 못 지킨 응답(프록시 502 등)도 같은 모양으로 감싸 화면 처리를 하나로 둔다.
