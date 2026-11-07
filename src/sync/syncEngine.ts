@@ -24,6 +24,7 @@ import { useAppStore } from '../store/useAppStore';
 import { useAuthStore } from '../store/useAuthStore';
 import { useOutboxStore } from '../store/useOutboxStore';
 import { toDateKey } from '../utils/periodCycle';
+import { classifyFailure, singleFlight } from './rules';
 import type { SyncOp } from './types';
 
 /**
@@ -36,8 +37,13 @@ import type { SyncOp } from './types';
 
 let running = false;
 
-/** 401을 만나면 한 번만 갱신을 시도한다. 갱신도 실패하면 로그아웃시킨다(명세 0-4). */
-export async function refreshToken(): Promise<string | null> {
+/**
+ * 401을 만나면 한 번만 갱신을 시도한다. 갱신도 실패하면 로그아웃시킨다(명세 0-4).
+ * 올리기·내려받기·지난 날짜가 동시에 불러도 요청은 하나만 나간다(rules.ts singleFlight).
+ */
+export const refreshToken = singleFlight(refreshTokenOnce);
+
+async function refreshTokenOnce(): Promise<string | null> {
   const { refreshToken: current, updateTokens, expireSession } = useAuthStore.getState();
   if (!current) {
     return null;
@@ -80,12 +86,17 @@ export async function runSync(): Promise<void> {
         await send(head.op, auth.accessToken);
         shift();
       } catch (e) {
-        if (isRemoveAlreadyDone(head.op, e)) {
+        const action = classifyFailure(head.op.kind, {
+          network: e instanceof NetworkError,
+          status: e instanceof ApiError ? e.status : undefined,
+        });
+
+        if (action === 'done') {
           shift();
           continue;
         }
 
-        if (e instanceof ApiError && e.status === 401) {
+        if (action === 'refresh') {
           const token = await refreshToken();
           if (!token) {
             return; // 갱신 실패. 다음 기회에 다시 시도한다.
@@ -93,15 +104,16 @@ export async function runSync(): Promise<void> {
           continue; // 새 토큰으로 같은 작업을 다시.
         }
 
-        // 연결이 없으면 큐를 그대로 두고 멈춘다. 실패로 세지 않는다 —
-        // 비행기 모드가 길어졌다고 기록을 버리면 안 된다.
-        if (e instanceof NetworkError) {
+        // 연결이 없거나 서버가 잠깐 못 받는다. 큐를 그대로 두고 멈춘다. 실패로 세지 않는다 —
+        // 비행기 모드나 서버 배포가 길어졌다고 기록을 버리면 안 된다.
+        if (action === 'pause') {
           return;
         }
 
-        // 서버가 거절한 요청(400·404 등). 다시 보내도 같은 결과라 횟수를 세고 넘어간다.
-        // 사유를 함께 남긴다 — 횟수를 다 쓰면 실패 목록에 들어가 설정 화면에 보인다.
+        // 서버가 거절한 요청(400 등). 횟수를 세고 사유를 남긴다 — 횟수를 다 쓰면 실패 목록에 들어가 설정 화면에 보인다.
+        // 그리고 이번 차례는 끝낸다. 예전엔 여기서 바로 다시 보내서, 5번을 1초 만에 다 써 버렸다.
         retryLater(e instanceof ApiError ? e.message : '알 수 없는 이유로 실패했어요.');
+        return;
       }
     }
   } finally {
@@ -305,14 +317,4 @@ async function send(op: SyncOp, token: string): Promise<void> {
       return;
     }
   }
-}
-
-/**
- * 삭제 요청이 404를 받으면 이미 지워진 것이다 — 원하는 상태에 도달했으니 성공으로 본다.
- *
- * 응답을 받기 전에 연결이 끊기면 서버는 지웠는데 기기는 실패로 알고 다시 보낸다.
- * 이때 404를 실패로 세면 다섯 번 뒤 "올리지 못한 기록"에 뜬다. 사용자는 지운 게 안 지워졌다고 오해한다.
- */
-function isRemoveAlreadyDone(op: SyncOp, e: unknown): boolean {
-  return op.kind.endsWith('.remove') && e instanceof ApiError && e.status === 404;
 }
