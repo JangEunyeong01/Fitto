@@ -44,7 +44,7 @@ flowchart LR
   Sync -- HTTPS, JWT --> API[Spring Boot API]
   API --> DB[(PostgreSQL<br/>Flyway V1~V7)]
   API -- 내려받기 --> Sync
-  Sync -->|"적용(받는 사이 바뀌었으면 버림)"| Store
+  Sync -->|"적용(도중에 바뀌면 버림)"| Store
 ```
 
 - 화면은 기기 저장소만 읽고 씁니다. 서버와 이야기하는 건 동기화 계층뿐입니다
