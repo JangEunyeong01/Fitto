@@ -32,6 +32,14 @@ export const TERMS_HISTORY: TermsVersion[] = [
       '서버가 싱가포르에 있어 정보가 국외로 옮겨진다는 것과, 의견 보내기(구글 폼)로 받는 정보를 적었어요.',
     ],
   },
+  {
+    version: '2026-11-15',
+    noticeFrom: '2026-11-08',
+    changes: [
+      '개인정보 보호책임자 이름을 적었어요.',
+      '휴대폰 자동 백업(구글 계정 백업)에 피또 기록과 로그인 정보는 담기지 않고, 예약한 알림 문구만 담길 수 있다는 것을 적었어요(처리방침 7번).',
+    ],
+  },
 ];
 
 /** 이 앱에 들어 있는 문안의 버전(가장 최근). 가입·다시 동의 때 서버로 보낸다. */
@@ -49,8 +57,11 @@ export const changesSince = (agreed: string | null): TermsVersion[] =>
 
 const EFFECTIVE = formatTermsDate(TERMS_VERSION);
 
-/** 개인정보 보호책임자. 출시 전에 실명과 문의 전용 메일로 채운다(비어 있으면 `npm run check`가 경고한다). */
-export const PRIVACY_OFFICER = { name: '', email: 'team.fitto.kr@gmail.com' };
+/**
+ * 개인정보 보호책임자. 법은 "책임자 성명 또는 담당 부서 이름"과 연락처를 적게 한다.
+ * 1인 운영이라 부서가 없어 실명을 쓴다(비어 있으면 `npm run check`가 경고한다).
+ */
+export const PRIVACY_OFFICER = { name: '장은영', email: 'team.fitto.kr@gmail.com' };
 
 const officerName = PRIVACY_OFFICER.name || '(출시 전 입력)';
 const officerEmail = PRIVACY_OFFICER.email || '(출시 전 입력)';
@@ -227,7 +238,8 @@ const policy: TermsDoc = {
         '· 헬스 커넥트에서 받은 데이터는 광고에 쓰거나 팔거나 다른 곳에 넘기지 않아요.\n' +
         '· iOS에서는 같은 목적으로 기기의 걸음 수(움직임과 피트니스)만 읽어요.\n' +
         '· 권한은 휴대폰 설정에서 언제든 거둘 수 있어요.\n' +
-        '· 화면 잠금의 지문·얼굴 인식은 휴대폰이 직접 확인하고, 피또는 성공했는지만 받아요. 생체 정보는 피또에 저장되지 않아요.',
+        '· 화면 잠금의 지문·얼굴 인식은 휴대폰이 직접 확인하고, 피또는 성공했는지만 받아요. 생체 정보는 피또에 저장되지 않아요.\n' +
+        '· 휴대폰의 자동 백업(구글 계정 백업)에는 피또 기록과 로그인 정보가 담기지 않아요. 예약해 둔 알림의 문구(물·식사·생리 예정 알림 등)만 휴대폰 설정 파일에 있어서 함께 담길 수 있어요. 휴대폰을 바꿔도 기록을 이어 쓰려면 계정을 만들어 주세요.',
     },
     {
       heading: '8. 만 14세 미만',
