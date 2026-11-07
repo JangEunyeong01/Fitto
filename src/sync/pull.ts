@@ -23,6 +23,7 @@ import {
   type WorkoutRoutine,
 } from '../store/useAppStore';
 import { enqueueSync, localWriteCount } from './enqueue';
+import { retryPendingImport } from './guestImport';
 import { useAuthStore } from '../store/useAuthStore';
 import { useOutboxStore } from '../store/useOutboxStore';
 import { refreshToken } from './syncEngine';
@@ -46,9 +47,9 @@ const DETAIL_DAYS = 2;
 /** 받는 사이 기록이 바뀌어 결과를 버렸는지. 그대로 두면 앱을 다시 열 때까지 안 받는다. */
 let discarded = false;
 
-/** 지난번 결과를 버렸으면 다시 받는다. 러너가 30초마다 올리기 뒤에 부른다. */
-export function pullAgainIfDiscarded(): Promise<void> {
-  return discarded ? pullAll() : Promise.resolve();
+/** 지난번 결과를 버렸거나 게스트 기록을 아직 못 옮겼으면 다시. 러너가 30초마다 올리기 뒤에 부른다. */
+export function pullIfBehind(): Promise<void> {
+  return discarded || useAuthStore.getState().importPending ? pullAll() : Promise.resolve();
 }
 
 export async function pullAll(): Promise<void> {
@@ -59,9 +60,14 @@ export async function pullAll(): Promise<void> {
   if (useOutboxStore.getState().items.length > 0) {
     return;
   }
+  // 게스트 기록을 아직 못 옮겼으면 그것부터. 못 옮긴 채로 받으면 서버의 빈 오늘 기록이 기기 기록을 덮는다.
+  if (!(await retryPendingImport())) {
+    return;
+  }
 
   try {
-    await pullOnce(auth.accessToken);
+    // 이전 재시도 중 토큰이 바뀌었을 수 있어서 다시 읽는다.
+    await pullOnce(useAuthStore.getState().accessToken ?? auth.accessToken);
   } catch (e) {
     // accessToken이 만료됐으면 갱신하고 한 번 더. 이걸 안 하면 새로 기록한 게 없는 동안
     // (대기열이 비어 밀어올리기가 돌지 않으므로) 갱신할 기회가 아예 없다.

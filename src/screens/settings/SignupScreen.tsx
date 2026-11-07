@@ -12,8 +12,8 @@ import { typography, weight } from '../../theme/tokens';
 import { useAppStore } from '../../store/useAppStore';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useToastStore } from '../../store/useToastStore';
-import { signup, importGuestData } from '../../api/auth';
-import { toImportPayload } from '../../api/mappers';
+import { signup } from '../../api/auth';
+import { importGuest } from '../../sync/guestImport';
 import { ApiError, NetworkError } from '../../api/client';
 import { useWakeNotice } from '../../hooks/useWakeNotice';
 import { ageFromBirth } from '../../utils/goals';
@@ -106,35 +106,26 @@ export default function SignupScreen() {
       });
       setConsentOpen(false);
 
+      // 기록 이전을 먼저 끝내고 로그인 상태로 바꾼다. 로그인부터 하면 러너가 바로 서버 기록을 내려받는데,
+      // 이전이 서버에 닿기 전이면 빈 오늘 기록을 받아 기기 기록을 덮는다(sync/guestImport).
+      // 이전은 실패해도 계정은 이미 만들어졌다. 표시를 켜 두면 러너가 내려받기 전에 다시 보낸다.
+      let importFailed = false;
+      try {
+        const count = await importGuest(result.accessToken);
+        showToast(count > 0 ? `기록 ${count}개를 계정에 옮겼어요` : '계정을 만들었어요');
+      } catch {
+        importFailed = true;
+        showToast('계정을 만들었어요. 기록은 연결되면 이어서 옮길게요');
+      }
+
       signIn({
         accessToken: result.accessToken,
         refreshToken: result.refreshToken,
         email: result.user.email,
         emailVerified: result.user.emailVerified,
         agreedTermsVersion: result.user.agreedTermsVersion ?? null,
+        importPending: importFailed,
       });
-
-      // 가입과 기록 이전은 따로 실패할 수 있다. 이전이 실패해도 계정은 이미 만들어졌으므로
-      // 로그인 상태는 유지하고, 다음 실행 때 다시 시도하면 된다(모든 기록에 ID가 있어 중복되지 않는다).
-      try {
-        // 스냅샷은 보내는 시점의 값을 그대로 쓴다. 화면이 구독할 필요가 없어 getState로 꺼낸다.
-        const s = useAppStore.getState();
-        const payload = toImportPayload({
-          dailyRecords: s.dailyRecords,
-          weightLog: s.weightLog,
-          periodSettings: s.periodSettings,
-          periodSetupDone: s.periodSetupDone,
-          periodLogs: s.periodLogs,
-          recipes: s.recipes,
-          routines: s.routines,
-          customIngredients: s.customIngredients,
-        });
-        const imported = await importGuestData(payload, result.accessToken);
-        const count = Object.values(imported.imported).reduce((a, v) => a + v, 0);
-        showToast(count > 0 ? `기록 ${count}개를 계정에 옮겼어요` : '계정을 만들었어요');
-      } catch {
-        showToast('계정은 만들었지만 기록 옮기기는 실패했어요. 나중에 다시 시도할게요');
-      }
 
       // 온보딩 직후에 들어온 경우에는 가입과 동시에 화면 구성이 홈으로 바뀐다(RootNavigator).
       // 그때는 돌아갈 화면이 없으므로 확인하고 부른다.

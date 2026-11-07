@@ -38,13 +38,21 @@ interface AuthState {
   agreedTermsVersion?: string | null;
   /** 다시 동의를 "나중에"로 미룬 날. 하루에 한 번까지만 다시 묻는다. */
   reconsentAskedOn?: string;
+  /**
+   * 게스트 기록을 계정에 옮기다 실패해서 아직 남았는지(sync/guestImport).
+   * 켜져 있는 동안은 서버 기록을 내려받지 않는다 — 서버의 빈 오늘 기록이 아직 못 옮긴 기기 기록을 덮는다.
+   * 예전 저장본엔 이 값이 없다(= false).
+   */
+  importPending?: boolean;
   signIn: (params: {
     accessToken: string;
     refreshToken: string;
     email: string;
     emailVerified: boolean;
     agreedTermsVersion?: string | null;
+    importPending?: boolean;
   }) => void;
+  setImportPending: (v: boolean) => void;
   setEmailVerified: (v: boolean) => void;
   setAgreedTermsVersion: (v: string | null) => void;
   setReconsentAskedOn: (date: string) => void;
@@ -65,9 +73,20 @@ export const useAuthStore = create<AuthState>()(
       emailVerified: null,
       sessionExpired: false,
 
-      signIn: ({ accessToken, refreshToken, email, emailVerified, agreedTermsVersion }) =>
-        set({ status: 'member', accessToken, refreshToken, email, emailVerified, agreedTermsVersion, sessionExpired: false }),
+      // 이전 실패 표시를 로그인과 한 번에 넣는다. 따로 넣으면 그 사이에 로그인을 본 러너가 내려받기부터 시작한다.
+      signIn: ({ accessToken, refreshToken, email, emailVerified, agreedTermsVersion, importPending = false }) =>
+        set({
+          status: 'member',
+          accessToken,
+          refreshToken,
+          email,
+          emailVerified,
+          agreedTermsVersion,
+          importPending,
+          sessionExpired: false,
+        }),
 
+      setImportPending: (v) => set({ importPending: v }),
       setEmailVerified: (v) => set({ emailVerified: v }),
       setAgreedTermsVersion: (v) => set({ agreedTermsVersion: v }),
       setReconsentAskedOn: (date) => set({ reconsentAskedOn: date }),
@@ -85,6 +104,7 @@ export const useAuthStore = create<AuthState>()(
           emailVerified: null,
           agreedTermsVersion: undefined,
           reconsentAskedOn: undefined,
+          importPending: false,
           sessionExpired: false,
         }),
 

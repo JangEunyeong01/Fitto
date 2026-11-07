@@ -10,8 +10,9 @@ import { typography, weight } from '../../theme/tokens';
 import { useAppStore } from '../../store/useAppStore';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useToastStore } from '../../store/useToastStore';
-import { login, importGuestData } from '../../api/auth';
-import { toImportPayload, fromUser } from '../../api/mappers';
+import { login } from '../../api/auth';
+import { fromUser } from '../../api/mappers';
+import { importGuest } from '../../sync/guestImport';
 import { ApiError, NetworkError } from '../../api/client';
 import { useWakeNotice } from '../../hooks/useWakeNotice';
 
@@ -59,38 +60,38 @@ export default function LoginScreen() {
 
     try {
       const result = await login(email.trim(), password);
+
+      // 합치기를 로그인 상태로 바꾸기 전에 끝낸다. 먼저 바꾸면 러너가 내려받은 서버의 빈 오늘 기록이
+      // 아직 못 합친 기기 기록을 덮는다(sync/guestImport). 실패하면 표시를 켜 두고 러너가 다시 보낸다.
+      let importFailed = false;
+      if (mergeGuestData) {
+        try {
+          const count = await importGuest(result.accessToken);
+          showToast(count > 0 ? `기록 ${count}개를 합쳤어요` : '로그인했어요');
+        } catch {
+          // 예전엔 이 실패가 아래 catch로 가서 "로그인 실패"처럼 보였다. 로그인은 이미 됐다.
+          importFailed = true;
+          showToast('로그인했어요. 기록은 연결되면 이어서 합칠게요');
+        }
+      } else {
+        showToast('로그인했어요');
+      }
+
+      // 서버 값이 최종값이다(명세 2장). 로그인하면 기기 프로필을 서버 값으로 맞춘다.
+      // 합치기 다음이라 프로필은 서버 값을 따르고, 기록은 이미 계정에 올라간 상태다.
+      const mapped = fromUser(result.user);
+      setProfile(mapped.profile);
+      setGoals(mapped.goals);
+      setPersona(mapped.persona);
+
       signIn({
         accessToken: result.accessToken,
         refreshToken: result.refreshToken,
         email: result.user.email,
         emailVerified: result.user.emailVerified,
         agreedTermsVersion: result.user.agreedTermsVersion ?? null,
+        importPending: importFailed,
       });
-
-      // 서버 값이 최종값이다(명세 2장). 로그인하면 기기 프로필을 서버 값으로 맞춘다.
-      const mapped = fromUser(result.user);
-      setProfile(mapped.profile);
-      setGoals(mapped.goals);
-      setPersona(mapped.persona);
-
-      if (mergeGuestData) {
-        const s = useAppStore.getState();
-        const payload = toImportPayload({
-          dailyRecords: s.dailyRecords,
-          weightLog: s.weightLog,
-          periodSettings: s.periodSettings,
-          periodSetupDone: s.periodSetupDone,
-          periodLogs: s.periodLogs,
-          recipes: s.recipes,
-          routines: s.routines,
-          customIngredients: s.customIngredients,
-        });
-        const imported = await importGuestData(payload, result.accessToken);
-        const count = Object.values(imported.imported).reduce((a, v) => a + v, 0);
-        showToast(count > 0 ? `기록 ${count}개를 합쳤어요` : '로그인했어요');
-      } else {
-        showToast('로그인했어요');
-      }
 
       // 온보딩 직후에 들어온 경우에는 로그인과 동시에 화면 구성이 홈으로 바뀐다(RootNavigator).
       if (navigation.canGoBack()) navigation.goBack();
