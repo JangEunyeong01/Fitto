@@ -50,8 +50,9 @@ export function pullDate(date: string): Promise<void> {
   const auth = useAuthStore.getState();
   if (auth.status !== 'member' || !auth.accessToken) return Promise.resolve();
   if (loaded.has(date)) return Promise.resolve();
-  // 아직 못 올린 기록이 있는데 서버 값으로 덮으면 그 기록이 사라진다(pullAll과 같은 규칙).
-  if (useOutboxStore.getState().items.length > 0) return Promise.resolve();
+  // 아직 못 올린 기록·못 옮긴 게스트 기록이 있는데 서버 값으로 덮으면 그 기록이 사라진다(pullAll과 같은 규칙).
+  // 게스트 기록 이전 재시도는 pullAll이 맡는다.
+  if (useOutboxStore.getState().items.length > 0 || auth.importPending) return Promise.resolve();
 
   const running = inflight.get(date);
   if (running) return running;

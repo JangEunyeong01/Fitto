@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { AppState } from 'react-native';
 import { useAuthStore } from '../store/useAuthStore';
 import { useOutboxStore } from '../store/useOutboxStore';
-import { pullAgainIfDiscarded, pullAll } from './pull';
+import { pullIfBehind, pullAll } from './pull';
 import { runSync } from './syncEngine';
 
 /**
@@ -51,10 +51,10 @@ export function useSyncRunner(): void {
       }
     });
 
-    // 받는 사이 기록이 생겨 결과를 버렸으면 다음 주기에 다시 받는다(pull.ts). 아니면 올리기만.
+    // 받는 사이 기록이 생겨 결과를 버렸거나 게스트 기록을 못 옮겼으면 다음 주기에 다시(pull.ts). 아니면 올리기만.
     const timer = setInterval(async () => {
       await runSync();
-      await pullAgainIfDiscarded();
+      await pullIfBehind();
     }, INTERVAL_MS);
 
     return () => {
