@@ -30,6 +30,8 @@ spring:
 
 fitto:
   terms:
+    # 테스트용으로 고정한 목록(둘 다 지난 날짜). 운영 목록을 따라가지 않는다 — ReconsentTest가 실제 날짜로 돌아서
+    # 아직 안 온 버전을 넣으면 시행일 전후로 결과가 바뀐다. 시행 전·후 판단은 TermsPolicyTest가 고정 시계로 본다.
     versions: 2026-10-01,2026-10-07
   jwt:
     secret: test-secret-key-for-integration-tests-32bytes

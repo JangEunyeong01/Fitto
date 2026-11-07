@@ -87,7 +87,9 @@ try {
   // 다시 동의 시트가 보여 줄 문안이 없다(반대면 서버가 동의를 거절한다).
   const problems = [];
   const appVersions = TERMS_HISTORY.map((t) => t.version);
-  for (const yml of ['server/src/main/resources/application.yaml', 'server/src/test/resources/application.yaml']) {
+  // 운영 설정만 본다. 테스트 설정(server/src/test/resources)의 목록은 지난 날짜로 고정한 테스트용 값이다 —
+  // 다시 동의 테스트가 실제 날짜로 돌아서, 아직 안 온 버전을 넣으면 "다가올 버전 없음"이 깨지고 시행일이 지나면 또 깨진다.
+  for (const yml of ['server/src/main/resources/application.yaml']) {
     const m = readFileSync(yml, 'utf8').match(/^\s*versions:\s*(.+)$/m);
     const serverVersions = m ? m[1].split(',').map((s) => s.trim()) : [];
     if (serverVersions.join(',') !== appVersions.join(',')) {
