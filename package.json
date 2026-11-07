@@ -43,7 +43,7 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "check": "npm run check:api && npm run check:copy && npm run check:notify && npm run check:period && npm run check:range && npm run check:search && npm run check:sync && npm run check:legal",
+    "check": "npm run check:api && npm run check:copy && npm run check:notify && npm run check:period && npm run check:range && npm run check:search && npm run check:sync && npm run check:migrate && npm run check:legal",
     "build:legal": "node scripts/build-legal.mjs",
     "check:legal": "node scripts/build-legal.mjs --check",
     "check:api": "node scripts/check-mappers.mjs",
@@ -52,7 +52,8 @@
     "check:period": "node scripts/check-period.mjs",
     "check:range": "node scripts/check-range.mjs",
     "check:search": "node scripts/check-hangul.mjs",
-    "check:sync": "node scripts/check-sync.mjs"
+    "check:sync": "node scripts/check-sync.mjs",
+    "check:migrate": "node scripts/check-migrate.mjs"
   },
   "private": true
 }
