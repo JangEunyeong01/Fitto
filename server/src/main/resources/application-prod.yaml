@@ -47,8 +47,13 @@ server:
   port: ${PORT:8080}
   # 배포로 컨테이너가 교체될 때 처리 중이던 요청을 끝내고 종료한다.
   shutdown: graceful
-  # 프록시(Render·Railway 등) 뒤에 있을 때 원래 프로토콜·IP를 그대로 읽는다.
-  forward-headers-strategy: framework
+  # 프록시(Render 등) 뒤에서 원래 프로토콜·IP를 읽는다.
+  # framework(스프링)는 X-Forwarded-For의 맨 앞 값을 IP로 쓴다. 맨 앞은 요청을 보낸 쪽이 마음대로 넣을 수 있고,
+  # Render는 들어온 값을 지우지 않고 뒤에 붙인다 — 운영 서버에 위조 헤더로 로그인 실패를 보내 보니 로그에 위조 IP가 찍혔다(2026-11).
+  # 그대로면 IP 기준 제한(로그인·가입·비밀번호 찾기)을 헤더만 바꿔 피한다.
+  # native(Tomcat RemoteIpValve)는 오른쪽 끝부터 읽으며 내부망 주소(Render 내부 프록시)를 건너뛰고 처음 나오는 바깥 주소를 쓴다.
+  # 오른쪽 끝은 Render가 붙인 값이라 위조할 수 없다. 배포 뒤 같은 위조 요청으로 실제 IP가 찍히는지 확인한다(DEPLOY.md).
+  forward-headers-strategy: native
   tomcat:
     # 요청 본문 상한. 게스트 기록 이전(POST /me/import)이 가장 큰 요청이라 넉넉히 두되 무제한은 아니다.
     max-http-form-post-size: 2MB

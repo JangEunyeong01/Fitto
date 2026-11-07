@@ -63,8 +63,8 @@ curl -sI https://<도메인>/health | grep -i strict-transport
 
 `Strict-Transport-Security: max-age=31536000 ; includeSubDomains`가 나와야 합니다.
 
-안 나오면 프록시 뒤에서 HTTPS를 인식하지 못한 것입니다. `forward-headers-strategy: framework`가 켜져 있어야
-`X-Forwarded-Proto`를 읽어서 이 헤더를 붙입니다.
+안 나오면 프록시 뒤에서 HTTPS를 인식하지 못한 것입니다. `forward-headers-strategy: native`가 켜져 있어야
+`X-Forwarded-Proto`를 읽어서 이 헤더를 붙입니다(10번과 같은 설정).
 
 ### 4. 허용하지 않은 주소에서 부를 수 없는지
 
@@ -133,6 +133,20 @@ select email, created_at from users order by created_at;
 운영 DB는 개발과 별도이고 마이그레이션으로 새로 만들므로 처음에는 비어 있어야 합니다.
 점검·시연용으로 만든 계정이 있다면 공개 전에 지웁니다. 계정을 지울 때는 그 사용자의 기록도 함께 지워야 합니다 —
 `user_id`를 가진 테이블 중 `users`를 외래키로 참조하는 건 일부뿐이라 나머지는 자동으로 지워지지 않습니다.
+
+### 10. 접속 IP를 위조할 수 없는지
+
+로그인·가입·비밀번호 찾기의 IP 기준 제한은 서버가 읽은 접속 IP에 기댑니다. 없는 계정으로 로그인 실패를 두 번 보냅니다.
+
+```bash
+curl -s -o /dev/null -X POST https://<도메인>/auth/login -H "Content-Type: application/json" -d '{"email":"nobody@example.com","password":"wrong-password"}'
+curl -s -o /dev/null -X POST https://<도메인>/auth/login -H "Content-Type: application/json" -H "X-Forwarded-For: 203.0.113.7" -d '{"email":"nobody@example.com","password":"wrong-password"}'
+```
+
+로그의 `로그인 실패: email=no***@example.com ip=...` 두 줄이 **둘 다 내 실제 공인 IP**여야 합니다.
+
+- 두 번째에 `203.0.113.7`이 찍히면 헤더를 위조해 IP 제한을 피할 수 있습니다. `forward-headers-strategy`가 `framework`면 그렇습니다 — 스프링은 `X-Forwarded-For`의 맨 앞(보내는 쪽이 넣은 값)을 쓰고, Render는 들어온 값을 지우지 않고 뒤에 붙입니다(2026-11 운영에서 확인). `native`로 둡니다
+- 둘 다 내 IP가 아닌 같은 주소(Render·Cloudflare 쪽 주소)로 찍히면, 모든 사용자가 한 IP로 묶여 제한에 같이 걸립니다. Render 내부 프록시가 Tomcat 기본 내부망 범위 밖이라는 뜻이라 `server.tomcat.remoteip.internal-proxies`를 맞춰야 합니다
 
 ## 앱 빌드
 
