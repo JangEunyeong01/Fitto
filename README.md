@@ -60,7 +60,15 @@ npm start
 
 Expo Go 앱으로 QR을 찍거나, `npm run android` · `npm run ios` · `npm run web`으로 실행합니다.
 
-피또 캐릭터 그림(`src/theme/fittoSvgs.ts`)은 저장소에 올리지 않습니다. 원본 SVG 폴더가 있으면 `node scripts/build-fitto-svgs.mjs <폴더>`로 만들고, 앱 빌드(EAS)에는 `.easignore`로 포함됩니다.
+피또 캐릭터 그림(`src/theme/fittoSvgs.ts`)은 저장소에 올리지 않습니다. 저장소만 받았다면 빈 물방울로 대신해 실행할 수 있습니다.
+
+```bash
+cp src/theme/fittoSvgs.placeholder.ts src/theme/fittoSvgs.ts
+```
+
+원본 SVG 폴더가 있으면 `node scripts/build-fitto-svgs.mjs <폴더>`로 만들고, 앱 빌드(EAS)에는 `.easignore`로 포함됩니다.
+
+PR마다 GitHub Actions가 앱 타입 검사·점검 스크립트(`npm run check`)와 서버 테스트(`./gradlew test`)를 돌립니다(`.github/workflows/ci.yml`).
 
 서버는 `server/`에 있습니다. 필요한 환경변수는 `server/.env.example`, 배포 후 확인 절차는 [server/DEPLOY.md](server/DEPLOY.md)에 정리해 뒀습니다.
 
