@@ -146,7 +146,7 @@ curl -s -o /dev/null -X POST https://<도메인>/auth/login -H "Content-Type: ap
 로그의 `로그인 실패: email=no***@example.com ip=...` 두 줄이 **둘 다 내 실제 공인 IP**여야 합니다.
 
 - 두 번째에 `203.0.113.7`이 찍히면 헤더를 위조해 IP 제한을 피할 수 있습니다. `forward-headers-strategy`가 `framework`면 그렇습니다 — 스프링은 `X-Forwarded-For`의 맨 앞(보내는 쪽이 넣은 값)을 쓰고, Render는 들어온 값을 지우지 않고 뒤에 붙입니다(2026-11 운영에서 확인). `native`로 둡니다
-- 둘 다 내 IP가 아닌 같은 주소(Render·Cloudflare 쪽 주소)로 찍히면, 모든 사용자가 한 IP로 묶여 제한에 같이 걸립니다. Render 내부 프록시가 Tomcat 기본 내부망 범위 밖이라는 뜻이라 `server.tomcat.remoteip.internal-proxies`를 맞춰야 합니다
+- 둘 다 내 IP가 아닌 같은 주소로 찍히면, 모든 사용자가 한 IP로 묶여 제한에 같이 걸립니다. `native`만 켰을 때 실제로 이랬습니다 — 찍힌 `172.71.x.x`는 Cloudflare 주소였습니다(Render 앞단). `server.tomcat.remoteip.internal-proxies`에 Cloudflare 공식 범위(cloudflare.com/ips-v4, ips-v6)를 넣어 건너뛰게 했습니다. 다시 이렇게 찍히면 찍힌 주소가 어느 범위인지 보고 목록에 없는 범위를 더합니다
 
 ## 앱 빌드
 
