@@ -2,6 +2,7 @@ import { request } from './client';
 import type {
   CustomIngredientPutDto,
   CustomIngredientResponseDto,
+  DietDay,
   MealItemDto,
   PeriodDailyDto,
   PeriodLogDto,
@@ -10,6 +11,7 @@ import type {
   RecipeResponseDto,
   RoutineDto,
   User,
+  WorkoutDay,
   WorkoutDto,
 } from './types';
 
@@ -94,22 +96,8 @@ export function patchMe(patch: Record<string, unknown>, token: string): Promise<
 
 /* ---------- 조회 (서버 → 기기) ---------- */
 
-export interface DietDay {
-  date: string;
-  totalCalories: number;
-  meals: Record<string, MealItemDto[]>;
-  memos: Record<string, string | null>;
-}
-
 export function getDiet(date: string, token: string): Promise<DietDay> {
   return request<DietDay>('/diet', { query: { date }, token });
-}
-
-export interface WorkoutDay {
-  date: string;
-  totalDuration: number;
-  totalCalories: number;
-  workouts: WorkoutDto[];
 }
 
 export function getWorkout(date: string, token: string): Promise<WorkoutDay> {

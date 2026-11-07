@@ -8,8 +8,11 @@ import type {
   WorkoutRoutine,
 } from '../store/useAppStore';
 import type { PeriodLog, PeriodSettings } from '../utils/periodCycle';
+import type { MealUnit } from '../constants/codes';
 import type { WorkoutPreference } from '../utils/workoutRecommend';
 import type {
+  DietDay,
+  WorkoutDay,
   CustomIngredientImportDto,
   CustomIngredientPutDto,
   CustomIngredientResponseDto,
@@ -29,6 +32,48 @@ import type {
  * 이름이 다른 이유는 서버 명세를 먼저 정해두고 화면은 원래 쓰던 이름을 유지했기 때문이다
  * (kcal ↔ calories, minutes ↔ duration 등). 양쪽을 맞추는 일은 전부 여기서만 한다.
  */
+
+/**
+ * 날짜 하나의 식단·운동·물 응답 → 기기의 그날 기록 조각.
+ * 최근 기록 받기(sync/pull)와 지난 날짜 받기(sync/pullDate)가 같이 쓴다. 예전엔 두 파일에 같은 코드가 있었다.
+ * 걸음·체중·생리는 날짜 범위로 따로 받아서 여기 없다.
+ */
+export function toDailyRecord(
+  diet: DietDay,
+  workout: WorkoutDay,
+  water: { amount: number }
+): Pick<DailyRecord, 'meals' | 'mealMemos' | 'exercises' | 'water'> {
+  const meals: DailyRecord['meals'] = { breakfast: [], lunch: [], dinner: [], snack: [] };
+  Object.entries(diet.meals).forEach(([slot, items]) => {
+    meals[slot as keyof DailyRecord['meals']] = items.map((item) => ({
+      id: item.id,
+      name: item.name,
+      amount: item.amount,
+      unit: item.unit as MealUnit,
+      servingLabel: item.servingLabel ?? undefined,
+      kcal: item.calories,
+    }));
+  });
+
+  const mealMemos: NonNullable<DailyRecord['mealMemos']> = {};
+  Object.entries(diet.memos).forEach(([slot, memo]) => {
+    if (memo) mealMemos[slot as keyof DailyRecord['meals']] = memo;
+  });
+
+  return {
+    meals,
+    mealMemos,
+    exercises: workout.workouts.map((w) => ({
+      id: w.id,
+      code: w.exerciseCode ?? undefined,
+      name: w.name,
+      minutes: w.duration,
+      kcal: w.calories,
+      memo: w.memo ?? undefined,
+    })),
+    water: water.amount,
+  };
+}
 
 /** 게스트로 쌓은 기기 기록을 POST /me/import에 올릴 모양으로 바꾼다(명세 6). */
 export interface LocalSnapshot {
