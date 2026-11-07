@@ -35,7 +35,7 @@ try {
     { stdio: 'inherit' }
   );
 
-  const { toImportPayload, fromUser } = await import(pathToFileURL(join(out, 'api/mappers.js')).href);
+  const { toImportPayload, fromUser, toDailyRecord } = await import(pathToFileURL(join(out, 'api/mappers.js')).href);
 
   const snapshot = {
     dailyRecords: {
@@ -180,6 +180,36 @@ try {
   assert.deepEqual(user.goals, { kcal: 1424, water: 1800, steps: 8000, cup: 250 });
   assert.equal(user.persona, 'friendly');
   assert.equal(user.periodOn, true);
+
+  // 날짜 하나의 식단·운동·물 응답 → 그날 기록. 최근 기록 받기와 지난 날짜 받기가 같이 쓴다.
+  const day = toDailyRecord(
+    {
+      date: '2026-11-07',
+      totalCalories: 620,
+      meals: {
+        breakfast: [{ id: 'm1', name: '현미밥', amount: 2, unit: 'serving', servingLabel: '1공기 210g', calories: 620 }],
+        lunch: [{ id: 'm2', name: '사과', amount: 150, unit: 'g', servingLabel: null, calories: 80 }],
+      },
+      memos: { breakfast: '많이 먹음', lunch: null, dinner: '' },
+    },
+    {
+      date: '2026-11-07',
+      totalDuration: 20,
+      totalCalories: 130,
+      workouts: [{ id: 'w1', date: '2026-11-07', exerciseCode: null, name: '줄넘기', duration: 20, calories: 130, memo: null }],
+    },
+    { date: '2026-11-07', amount: 750 }
+  );
+  // 응답에 없는 끼니도 빈 배열로 있어야 화면이 그린다.
+  assert.deepEqual(Object.keys(day.meals).sort(), ['breakfast', 'dinner', 'lunch', 'snack']);
+  assert.deepEqual(day.meals.dinner, []);
+  assert.deepEqual(day.meals.breakfast[0], { id: 'm1', name: '현미밥', amount: 2, unit: 'serving', servingLabel: '1공기 210g', kcal: 620 });
+  // 1인분 설명이 없으면 키가 비어 있다(null을 그대로 두면 화면이 "null"을 찍는다).
+  assert.equal(day.meals.lunch[0].servingLabel, undefined);
+  // 빈 메모는 남기지 않는다.
+  assert.deepEqual(day.mealMemos, { breakfast: '많이 먹음' });
+  assert.deepEqual(day.exercises, [{ id: 'w1', code: undefined, name: '줄넘기', minutes: 20, kcal: 130, memo: undefined }]);
+  assert.equal(day.water, 750);
 
   console.log('매핑 점검 통과');
 } finally {

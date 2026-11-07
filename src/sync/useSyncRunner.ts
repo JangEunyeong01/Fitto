@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { AppState } from 'react-native';
 import { useAuthStore } from '../store/useAuthStore';
 import { useOutboxStore } from '../store/useOutboxStore';
-import { pullAll } from './pull';
+import { pullAgainIfDiscarded, pullAll } from './pull';
 import { runSync } from './syncEngine';
 
 /**
@@ -51,7 +51,11 @@ export function useSyncRunner(): void {
       }
     });
 
-    const timer = setInterval(runSync, INTERVAL_MS);
+    // 받는 사이 기록이 생겨 결과를 버렸으면 다음 주기에 다시 받는다(pull.ts). 아니면 올리기만.
+    const timer = setInterval(async () => {
+      await runSync();
+      await pullAgainIfDiscarded();
+    }, INTERVAL_MS);
 
     return () => {
       unsubscribeOutbox();

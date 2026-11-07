@@ -99,6 +99,22 @@ export interface WaterDto {
   amount: number;
 }
 
+/** GET /diet?date= 응답. 끼니별 항목과 메모. */
+export interface DietDay {
+  date: string;
+  totalCalories: number;
+  meals: Record<string, MealItemDto[]>;
+  memos: Record<string, string | null>;
+}
+
+/** GET /workout?date= 응답. */
+export interface WorkoutDay {
+  date: string;
+  totalDuration: number;
+  totalCalories: number;
+  workouts: WorkoutDto[];
+}
+
 export interface StepsDto {
   date: DateKey;
   steps: number;

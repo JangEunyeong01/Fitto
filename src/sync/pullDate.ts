@@ -1,10 +1,11 @@
 import { ApiError, NetworkError } from '../api/client';
 import { getDiet, getWater, getWorkout } from '../api/records';
-import { useAppStore, type DailyRecord, type MealItem, type MealSlot } from '../store/useAppStore';
+import { toDailyRecord } from '../api/mappers';
+import { useAppStore } from '../store/useAppStore';
 import { useAuthStore } from '../store/useAuthStore';
 import { useOutboxStore } from '../store/useOutboxStore';
+import { localWriteCount } from './enqueue';
 import { refreshToken } from './syncEngine';
-import type { MealUnit } from '../constants/codes';
 
 /**
  * 지난 날짜 하나를 서버에서 받아온다.
@@ -56,8 +57,9 @@ export function pullDate(date: string): Promise<void> {
   if (running) return running;
 
   const task = fetchDate(date, auth.accessToken)
-    .then(() => {
-      loaded.add(date);
+    .then((applied) => {
+      // 받는 사이 기록이 바뀌어 버렸으면 "받았다"고 적지 않는다. 다음에 그 날짜를 열면 다시 받는다.
+      if (applied) loaded.add(date);
     })
     .catch((e) => {
       // 연결이 없으면 다음 기회에. 기기에 있는 기록으로 화면은 그대로 그린다.
@@ -73,57 +75,30 @@ export function pullDate(date: string): Promise<void> {
   return task;
 }
 
-async function fetchDate(date: string, token: string): Promise<void> {
+async function fetchDate(date: string, token: string): Promise<boolean> {
   try {
-    await fetchOnce(date, token);
+    return await fetchOnce(date, token);
   } catch (e) {
     // accessToken이 만료됐으면 갱신하고 한 번 더. 갱신도 실패하면 그대로 던진다.
     if (e instanceof ApiError && e.status === 401) {
       const fresh = await refreshToken();
       if (!fresh) throw e;
-      await fetchOnce(date, fresh);
-      return;
+      return fetchOnce(date, fresh);
     }
     throw e;
   }
 }
 
-async function fetchOnce(date: string, token: string): Promise<void> {
-  const diet = await getDiet(date, token);
-  const workout = await getWorkout(date, token);
-  const water = await getWater(date, token);
+/** 받아서 적용했으면 true. 받는 사이 기기 기록이 바뀌었으면 적용하지 않고 false(pullAll과 같은 규칙). */
+async function fetchOnce(date: string, token: string): Promise<boolean> {
+  const writesAtStart = localWriteCount();
+  const [diet, workout, water] = await Promise.all([getDiet(date, token), getWorkout(date, token), getWater(date, token)]);
 
-  const meals = { breakfast: [], lunch: [], dinner: [], snack: [] } as Record<MealSlot, MealItem[]>;
-  Object.entries(diet.meals).forEach(([slot, items]) => {
-    meals[slot as MealSlot] = items.map((item) => ({
-      id: item.id,
-      name: item.name,
-      amount: item.amount,
-      unit: item.unit as MealUnit,
-      servingLabel: item.servingLabel ?? undefined,
-      kcal: item.calories,
-    }));
-  });
-
-  const mealMemos: Partial<Record<MealSlot, string>> = {};
-  Object.entries(diet.memos).forEach(([slot, memo]) => {
-    if (memo) mealMemos[slot as MealSlot] = memo;
-  });
-
-  const record: Partial<DailyRecord> = {
-    meals,
-    mealMemos,
-    exercises: workout.workouts.map((w) => ({
-      id: w.id,
-      code: w.exerciseCode ?? undefined,
-      name: w.name,
-      minutes: w.duration,
-      kcal: w.calories,
-      memo: w.memo ?? undefined,
-    })),
-    water: water.amount,
-  };
+  if (localWriteCount() !== writesAtStart || useOutboxStore.getState().items.length > 0) {
+    return false;
+  }
 
   // 걸음·체중·생리는 날짜 범위로 한 번에 받아서 pullAll이 이미 넣어둔다. 여기서는 건드리지 않는다.
-  useAppStore.getState().applyServerRecords({ dailyRecords: { [date]: record } });
+  useAppStore.getState().applyServerRecords({ dailyRecords: { [date]: toDailyRecord(diet, workout, water) } });
+  return true;
 }
